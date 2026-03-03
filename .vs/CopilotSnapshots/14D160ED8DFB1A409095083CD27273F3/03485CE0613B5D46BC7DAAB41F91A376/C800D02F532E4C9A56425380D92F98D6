@@ -1,0 +1,126 @@
+﻿<template>
+  <section class="hero card">
+    <p class="eyebrow">UEE STYLE ORGANIZATION PORTAL</p>
+    <h1>星际公民战队 · 官方招募站</h1>
+    <p>
+      面向星际公民玩家的团队门户，支持展示组织定位、核心成员、活动任务与招募信息。
+    </p>
+    <div class="actions">
+      <RouterLink to="/about" class="btn btn-primary">开始填充内容</RouterLink>
+      <a
+        class="btn"
+        href="https://robertsspaceindustries.com/"
+        target="_blank"
+        rel="noopener"
+      >
+        官方站点参考
+      </a>
+    </div>
+  </section>
+
+  <section class="stats grid">
+    <article class="card" v-for="item in teamStats" :key="item.label">
+      <h3>{{ item.value }}</h3>
+      <p>{{ item.label }}</p>
+    </article>
+  </section>
+
+  <section class="card ace-pilot">
+    <div class="ace-media">
+      <img :src="acePilot.image" :alt="acePilot.ship" />
+    </div>
+    <div class="ace-content">
+      <p class="eyebrow">ACE PILOT</p>
+      <h2>{{ acePilot.name }}</h2>
+      <p class="callsign">{{ acePilot.callsign }}</p>
+      <p class="ship">座驾：{{ acePilot.ship }}</p>
+      <p>{{ acePilot.description }}</p>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { acePilot, teamStats } from '@/data/siteContent'
+</script>
+
+<style scoped>
+.hero {
+  padding: 1.6rem;
+  border-color: rgba(142, 194, 255, 0.45);
+}
+
+.eyebrow {
+  color: var(--accent-2);
+  margin: 0;
+}
+
+h1 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  letter-spacing: 0.03em;
+}
+
+p {
+  margin: 0;
+}
+
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.stats {
+  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.stats h3 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.stats p {
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+}
+
+.ace-pilot {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.ace-media {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0a101a;
+}
+
+.ace-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ace-content h2 {
+  margin: 0.35rem 0;
+}
+
+.callsign,
+.ship {
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+@media (max-width: 860px) {
+  .ace-pilot {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

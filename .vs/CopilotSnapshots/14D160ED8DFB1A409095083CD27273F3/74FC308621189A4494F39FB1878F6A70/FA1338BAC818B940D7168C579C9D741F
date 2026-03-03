@@ -1,0 +1,38 @@
+﻿<template>
+  <PageTitle
+    title="活动项目"
+    subtitle="用于展示常规行动、专项训练、赛事等内容。"
+  />
+
+  <section class="grid projects-grid">
+    <article class="card" v-for="item in projects" :key="item.name">
+      <h3>{{ item.name }}</h3>
+      <p class="period">{{ item.period }}</p>
+      <p>{{ item.description }}</p>
+    </article>
+  </section>
+</template>
+
+<script setup>
+import PageTitle from '@/components/common/PageTitle.vue'
+import { projects } from '@/data/siteContent'
+</script>
+
+<style scoped>
+.projects-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+h3 {
+  margin: 0;
+}
+
+.period {
+  color: var(--text-muted);
+  margin: 0.4rem 0;
+}
+
+p {
+  margin-bottom: 0;
+}
+</style>

@@ -1,0 +1,70 @@
+﻿<template>
+  <header class="site-header">
+    <div class="container header-inner">
+      <RouterLink class="brand" to="/">星际公民团队站</RouterLink>
+      <nav class="nav">
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="nav-link"
+        >
+          {{ item.label }}
+        </RouterLink>
+      </nav>
+    </div>
+  </header>
+</template>
+
+<script setup>
+import { navItems } from '@/data/siteContent'
+</script>
+
+<style scoped>
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(90deg, rgba(7, 11, 20, 0.9), rgba(11, 21, 35, 0.78));
+  border-bottom: 1px solid var(--line);
+}
+
+.header-inner {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.nav-link {
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+}
+
+.nav-link.router-link-active {
+  color: var(--text);
+  border-color: var(--line);
+  background: rgba(95, 169, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(143, 215, 255, 0.16);
+}
+</style>

@@ -1,0 +1,85 @@
+﻿<template>
+  <div class="app-shell">
+    <div class="tech-overlay" aria-hidden="true">
+      <span class="tech-grid"></span>
+      <span class="tech-glow"></span>
+    </div>
+    <SiteHeader />
+    <main class="container page-main">
+      <router-view v-slot="{ Component }">
+        <transition name="page-fade">
+          <div :key="route.fullPath" class="route-container">
+            <component :is="Component" />
+          </div>
+        </transition>
+      </router-view>
+    </main>
+    <SiteFooter />
+  </div>
+</template>
+
+<script setup>
+import { useRoute } from 'vue-router'
+import SiteHeader from './components/layout/SiteHeader.vue'
+import SiteFooter from './components/layout/SiteFooter.vue'
+
+const route = useRoute()
+</script>
+
+<style scoped>
+.tech-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.tech-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image:
+    linear-gradient(rgba(143, 215, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 215, 255, 0.15) 1px, transparent 1px);
+  background-size: 36px 36px;
+  transform: perspective(650px) rotateX(60deg) translateY(45%);
+  transform-origin: center;
+}
+
+.tech-glow {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  left: -120px;
+  top: -120px;
+  background: radial-gradient(circle, rgba(95, 169, 255, 0.24), transparent 70%);
+  animation: drift 16s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(90px, 40px, 0);
+  }
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.route-container {
+  min-height: 40vh;
+}
+</style>

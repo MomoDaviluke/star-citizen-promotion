@@ -1,0 +1,46 @@
+﻿<template>
+  <PageTitle
+    title="加入我们"
+    subtitle="这里可以填写招募条件、流程、常见问题与报名入口。"
+  />
+
+  <section class="grid join-grid">
+    <article class="card">
+      <h3>招募条件（示例）</h3>
+      <ul>
+        <li>尊重团队协作与沟通规则</li>
+        <li>愿意参加基础训练与复盘</li>
+        <li>每周有稳定在线时间</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>加入流程（示例）</h3>
+      <ol>
+        <li>提交申请信息</li>
+        <li>完成语音面谈</li>
+        <li>参与试训活动</li>
+      </ol>
+    </article>
+  </section>
+</template>
+
+<script setup>
+import PageTitle from '@/components/common/PageTitle.vue'
+</script>
+
+<style scoped>
+.join-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+h3 {
+  margin-top: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+</style>

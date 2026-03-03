@@ -1,0 +1,73 @@
+﻿<template>
+  <section class="hero card">
+    <p class="eyebrow">组织介绍站框架已就绪</p>
+    <h1>打造你的星际公民团队门户</h1>
+    <p>
+      你可以在此基础上直接替换文案、图片、视频和活动数据，快速上线团队介绍站。
+    </p>
+    <div class="actions">
+      <RouterLink to="/about" class="btn btn-primary">开始填充内容</RouterLink>
+      <a
+        class="btn"
+        href="https://robertsspaceindustries.com/"
+        target="_blank"
+        rel="noopener"
+      >
+        官方站点参考
+      </a>
+    </div>
+  </section>
+
+  <section class="stats grid">
+    <article class="card" v-for="item in teamStats" :key="item.label">
+      <h3>{{ item.value }}</h3>
+      <p>{{ item.label }}</p>
+    </article>
+  </section>
+</template>
+
+<script setup>
+import { teamStats } from '@/data/siteContent'
+</script>
+
+<style scoped>
+.hero {
+  padding: 1.4rem;
+}
+
+.eyebrow {
+  color: var(--accent-2);
+  margin: 0;
+}
+
+h1 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+p {
+  margin: 0;
+}
+
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.stats {
+  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.stats h3 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.stats p {
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+}
+</style>

@@ -1,0 +1,27 @@
+﻿<!-- src/views/Home.vue -->
+<template>
+  <div class="home-page">
+    <h1>星际公民宣传首页</h1>
+    <p>欢迎来到星际公民的世界！</p>
+    <div class="nav-links">
+      <!-- 内部页面跳转示例 -->
+      <router-link to="/about">关于我们</router-link>
+      <!-- 外部网站跳转示例 -->
+      <a href="https://robertsspaceindustries.com/" target="_blank" rel="noopener">
+        访问星际公民官网
+      </a>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.home-page {
+  text-align: center;
+  padding: 50px;
+}
+.nav-links a {
+  margin: 0 15px;
+  color: #42b983;
+  text-decoration: none;
+}
+</style>

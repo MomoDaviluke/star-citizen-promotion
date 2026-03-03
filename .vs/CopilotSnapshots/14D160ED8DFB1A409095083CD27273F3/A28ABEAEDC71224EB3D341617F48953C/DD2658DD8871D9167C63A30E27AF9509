@@ -1,0 +1,38 @@
+﻿export const navItems = [
+  { label: '首页', to: '/' },
+  { label: '团队介绍', to: '/about' },
+  { label: '核心成员', to: '/members' },
+  { label: '活动项目', to: '/projects' },
+  { label: '加入我们', to: '/join' },
+  { label: '联系我们', to: '/contact' }
+]
+
+export const teamStats = [
+  { label: '团队成员', value: '20+' },
+  { label: '每周活动', value: '3 场' },
+  { label: '合作组织', value: '12+' }
+]
+
+export const members = [
+  { name: 'Echo', role: '舰队指挥', intro: '负责大型行动协调与战术安排。' },
+  { name: 'Nova', role: '后勤总管', intro: '管理补给路线、物资统筹与协作。' },
+  { name: 'Raven', role: '训练官', intro: '组织新人训练、飞行演练与战术复盘。' }
+]
+
+export const projects = [
+  {
+    name: '新人成长营',
+    period: '每月第 1 周',
+    description: '提供从飞船入门到组队协作的完整训练路线。'
+  },
+  {
+    name: '跨组织联合行动',
+    period: '每月第 3 周',
+    description: '与友方组织共同执行大型护航与区域控制任务。'
+  },
+  {
+    name: '赛事与展示',
+    period: '季度活动',
+    description: '通过竞速、编队飞行等活动提升团队曝光与凝聚力。'
+  }
+]

@@ -1,0 +1,38 @@
+﻿<template>
+  <PageTitle
+    title="核心成员"
+    subtitle="你可以在 src/data/siteContent.js 中维护成员数据，页面会自动渲染。"
+  />
+
+  <section class="grid members-grid">
+    <article class="card" v-for="item in members" :key="item.name">
+      <h3>{{ item.name }}</h3>
+      <p class="role">{{ item.role }}</p>
+      <p>{{ item.intro }}</p>
+    </article>
+  </section>
+</template>
+
+<script setup>
+import PageTitle from '@/components/common/PageTitle.vue'
+import { members } from '@/data/siteContent'
+</script>
+
+<style scoped>
+.members-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+h3 {
+  margin: 0;
+}
+
+.role {
+  color: var(--accent-2);
+  margin: 0.35rem 0;
+}
+
+p {
+  margin: 0;
+}
+</style>

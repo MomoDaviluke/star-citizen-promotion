@@ -1,0 +1,123 @@
+﻿:root {
+  --bg: #04080f;
+  --panel: #0b1523;
+  --text: #e7edf7;
+  --text-muted: #92a4bf;
+  --line: #1f3147;
+  --accent: #5fa9ff;
+  --accent-2: #8fd7ff;
+  --glow: 0 0 0 1px rgba(143, 215, 255, 0.14), 0 0 28px rgba(95, 169, 255, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background:
+    radial-gradient(circle at 20% -10%, rgba(95, 169, 255, 0.2), transparent 40%),
+    radial-gradient(circle at 85% 0%, rgba(143, 215, 255, 0.12), transparent 35%),
+    linear-gradient(180deg, #060b13 0%, var(--bg) 60%);
+  color: var(--text);
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: linear-gradient(transparent 96%, rgba(143, 215, 255, 0.2) 100%);
+  background-size: 100% 4px;
+  z-index: -1;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  width: min(1100px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.page-main {
+  padding-block: 2rem 3rem;
+}
+
+.page-title {
+  margin-bottom: 1.25rem;
+}
+
+.page-title h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.4rem);
+}
+
+.page-title p {
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.05), rgba(95, 169, 255, 0.03));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(143, 215, 255, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(143, 215, 255, 0.16), 0 14px 34px rgba(0, 0, 0, 0.32);
+}
+
+.btn {
+  display: inline-block;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.btn:hover {
+  background: rgba(95, 169, 255, 0.18);
+  box-shadow: var(--glow);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #05142d;
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: #70b4ff;
+}

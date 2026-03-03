@@ -1,0 +1,14 @@
+﻿<template>
+  <div class="app-shell">
+    <SiteHeader />
+    <main class="container page-main">
+      <router-view />
+    </main>
+    <SiteFooter />
+  </div>
+</template>
+
+<script setup>
+import SiteHeader from './components/layout/SiteHeader.vue'
+import SiteFooter from './components/layout/SiteFooter.vue'
+</script>

@@ -1,0 +1,246 @@
+﻿<template>
+  <section class="hero card">
+    <p class="eyebrow">UEE STYLE ORGANIZATION PORTAL</p>
+    <h1>星际公民战队 · 官方招募站</h1>
+    <p>
+      面向星际公民玩家的团队门户，支持展示组织定位、核心成员、活动任务与招募信息。
+    </p>
+    <div class="actions">
+      <RouterLink to="/about" class="btn btn-primary">开始填充内容</RouterLink>
+      <a
+        class="btn"
+        href="https://robertsspaceindustries.com/"
+        target="_blank"
+        rel="noopener"
+      >
+        官方站点参考
+      </a>
+    </div>
+  </section>
+
+  <section class="ops-strip card">
+    <span>stardate: 2956.03</span>
+    <span>sector: pyro fringe</span>
+    <span>operation id: f8c-alpha</span>
+  </section>
+
+  <section class="stats grid">
+    <article class="card" v-for="item in teamStats" :key="item.label">
+      <h3>{{ item.value }}</h3>
+      <p>{{ item.label }}</p>
+    </article>
+  </section>
+
+  <section class="card ace-pilot" @mouseenter="stopAutoRotate" @mouseleave="startAutoRotate">
+    <div class="ace-media">
+      <img :src="currentPilot.image" :alt="currentPilot.ship" />
+    </div>
+    <div class="ace-content">
+      <p class="eyebrow">ACE PILOT</p>
+      <h2>{{ currentPilot.name }}</h2>
+      <p class="callsign">{{ currentPilot.callsign }}</p>
+      <p class="ship">座驾：{{ currentPilot.ship }}</p>
+      <p>{{ currentPilot.description }}</p>
+      <div class="pilot-actions">
+        <button type="button" class="btn" @click="prevPilot">上一位</button>
+        <button type="button" class="btn" @click="nextPilot">下一位</button>
+      </div>
+      <div class="pilot-dots">
+        <button
+          v-for="(pilot, index) in acePilots"
+          :key="pilot.callsign"
+          type="button"
+          class="dot"
+          :class="{ active: index === currentPilotIndex }"
+          @click="selectPilot(index)"
+          :aria-label="`切换到 ${pilot.name}`"
+        />
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { acePilots, teamStats } from '@/data/siteContent'
+
+const currentPilotIndex = ref(0)
+let rotateTimer = null
+
+const currentPilot = computed(() => acePilots[currentPilotIndex.value])
+
+const selectPilot = (index) => {
+  currentPilotIndex.value = index
+}
+
+const nextPilot = () => {
+  currentPilotIndex.value = (currentPilotIndex.value + 1) % acePilots.length
+}
+
+const prevPilot = () => {
+  currentPilotIndex.value = (currentPilotIndex.value - 1 + acePilots.length) % acePilots.length
+}
+
+const startAutoRotate = () => {
+  stopAutoRotate()
+  rotateTimer = window.setInterval(() => {
+    nextPilot()
+  }, 5000)
+}
+
+const stopAutoRotate = () => {
+  if (rotateTimer !== null) {
+    clearInterval(rotateTimer)
+    rotateTimer = null
+  }
+}
+
+onMounted(() => {
+  startAutoRotate()
+})
+
+onBeforeUnmount(() => {
+  stopAutoRotate()
+})
+</script>
+
+<style scoped>
+.hero {
+  padding: 1.6rem;
+  border-color: rgba(142, 194, 255, 0.45);
+  box-shadow: var(--glow);
+  animation: reveal 0.8s ease both;
+}
+
+.eyebrow {
+  color: var(--accent-2);
+  margin: 0;
+}
+
+h1 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  letter-spacing: 0.03em;
+}
+
+p {
+  margin: 0;
+}
+
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ops-strip {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.2rem;
+  color: var(--accent-2);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+
+.stats {
+  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.stats h3 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: var(--accent-2);
+}
+
+.stats p {
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+}
+
+.ace-pilot {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 1fr);
+  gap: 1rem;
+  align-items: center;
+  animation: reveal 0.95s ease both;
+}
+
+.ace-media {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0a101a;
+  box-shadow: inset 0 0 0 1px rgba(143, 215, 255, 0.12);
+}
+
+.ace-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ace-content h2 {
+  margin: 0.35rem 0;
+}
+
+.callsign,
+.ship {
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.pilot-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pilot-actions .btn {
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+}
+
+.pilot-dots {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 860px) {
+  .ace-pilot {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
