@@ -1,11 +1,23 @@
+<!--
+  @file 核心成员视图组件
+  @description 展示团队核心成员信息卡片
+  @module views/Members
+-->
+
 <template>
   <PageTitle
     title="核心成员"
     subtitle="你可以在 src/data/siteContent.js 中维护成员数据，页面会自动渲染。"
   />
 
+  <!-- 成员卡片网格 -->
   <section class="grid members-grid">
-    <article class="card member-card" v-for="(item, index) in members" :key="item.name" :style="{ animationDelay: `${index * 0.1}s` }">
+    <article
+      class="card member-card"
+      v-for="(item, index) in members"
+      :key="item.name"
+      :style="{ animationDelay: `${index * 0.1}s` }"
+    >
       <div class="member-header">
         <div class="member-avatar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -39,11 +51,17 @@
 </template>
 
 <script setup>
+/**
+ * 核心成员视图组件
+ * @description 从数据文件读取并展示团队成员信息
+ */
+
 import PageTitle from '@/components/common/PageTitle.vue'
 import { members } from '@/data/siteContent'
 </script>
 
 <style scoped>
+/* 成员卡片网格 */
 .members-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }

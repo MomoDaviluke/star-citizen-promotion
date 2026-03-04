@@ -41,8 +41,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vue: ['vue', 'vue-router'],
-            vendor: ['vue', 'vue-router']
+            vue: ['vue', 'vue-router']
           }
         }
       }

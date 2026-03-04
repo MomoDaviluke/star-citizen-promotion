@@ -1,9 +1,16 @@
+<!--
+  @file 加入我们视图组件
+  @description 展示招募条件和加入流程
+  @module views/Join
+-->
+
 <template>
   <PageTitle
     title="加入我们"
     subtitle="这里可以填写招募条件、流程、常见问题与报名入口。"
   />
 
+  <!-- 招募条件和流程卡片 -->
   <section class="grid join-grid">
     <article class="card join-card" :style="{ animationDelay: '0s' }">
       <div class="card-header">
@@ -45,6 +52,7 @@
     </article>
   </section>
 
+  <!-- 行动召唤区域 -->
   <section class="cta-section">
     <div class="cta-card">
       <div class="cta-content">
@@ -61,9 +69,15 @@
 </template>
 
 <script setup>
+/**
+ * 加入我们视图组件
+ * @description 展示招募条件、加入流程和申请入口
+ */
+
 import PageTitle from '@/components/common/PageTitle.vue'
 import { ref } from 'vue'
 
+/** 招募条件列表 */
 const requirements = ref([
   '尊重团队协作与沟通规则',
   '愿意参加基础训练与复盘',
@@ -71,6 +85,7 @@ const requirements = ref([
   '拥有基础的游戏设备与网络条件'
 ])
 
+/** 加入流程步骤 */
 const process = ref([
   '提交申请信息',
   '完成语音面谈',
@@ -80,6 +95,7 @@ const process = ref([
 </script>
 
 <style scoped>
+/* 卡片网格布局 */
 .join-grid {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
@@ -178,6 +194,7 @@ h3 {
   flex: 1;
 }
 
+/* 行动召唤区域 */
 .cta-section {
   margin-top: 2.5rem;
 }
@@ -247,6 +264,7 @@ h3 {
   }
 }
 
+/* 响应式适配 */
 @media (max-width: 860px) {
   .cta-card {
     flex-direction: column;

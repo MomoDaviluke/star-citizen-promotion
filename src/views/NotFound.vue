@@ -1,10 +1,19 @@
+<!--
+  @file 404 页面视图组件
+  @description 页面未找到时的错误提示页面
+  @module views/NotFound
+-->
+
 <template>
   <section class="not-found">
+    <!-- 视觉装饰层 -->
     <div class="error-visual">
       <div class="error-grid"></div>
       <div class="error-glow"></div>
       <div class="error-scanline"></div>
     </div>
+
+    <!-- 错误内容 -->
     <div class="error-content">
       <p class="error-code">SIGNAL LOST</p>
       <h1 class="error-number">404</h1>
@@ -16,6 +25,8 @@
         </RouterLink>
       </div>
     </div>
+
+    <!-- 页脚信息 -->
     <div class="error-footer">
       <span class="error-id">ERR:NAVIGATION_FAILED</span>
       <span class="error-separator">|</span>
@@ -25,10 +36,19 @@
 </template>
 
 <script setup>
+/**
+ * 404 页面视图组件
+ * @description 显示页面未找到错误，提供返回首页的导航
+ */
+
 import { ref, onMounted } from 'vue'
 
+/** 星历时间戳 */
 const timestamp = ref('')
 
+/**
+ * 组件挂载时生成时间戳
+ */
 onMounted(() => {
   const now = new Date()
   timestamp.value = `STARDATE ${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`
@@ -36,6 +56,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 404 页面容器 */
 .not-found {
   position: relative;
   text-align: center;
@@ -48,6 +69,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
+/* 视觉装饰层 */
 .error-visual {
   position: absolute;
   inset: 0;
@@ -92,6 +114,7 @@ onMounted(() => {
   }
 }
 
+/* 错误内容 */
 .error-content {
   position: relative;
   z-index: 1;
@@ -148,6 +171,7 @@ onMounted(() => {
   transform: translateX(4px);
 }
 
+/* 页脚信息 */
 .error-footer {
   position: relative;
   z-index: 1;

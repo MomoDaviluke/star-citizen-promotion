@@ -1,4 +1,11 @@
+<!--
+  @file 首页视图组件
+  @description 网站首页，包含英雄区域、团队统计、王牌飞行员展示等模块
+  @module views/Home
+-->
+
 <template>
+  <!-- 英雄区域：3D 视差效果的主视觉区 -->
   <section
     ref="heroRef"
     class="hero"
@@ -49,6 +56,7 @@
     <div class="hero-corner hero-corner-br"></div>
   </section>
 
+  <!-- 操作信息条：显示星系信息 -->
   <section class="ops-strip">
     <div class="ops-item">
       <span class="ops-label">stardate</span>
@@ -66,8 +74,14 @@
     </div>
   </section>
 
+  <!-- 团队统计卡片 -->
   <section class="stats grid">
-    <article class="card stat-card" v-for="(item, index) in teamStats" :key="item.label" :style="{ animationDelay: `${index * 0.1}s` }">
+    <article
+      class="card stat-card"
+      v-for="(item, index) in teamStats"
+      :key="item.label"
+      :style="{ animationDelay: `${index * 0.1}s` }"
+    >
       <div class="stat-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path v-if="index === 0" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -82,12 +96,13 @@
     </article>
   </section>
 
+  <!-- 王牌飞行员展示区 -->
   <section class="ace-section">
     <div class="section-header">
       <div class="section-badge">FEATURED</div>
       <h2 class="section-title">王牌飞行员</h2>
     </div>
-    
+
     <div class="ace-pilot" @mouseenter="stopAutoRotate" @mouseleave="startAutoRotate">
       <div class="ace-media">
         <div class="ace-frame">
@@ -137,25 +152,56 @@
 </template>
 
 <script setup>
+/**
+ * 首页视图组件
+ * @description 展示网站主要内容，包含英雄区域、统计数据和飞行员轮播
+ */
+
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { acePilots, teamStats } from '@/data/siteContent'
 
+/** 当前选中的飞行员索引 */
 const currentPilotIndex = ref(0)
+
+/** 英雄区域 DOM 引用 */
 const heroRef = ref(null)
+
+/** 英雄区域 X 轴偏移量（用于 3D 效果） */
 const heroOffsetX = ref(0)
+
+/** 英雄区域 Y 轴偏移量（用于 3D 效果） */
 const heroOffsetY = ref(0)
+
+/** 鼠标移动动画帧 ID */
 let pointerFrame = null
+
+/** 待处理的 X 坐标 */
 let pendingX = 0
+
+/** 待处理的 Y 坐标 */
 let pendingY = 0
+
+/** 自动轮播定时器 ID */
 let rotateTimer = null
 
+/** 当前飞行员信息（计算属性） */
 const currentPilot = computed(() => acePilots[currentPilotIndex.value])
 
+/**
+ * 选择指定索引的飞行员
+ * @param {number} index - 飞行员索引
+ */
 const selectPilot = (index) => {
   currentPilotIndex.value = index
 }
 
+/**
+ * 处理英雄区域鼠标移动
+ * @description 实现 3D 视差效果，使用 requestAnimationFrame 优化性能
+ * @param {MouseEvent} event - 鼠标事件
+ */
 const handleHeroMove = (event) => {
+  // 忽略触控设备
   if (window.matchMedia('(pointer: coarse)').matches) return
 
   const el = heroRef.value
@@ -168,6 +214,7 @@ const handleHeroMove = (event) => {
   pendingX = x * 6
   pendingY = y * 4
 
+  // 节流：使用 requestAnimationFrame
   if (pointerFrame !== null) return
 
   pointerFrame = window.requestAnimationFrame(() => {
@@ -177,23 +224,37 @@ const handleHeroMove = (event) => {
   })
 }
 
+/**
+ * 重置英雄区域位置
+ * @description 鼠标离开时恢复初始状态
+ */
 const resetHeroMove = () => {
   heroOffsetX.value = 0
   heroOffsetY.value = 0
 }
 
+/** 英雄区域 3D 变换样式（计算属性） */
 const heroTransformStyle = computed(() => ({
   transform: `perspective(1000px) rotateX(${-heroOffsetY.value}deg) rotateY(${heroOffsetX.value}deg)`
 }))
 
+/**
+ * 切换到下一位飞行员
+ */
 const nextPilot = () => {
   currentPilotIndex.value = (currentPilotIndex.value + 1) % acePilots.length
 }
 
+/**
+ * 切换到上一位飞行员
+ */
 const prevPilot = () => {
   currentPilotIndex.value = (currentPilotIndex.value - 1 + acePilots.length) % acePilots.length
 }
 
+/**
+ * 启动自动轮播
+ */
 const startAutoRotate = () => {
   stopAutoRotate()
   rotateTimer = window.setInterval(() => {
@@ -201,6 +262,9 @@ const startAutoRotate = () => {
   }, 6000)
 }
 
+/**
+ * 停止自动轮播
+ */
 const stopAutoRotate = () => {
   if (rotateTimer !== null) {
     clearInterval(rotateTimer)
@@ -208,10 +272,12 @@ const stopAutoRotate = () => {
   }
 }
 
+/** 组件挂载时启动自动轮播 */
 onMounted(() => {
   startAutoRotate()
 })
 
+/** 组件卸载时清理资源 */
 onBeforeUnmount(() => {
   stopAutoRotate()
   if (pointerFrame !== null) {
@@ -222,6 +288,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 英雄区域基础样式 */
 .hero {
   position: relative;
   padding: 3rem 2.5rem;
@@ -234,6 +301,7 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
+/* 英雄区域背景层 */
 .hero-bg {
   position: absolute;
   inset: 0;
@@ -241,6 +309,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+/* 网格背景 */
 .hero-grid {
   position: absolute;
   inset: 0;
@@ -252,6 +321,7 @@ onBeforeUnmount(() => {
   mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
 }
 
+/* 光晕效果 */
 .hero-glow {
   position: absolute;
   border-radius: 50%;
@@ -285,6 +355,7 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 扫描线效果 */
 .hero-lines {
   position: absolute;
   inset: 0;
@@ -316,6 +387,7 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 英雄区域内容 */
 .hero-content {
   position: relative;
   z-index: 1;
@@ -418,6 +490,7 @@ onBeforeUnmount(() => {
   transform: translateX(4px);
 }
 
+/* 英雄区域角落装饰 */
 .hero-corner {
   position: absolute;
   width: 20px;
@@ -451,6 +524,7 @@ onBeforeUnmount(() => {
   border-width: 0 2px 2px 0;
 }
 
+/* 操作信息条 */
 .ops-strip {
   margin-top: 1.5rem;
   display: flex;
@@ -491,6 +565,7 @@ onBeforeUnmount(() => {
   background: var(--line);
 }
 
+/* 统计卡片区域 */
 .stats {
   margin-top: 1.5rem;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -536,6 +611,7 @@ onBeforeUnmount(() => {
   letter-spacing: 0.1em;
 }
 
+/* 王牌飞行员区域 */
 .ace-section {
   margin-top: 2.5rem;
 }
@@ -752,6 +828,7 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 响应式适配 */
 @media (max-width: 860px) {
   .hero {
     padding: 2rem 1.5rem;

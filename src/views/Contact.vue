@@ -1,9 +1,16 @@
+<!--
+  @file 联系我们视图组件
+  @description 展示联系方式和社交媒体链接
+  @module views/Contact
+-->
+
 <template>
   <PageTitle
     title="联系我们"
     subtitle="替换为你们的 Discord、QQ群、邮箱、B站/微博等官方渠道。"
   />
 
+  <!-- 联系信息卡片 -->
   <section class="grid contact-grid">
     <article class="card contact-card" :style="{ animationDelay: '0s' }">
       <div class="contact-header">
@@ -52,6 +59,7 @@
     </article>
   </section>
 
+  <!-- 社交媒体链接 -->
   <section class="social-section">
     <h3 class="social-title">关注我们</h3>
     <div class="social-links">
@@ -75,10 +83,16 @@
 </template>
 
 <script setup>
+/**
+ * 联系我们视图组件
+ * @description 展示联系方式和社交媒体链接
+ */
+
 import PageTitle from '@/components/common/PageTitle.vue'
 </script>
 
 <style scoped>
+/* 联系信息卡片网格 */
 .contact-grid {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
@@ -177,6 +191,7 @@ h3 {
   font-weight: 600;
 }
 
+/* 社交媒体区域 */
 .social-section {
   margin-top: 2.5rem;
   text-align: center;

@@ -1,11 +1,23 @@
+<!--
+  @file 团队介绍视图组件
+  @description 展示团队背景、愿景、价值观和发展历程
+  @module views/About
+-->
+
 <template>
   <PageTitle
     title="团队介绍"
     subtitle="这里放团队成立背景、愿景与核心价值，建议配合时间线与关键里程碑。"
   />
 
+  <!-- 团队介绍卡片 -->
   <section class="grid about-grid">
-    <article class="card about-card" v-for="(item, index) in aboutItems" :key="item.title" :style="{ animationDelay: `${index * 0.15}s` }">
+    <article
+      class="card about-card"
+      v-for="(item, index) in aboutItems"
+      :key="item.title"
+      :style="{ animationDelay: `${index * 0.15}s` }"
+    >
       <div class="card-header">
         <span class="card-number">0{{ index + 1 }}</span>
         <div class="card-icon">
@@ -24,6 +36,7 @@
     </article>
   </section>
 
+  <!-- 发展历程时间线 -->
   <section class="timeline">
     <div class="timeline-header">
       <span class="timeline-label">HISTORY</span>
@@ -46,15 +59,22 @@
 </template>
 
 <script setup>
+/**
+ * 团队介绍视图组件
+ * @description 展示团队信息和发展历程时间线
+ */
+
 import PageTitle from '@/components/common/PageTitle.vue'
 import { ref } from 'vue'
 
+/** 团队介绍内容项 */
 const aboutItems = ref([
   { title: '我们是谁', content: '替换为团队简介：组织定位、风格、主要玩法方向。' },
   { title: '我们的目标', content: '替换为中长期目标：成员成长、行动规划、对外合作。' },
   { title: '文化与纪律', content: '替换为行为准则：沟通方式、活动出勤、协作流程。' }
 ])
 
+/** 发展历程时间线数据 */
 const timeline = ref([
   { date: '2954.Q1', title: '组织成立', desc: '在斯坦顿星系正式组建核心团队' },
   { date: '2954.Q3', title: '首次大型行动', desc: '完成首次跨星系护航任务' },
@@ -64,6 +84,7 @@ const timeline = ref([
 </script>
 
 <style scoped>
+/* 团队介绍卡片网格 */
 .about-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
@@ -130,6 +151,7 @@ p {
   background: linear-gradient(90deg, var(--accent-2), transparent);
 }
 
+/* 时间线区域 */
 .timeline {
   margin-top: 3rem;
   padding: 2rem;
@@ -244,11 +266,12 @@ p {
   }
 }
 
+/* 响应式适配 */
 @media (max-width: 860px) {
   .timeline {
     padding: 1.5rem;
   }
-  
+
   .timeline-item {
     gap: 1rem;
   }

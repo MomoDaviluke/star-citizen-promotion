@@ -1,11 +1,23 @@
+<!--
+  @file 活动项目视图组件
+  @description 展示团队活动项目和任务进度
+  @module views/Projects
+-->
+
 <template>
   <PageTitle
     title="活动项目"
     subtitle="用于展示常规行动、专项训练、赛事等内容。"
   />
 
+  <!-- 项目卡片网格 -->
   <section class="grid projects-grid">
-    <article class="card mission-card" v-for="(item, index) in projects" :key="item.name" :style="{ animationDelay: `${index * 0.1}s` }">
+    <article
+      class="card mission-card"
+      v-for="(item, index) in projects"
+      :key="item.name"
+      :style="{ animationDelay: `${index * 0.1}s` }"
+    >
       <div class="mission-header">
         <div class="mission-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -39,9 +51,19 @@
 </template>
 
 <script setup>
+/**
+ * 活动项目视图组件
+ * @description 展示团队活动项目和任务进度
+ */
+
 import PageTitle from '@/components/common/PageTitle.vue'
 import { projects } from '@/data/siteContent'
 
+/**
+ * 获取项目状态样式类
+ * @param {number} index - 项目索引
+ * @returns {string} 状态样式类名
+ */
 const getStatusClass = (index) => {
   const classes = ['status-active', 'status-pending', 'status-scheduled']
   return classes[index % classes.length]
@@ -49,6 +71,7 @@ const getStatusClass = (index) => {
 </script>
 
 <style scoped>
+/* 项目卡片网格 */
 .projects-grid {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }

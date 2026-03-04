@@ -1,15 +1,29 @@
+<!--
+ * @fileoverview 加载指示器组件
+ * @description 提供全局加载状态展示，自动集成路由导航钩子，
+ *              支持进度条显示和最小展示时间
+ * @module components/common/LoadingIndicator
+ * @example
+ * <LoadingIndicator text="加载中..." :show-progress="true" :min-duration="200" />
+ -->
+
 <template>
   <Teleport to="body">
     <Transition name="loading-fade">
       <div v-if="isLoading" class="loading-overlay" role="alert" aria-live="polite">
         <div class="loading-content">
+          <!-- 三环旋转动画加载器 -->
           <div class="loading-spinner">
             <div class="spinner-ring"></div>
             <div class="spinner-ring"></div>
             <div class="spinner-ring"></div>
             <div class="spinner-core"></div>
           </div>
+
+          <!-- 加载提示文字 -->
           <p class="loading-text">{{ text }}</p>
+
+          <!-- 可选进度条 -->
           <div v-if="showProgress" class="loading-progress">
             <div class="progress-bar" :style="{ width: `${progress}%` }"></div>
           </div>
@@ -23,6 +37,12 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
+/**
+ * 组件属性定义
+ * @property {string} text - 加载提示文字（默认 '加载中...'）
+ * @property {boolean} showProgress - 是否显示进度条
+ * @property {number} minDuration - 最小展示时间（毫秒），防止闪烁
+ */
 const props = defineProps({
   text: {
     type: String,
@@ -38,44 +58,66 @@ const props = defineProps({
   }
 })
 
+/** 加载状态 */
 const isLoading = ref(false)
+
+/** 进度值（0-100） */
 const progress = ref(0)
+
+/** 开始加载时间戳 */
 const startTime = ref(0)
+
+/** 最小展示时间定时器 */
 const minDurationTimer = ref(null)
+
+/** 进度模拟定时器 */
 const progressTimer = ref(null)
 
+/** 路由实例 */
 const router = useRouter()
 
+/**
+ * 开始加载
+ * @description 显示加载指示器并开始进度模拟
+ */
 const startLoading = () => {
   if (isLoading.value) return
   startTime.value = Date.now()
   isLoading.value = true
   progress.value = 0
-  
+
   if (props.showProgress) {
     simulateProgress()
   }
 }
 
+/**
+ * 停止加载
+ * @description 确保最小展示时间后隐藏加载指示器
+ */
 const stopLoading = () => {
   const elapsed = Date.now() - startTime.value
   const remaining = Math.max(0, props.minDuration - elapsed)
-  
+
   if (minDurationTimer.value) {
     clearTimeout(minDurationTimer.value)
   }
-  
+
   if (progressTimer.value) {
     clearInterval(progressTimer.value)
     progressTimer.value = null
   }
-  
+
   minDurationTimer.value = setTimeout(() => {
     isLoading.value = false
     progress.value = 100
   }, remaining)
 }
 
+/**
+ * 模拟进度增长
+ * @description 以随机增量模拟加载进度，最高到 90%
+ */
 const simulateProgress = () => {
   progressTimer.value = setInterval(() => {
     if (progress.value < 90) {
@@ -84,6 +126,10 @@ const simulateProgress = () => {
   }, 100)
 }
 
+/**
+ * 强制停止加载
+ * @description 立即停止加载，清除所有定时器
+ */
 const forceStop = () => {
   if (minDurationTimer.value) {
     clearTimeout(minDurationTimer.value)
@@ -94,6 +140,16 @@ const forceStop = () => {
   isLoading.value = false
 }
 
+/*
+ * ============================================
+ * 路由导航钩子集成
+ * ============================================
+ */
+
+/**
+ * 路由前置守卫
+ * @description 在路由切换开始时显示加载指示器
+ */
 router.beforeEach((to, from, next) => {
   if (to.path !== from.path) {
     startLoading()
@@ -101,18 +157,34 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
+/**
+ * 路由后置守卫
+ * @description 在路由切换完成后隐藏加载指示器
+ */
 router.afterEach(() => {
   stopLoading()
 })
 
+/**
+ * 路由错误处理
+ * @description 路由导航出错时强制停止加载
+ */
 router.onError(() => {
   forceStop()
 })
 
+/**
+ * 组件卸载清理
+ * @description 清除所有定时器，防止内存泄漏
+ */
 onUnmounted(() => {
   forceStop()
 })
 
+/**
+ * 暴露公共方法
+ * @description 允许父组件手动控制加载状态
+ */
 defineExpose({
   startLoading,
   stopLoading,
@@ -123,6 +195,11 @@ defineExpose({
 </script>
 
 <style scoped>
+/*
+ * ============================================
+ * 加载遮罩层样式
+ * ============================================
+ */
 .loading-overlay {
   position: fixed;
   inset: 0;
@@ -141,6 +218,11 @@ defineExpose({
   gap: 1.5rem;
 }
 
+/*
+ * --------------------------------------------
+ * 三环旋转加载动画
+ * --------------------------------------------
+ */
 .loading-spinner {
   position: relative;
   width: 60px;
@@ -181,6 +263,11 @@ defineExpose({
   animation: pulse 1s ease-in-out infinite;
 }
 
+/*
+ * --------------------------------------------
+ * 加载文字样式
+ * --------------------------------------------
+ */
 .loading-text {
   color: var(--text);
   font-size: 0.9rem;
@@ -190,6 +277,11 @@ defineExpose({
   margin: 0;
 }
 
+/*
+ * --------------------------------------------
+ * 进度条样式
+ * --------------------------------------------
+ */
 .loading-progress {
   width: 200px;
   height: 3px;
@@ -206,6 +298,11 @@ defineExpose({
   box-shadow: 0 0 10px var(--accent);
 }
 
+/*
+ * --------------------------------------------
+ * 淡入淡出过渡动画
+ * --------------------------------------------
+ */
 .loading-fade-enter-active,
 .loading-fade-leave-active {
   transition: opacity 0.25s ease;
@@ -216,6 +313,11 @@ defineExpose({
   opacity: 0;
 }
 
+/*
+ * --------------------------------------------
+ * 关键帧动画定义
+ * --------------------------------------------
+ */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -236,12 +338,17 @@ defineExpose({
   }
 }
 
+/*
+ * --------------------------------------------
+ * 无障碍支持：尊重用户的减少动画偏好
+ * --------------------------------------------
+ */
 @media (prefers-reduced-motion: reduce) {
   .spinner-ring,
   .spinner-core {
     animation: none;
   }
-  
+
   .spinner-ring:nth-child(1) {
     border-top-color: var(--accent);
     border-right-color: var(--accent);

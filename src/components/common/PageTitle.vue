@@ -1,12 +1,29 @@
+<!--
+ * @fileoverview 页面标题组件
+ * @description 提供统一的页面标题展示样式，包含装饰元素、标题和副标题
+ * @module components/common/PageTitle
+ * @example
+ * <PageTitle title="关于我们" subtitle="了解我们的团队使命" />
+ -->
+
 <template>
   <section class="page-title">
+    <!-- 顶部装饰元素 -->
     <div class="title-decoration">
       <span class="deco-line"></span>
       <span class="deco-dot"></span>
     </div>
+
+    <!-- 页面标识文字 -->
     <p class="kicker">UEE TRANSMISSION</p>
+
+    <!-- 主标题 -->
     <h1>{{ title }}</h1>
+
+    <!-- 副标题 -->
     <p class="subtitle">{{ subtitle }}</p>
+
+    <!-- 底部装饰元素 -->
     <div class="title-decoration title-decoration-bottom">
       <span class="deco-dot"></span>
       <span class="deco-line"></span>
@@ -15,6 +32,11 @@
 </template>
 
 <script setup>
+/**
+ * 组件属性定义
+ * @property {string} title - 页面主标题（必填）
+ * @property {string} subtitle - 页面副标题（可选，默认为空字符串）
+ */
 defineProps({
   title: {
     type: String,
@@ -28,6 +50,11 @@ defineProps({
 </script>
 
 <style scoped>
+/*
+ * ============================================
+ * 页面标题容器样式
+ * ============================================
+ */
 .page-title {
   margin-bottom: 2rem;
   position: relative;
@@ -35,6 +62,12 @@ defineProps({
   border-left: 2px solid var(--accent);
 }
 
+/*
+ * --------------------------------------------
+ * 装饰元素样式
+ * 包含渐变线条和脉冲动画圆点
+ * --------------------------------------------
+ */
 .title-decoration {
   display: flex;
   align-items: center;
@@ -77,6 +110,12 @@ defineProps({
   }
 }
 
+/*
+ * --------------------------------------------
+ * 页面标识文字（Kicker）
+ * 显示 "UEE TRANSMISSION" 标识
+ * --------------------------------------------
+ */
 .kicker {
   margin: 0 0 0.35rem;
   color: var(--accent-2);
@@ -86,6 +125,12 @@ defineProps({
   text-transform: uppercase;
 }
 
+/*
+ * --------------------------------------------
+ * 主标题样式
+ * 使用渐变文字效果，响应式字体大小
+ * --------------------------------------------
+ */
 h1 {
   margin: 0 0 0.5rem;
   font-size: clamp(1.6rem, 4vw, 2.2rem);
@@ -98,6 +143,12 @@ h1 {
   background-clip: text;
 }
 
+/*
+ * --------------------------------------------
+ * 副标题样式
+ * 使用柔和的文字颜色
+ * --------------------------------------------
+ */
 .subtitle {
   margin: 0;
   color: var(--text-muted);

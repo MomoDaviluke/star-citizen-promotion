@@ -1,18 +1,42 @@
+<!--
+ * @fileoverview 网站头部导航组件
+ * @description 提供响应式导航栏，包含品牌标识、导航链接和移动端菜单
+ * @module components/layout/SiteHeader
+ * @example
+ * <SiteHeader />
+ -->
+
 <template>
   <header class="site-header">
+    <!-- 背景层 -->
     <div class="header-bg"></div>
+
     <div class="container header-inner">
+      <!-- 品牌标识 -->
       <RouterLink class="brand" to="/">
         <span class="brand-icon">◆</span>
         <span class="brand-text">星际公民团队站</span>
       </RouterLink>
-      <button class="menu-toggle" type="button" @click="menuOpen = !menuOpen" :aria-expanded="menuOpen">
+
+      <!-- 移动端菜单切换按钮 -->
+      <button
+        class="menu-toggle"
+        type="button"
+        @click="menuOpen = !menuOpen"
+        :aria-expanded="menuOpen"
+        aria-label="切换导航菜单"
+      >
         <span class="toggle-bar"></span>
         <span class="toggle-bar"></span>
         <span class="toggle-bar"></span>
       </button>
+
+      <!-- 导航菜单 -->
       <nav class="nav" :class="{ open: menuOpen }">
+        <!-- 导航悬停发光效果 -->
         <div class="nav-glow"></div>
+
+        <!-- 导航链接列表 -->
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
@@ -26,6 +50,8 @@
         </RouterLink>
       </nav>
     </div>
+
+    <!-- 底部分隔线 -->
     <div class="header-line"></div>
   </header>
 </template>
@@ -35,9 +61,16 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { navItems } from '@/data/siteContent'
 
+/** 当前路由对象 */
 const route = useRoute()
+
+/** 移动端菜单展开状态 */
 const menuOpen = ref(false)
 
+/**
+ * 监听路由变化
+ * @description 路由切换时自动关闭移动端菜单
+ */
 watch(
   () => route.fullPath,
   () => {
@@ -47,6 +80,12 @@ watch(
 </script>
 
 <style scoped>
+/*
+ * ============================================
+ * 头部容器样式
+ * 使用 sticky 定位实现滚动时固定
+ * ============================================
+ */
 .site-header {
   position: sticky;
   top: 0;
@@ -55,6 +94,12 @@ watch(
   overflow: hidden;
 }
 
+/*
+ * --------------------------------------------
+ * 背景层样式
+ * 包含渐变背景和顶部发光效果
+ * --------------------------------------------
+ */
 .header-bg {
   position: absolute;
   inset: 0;
@@ -67,11 +112,17 @@ watch(
   content: '';
   position: absolute;
   inset: 0;
-  background: 
+  background:
     linear-gradient(180deg, rgba(95, 169, 255, 0.05) 0%, transparent 100%),
     radial-gradient(ellipse 50% 100% at 50% 0%, rgba(95, 169, 255, 0.08), transparent);
 }
 
+/*
+ * --------------------------------------------
+ * 底部分隔线
+ * 渐变发光效果
+ * --------------------------------------------
+ */
 .header-line {
   position: absolute;
   bottom: 0;
@@ -81,6 +132,11 @@ watch(
   background: linear-gradient(90deg, transparent, rgba(143, 215, 255, 0.3), transparent);
 }
 
+/*
+ * --------------------------------------------
+ * 头部内部布局
+ * --------------------------------------------
+ */
 .header-inner {
   min-height: 70px;
   display: flex;
@@ -89,6 +145,11 @@ watch(
   gap: 1.5rem;
 }
 
+/*
+ * --------------------------------------------
+ * 品牌标识样式
+ * --------------------------------------------
+ */
 .brand {
   display: flex;
   align-items: center;
@@ -115,6 +176,11 @@ watch(
   position: relative;
 }
 
+/*
+ * --------------------------------------------
+ * 导航菜单样式
+ * --------------------------------------------
+ */
 .nav {
   display: flex;
   align-items: center;
@@ -139,6 +205,12 @@ watch(
   opacity: 1;
 }
 
+/*
+ * --------------------------------------------
+ * 导航链接样式
+ * 包含悬停指示器和下划线动画
+ * --------------------------------------------
+ */
 .nav-link {
   position: relative;
   padding: 0.5rem 0.9rem;
@@ -193,6 +265,11 @@ watch(
   transform: scaleX(1);
 }
 
+/*
+ * --------------------------------------------
+ * 当前激活链接样式
+ * --------------------------------------------
+ */
 .nav-link.router-link-active {
   color: var(--text);
   background: rgba(95, 169, 255, 0.08);
@@ -211,6 +288,11 @@ watch(
   pointer-events: none;
 }
 
+/*
+ * --------------------------------------------
+ * 移动端菜单切换按钮
+ * --------------------------------------------
+ */
 .menu-toggle {
   display: none;
   flex-direction: column;
@@ -240,6 +322,12 @@ watch(
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
+/*
+ * --------------------------------------------
+ * 汉堡菜单展开动画
+ * 三条横线变形为 X
+ * --------------------------------------------
+ */
 .menu-toggle[aria-expanded="true"] .toggle-bar:nth-child(1) {
   transform: translateY(6px) rotate(45deg);
 }
@@ -261,6 +349,11 @@ watch(
   }
 }
 
+/*
+ * --------------------------------------------
+ * 响应式布局：移动端样式
+ * --------------------------------------------
+ */
 @media (max-width: 860px) {
   .menu-toggle {
     display: flex;
@@ -286,7 +379,7 @@ watch(
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: 
+    transition:
       opacity var(--transition-fast),
       visibility var(--transition-fast),
       transform var(--transition-fast);
