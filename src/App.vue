@@ -1,29 +1,77 @@
 <template>
   <div class="app-shell">
     <div class="tech-overlay" aria-hidden="true">
-      <span class="tech-grid"></span>
-      <span class="tech-glow"></span>
+      <div class="tech-grid"></div>
+      <div class="tech-glow tech-glow-1"></div>
+      <div class="tech-glow tech-glow-2"></div>
     </div>
     <SiteHeader />
     <main class="container page-main">
-      <router-view v-slot="{ Component }">
-        <transition name="page-fade">
-          <div :key="route.fullPath" class="route-container">
-            <component :is="Component" />
-          </div>
-        </transition>
+      <router-view v-slot="{ Component, route }">
+        <PageTransition :key="route.path">
+          <component :is="Component" :key="route.path" />
+        </PageTransition>
       </router-view>
     </main>
     <SiteFooter />
+    <LoadingIndicator ref="loadingIndicator" />
   </div>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
+import { ref, onMounted, provide } from 'vue'
+import { useRouter } from 'vue-router'
 import SiteHeader from './components/layout/SiteHeader.vue'
 import SiteFooter from './components/layout/SiteFooter.vue'
+import PageTransition from './components/common/PageTransition.vue'
+import LoadingIndicator from './components/common/LoadingIndicator.vue'
+import { aiService } from './services'
 
-const route = useRoute()
+const router = useRouter()
+const loadingIndicator = ref(null)
+const isPageLoading = ref(false)
+
+provide('isPageLoading', isPageLoading)
+
+router.beforeEach((to, from, next) => {
+  isPageLoading.value = true
+  next()
+})
+
+router.afterEach(() => {
+  isPageLoading.value = false
+})
+
+onMounted(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  
+  if (prefersReducedMotion) {
+    document.documentElement.style.setProperty('--transition-normal', '0.01ms')
+    document.documentElement.style.setProperty('--transition-slow', '0.01ms')
+  }
+  
+  if ('connection' in navigator) {
+    const connection = navigator.connection
+    if (connection.saveData || connection.effectiveType === 'slow-2g') {
+      document.body.classList.add('reduce-motion')
+    }
+  }
+})
+
+const showLoading = (text) => {
+  if (loadingIndicator.value) {
+    loadingIndicator.value.startLoading()
+  }
+}
+
+const hideLoading = () => {
+  if (loadingIndicator.value) {
+    loadingIndicator.value.stopLoading()
+  }
+}
+
+provide('loading', { showLoading, hideLoading })
+provide('aiService', aiService)
 </script>
 
 <style scoped>
@@ -38,74 +86,51 @@ const route = useRoute()
 .tech-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.2;
+  opacity: 0.08;
   background-image:
     linear-gradient(rgba(143, 215, 255, 0.15) 1px, transparent 1px),
     linear-gradient(90deg, rgba(143, 215, 255, 0.15) 1px, transparent 1px);
-  background-size: 36px 36px;
-  transform: perspective(650px) rotateX(60deg) translateY(45%);
-  transform-origin: center;
-  will-change: transform;
+  background-size: 50px 50px;
+  mask-image: linear-gradient(180deg, black 0%, transparent 80%);
 }
 
 .tech-glow {
   position: absolute;
-  width: 480px;
-  height: 480px;
   border-radius: 50%;
-  left: -120px;
-  top: -120px;
-  background: radial-gradient(circle, rgba(95, 169, 255, 0.24), transparent 70%);
-  animation: drift 16s ease-in-out infinite;
+  filter: blur(80px);
   will-change: transform;
 }
 
-@keyframes drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(90px, 40px, 0);
-  }
+.tech-glow-1 {
+  width: 500px;
+  height: 500px;
+  left: -150px;
+  top: -150px;
+  background: radial-gradient(circle, rgba(95, 169, 255, 0.12), transparent 70%);
 }
 
-.page-fade-enter-active,
-.page-fade-leave-active {
-  transition: opacity 0.28s ease, transform 0.28s ease;
+.tech-glow-2 {
+  width: 400px;
+  height: 400px;
+  right: -100px;
+  bottom: -100px;
+  background: radial-gradient(circle, rgba(143, 215, 255, 0.08), transparent 70%);
 }
 
-.page-fade-enter-from,
-.page-fade-leave-to {
-  opacity: 0;
-  transform: translateY(8px);
+.tech-particles {
+  display: none;
 }
 
-.route-container {
-  min-height: 40vh;
-  content-visibility: auto;
-  contain-intrinsic-size: 1px 720px;
-}
-
-@media (max-width: 860px) {
-  .tech-grid {
-    opacity: 0.14;
-  }
-
-  .tech-glow {
-    opacity: 0.72;
-    animation-duration: 22s;
-  }
+.page-main {
+  padding-block: 2rem 4rem;
+  position: relative;
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tech-glow {
+  .tech-glow,
+  .tech-particles {
     animation: none;
-  }
-
-  .page-fade-enter-active,
-  .page-fade-leave-active {
-    transition: none;
   }
 }
 </style>

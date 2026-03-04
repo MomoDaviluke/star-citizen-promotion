@@ -1,40 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\data\\siteContent.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\data\\siteContent.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\components\\common\\PageTitle.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\components\\common\\PageTitle.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\About.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\views\\About.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\Projects.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\views\\Projects.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\Home.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\views\\Home.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\main.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\main.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\App.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\App.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -42,115 +9,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": -1,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "PageTitle.vue",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\components\\common\\PageTitle.vue",
-              "RelativeDocumentMoniker": "src\\components\\common\\PageTitle.vue",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\components\\common\\PageTitle.vue",
-              "RelativeToolTip": "src\\components\\common\\PageTitle.vue",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-03-03T11:02:44.941Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "siteContent.js",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\data\\siteContent.js",
-              "RelativeDocumentMoniker": "src\\data\\siteContent.js",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\data\\siteContent.js",
-              "RelativeToolTip": "src\\data\\siteContent.js",
-              "ViewState": "AgIAAA8AAAAAAAAAAAAAACsAAAA7AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-03-03T11:02:37.702Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "index.html",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\index.html",
-              "RelativeDocumentMoniker": "index.html",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\index.html",
-              "RelativeToolTip": "index.html",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
-              "WhenOpened": "2026-03-03T11:02:27.397Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "About.vue",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\About.vue",
-              "RelativeDocumentMoniker": "src\\views\\About.vue",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\About.vue",
-              "RelativeToolTip": "src\\views\\About.vue",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-03-03T11:02:11.011Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Projects.vue",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\Projects.vue",
-              "RelativeDocumentMoniker": "src\\views\\Projects.vue",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\Projects.vue",
-              "RelativeToolTip": "src\\views\\Projects.vue",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-03-03T11:02:04.519Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "main.js",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\main.js",
-              "RelativeDocumentMoniker": "src\\main.js",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\main.js",
-              "RelativeToolTip": "src\\main.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-03-03T10:06:47.076Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "App.vue",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\App.vue",
-              "RelativeDocumentMoniker": "src\\App.vue",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\App.vue",
-              "RelativeToolTip": "src\\App.vue",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-03-03T10:07:04.163Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "Home.vue",
-              "DocumentMoniker": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\Home.vue",
-              "RelativeDocumentMoniker": "src\\views\\Home.vue",
-              "ToolTip": "C:\\Users\\momo\\Desktop\\star-citizen-promotion\\src\\views\\Home.vue",
-              "RelativeToolTip": "src\\views\\Home.vue",
-              "ViewState": "AgIAACEAAAAAAAAAAAAAAEEAAAAMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-03-03T10:33:00.835Z",
-              "EditorCaption": ""
             }
           ]
         }

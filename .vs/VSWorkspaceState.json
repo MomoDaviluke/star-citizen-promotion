@@ -1,8 +1,6 @@
 {
   "ExpandedNodes": [
-    "",
     "\\public",
-    "\\src",
     "\\src\\components",
     "\\src\\components\\common",
     "\\src\\components\\layout",
@@ -11,6 +9,5 @@
     "\\src\\styles",
     "\\src\\views"
   ],
-  "SelectedNode": "\\src\\data\\siteContent.js",
   "PreviewInSolutionExplorer": false
 }
