@@ -7,8 +7,11 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
-.DS_Store
+.pnpm-store
+
+# Build outputs
 dist
 dist-ssr
 coverage
@@ -17,6 +20,7 @@ coverage
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 *.suo
 *.ntvs*
@@ -24,8 +28,10 @@ coverage
 *.sln
 *.sw?
 
+# TypeScript
 *.tsbuildinfo
 
+# ESLint
 .eslintcache
 
 # Cypress
@@ -37,3 +43,22 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Environment files (keep examples)
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.development
+!.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Visual Studio
+.vs/
+
+# Debug
+*.cpuprofile
+*.heapsnapshot

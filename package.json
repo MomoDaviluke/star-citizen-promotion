@@ -1,24 +1,42 @@
 {
-  "name": "my-vue3-project",
-  "version": "0.0.0",
+  "name": "star-citizen-promotion",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
+  "description": "Star Citizen 战队宣传网站 - Vue 3 + Vite",
+  "author": "",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{js,vue,css,json}\"",
+    "prepare": "husky || true"
   },
   "dependencies": {
     "vue": "^3.5.29",
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.2",
     "@vitejs/plugin-vue": "^6.0.4",
-    "eslint": "^10.0.2",
+    "eslint": "^9.22.0",
+    "eslint-plugin-vue": "^10.0.0",
+    "prettier": "^3.5.0",
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.6"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": ""
 }
