@@ -26,7 +26,7 @@
         </div>
         <div class="mission-meta">
           <span class="mission-tag">mission log</span>
-          <span class="mission-status" :class="getStatusClass(index)">ACTIVE</span>
+          <span class="mission-status" :class="getStatusClass(item)">{{ getStatusText(item) }}</span>
         </div>
       </div>
       <h3>{{ item.name }}</h3>
@@ -42,9 +42,9 @@
       <p>{{ item.description }}</p>
       <div class="mission-footer">
         <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: `${(index + 1) * 25}%` }"></div>
+          <div class="progress-fill" :style="{ width: `${item.progress || 0}%` }"></div>
         </div>
-        <span class="progress-text">{{ (index + 1) * 25 }}% COMPLETE</span>
+        <span class="progress-text">{{ item.progress || 0 }}% COMPLETE</span>
       </div>
     </article>
   </section>
@@ -57,17 +57,63 @@
  */
 
 import PageTitle from '@/components/common/PageTitle.vue'
-import { projects } from '@/data/siteContent'
+import { ref, onMounted, computed } from 'vue'
+import { dataService } from '@/services'
+
+/** 项目数据 */
+const projects = ref([])
+
+/** 加载状态 */
+const isLoading = ref(true)
+
+/**
+ * 加载项目数据
+ */
+async function loadProjects() {
+  isLoading.value = true
+  try {
+    const response = await dataService.getProjects()
+    projects.value = response.data || []
+  } catch (error) {
+    console.error('加载项目数据失败:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
 
 /**
  * 获取项目状态样式类
- * @param {number} index - 项目索引
+ * @param {Object} project - 项目对象
  * @returns {string} 状态样式类名
  */
-const getStatusClass = (index) => {
-  const classes = ['status-active', 'status-pending', 'status-scheduled']
-  return classes[index % classes.length]
+const getStatusClass = (project) => {
+  const statusMap = {
+    active: 'status-active',
+    planning: 'status-scheduled',
+    completed: 'status-completed',
+    cancelled: 'status-cancelled'
+  }
+  return statusMap[project.status] || 'status-scheduled'
 }
+
+/**
+ * 获取项目状态文本
+ * @param {Object} project - 项目对象
+ * @returns {string} 状态文本
+ */
+const getStatusText = (project) => {
+  const statusMap = {
+    active: 'ACTIVE',
+    planning: 'PLANNING',
+    completed: 'COMPLETED',
+    cancelled: 'CANCELLED'
+  }
+  return statusMap[project.status] || 'UNKNOWN'
+}
+
+onMounted(() => {
+  loadProjects()
+})
 </script>
 
 <style scoped>

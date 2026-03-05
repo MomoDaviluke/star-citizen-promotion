@@ -53,11 +53,37 @@
 <script setup>
 /**
  * 核心成员视图组件
- * @description 从数据文件读取并展示团队成员信息
+ * @description 从 API 或数据文件读取并展示团队成员信息
  */
 
 import PageTitle from '@/components/common/PageTitle.vue'
-import { members } from '@/data/siteContent'
+import { ref, onMounted } from 'vue'
+import { dataService } from '@/services'
+
+/** 成员数据 */
+const members = ref([])
+
+/** 加载状态 */
+const isLoading = ref(true)
+
+/**
+ * 加载成员数据
+ */
+async function loadMembers() {
+  isLoading.value = true
+  try {
+    const response = await dataService.getMembers()
+    members.value = response.data || []
+  } catch (error) {
+    console.error('加载成员数据失败:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadMembers()
+})
 </script>
 
 <style scoped>

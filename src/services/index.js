@@ -7,3 +7,7 @@
 export { AIService, TASK_STATUS, PRIORITY, aiService } from './AIService.js'
 export { PriorityQueue } from './PriorityQueue.js'
 export { default as ResourceMonitor } from './ResourceMonitor.js'
+
+export { httpClient } from './http.js'
+export { authService } from './authService.js'
+export { dataService } from './dataService.js'

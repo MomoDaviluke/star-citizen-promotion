@@ -158,7 +158,19 @@
  */
 
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { acePilots, teamStats } from '@/data/siteContent'
+import { dataService } from '@/services'
+
+/** 团队统计数据 */
+const teamStats = ref([])
+
+/** 王牌飞行员数据 */
+const acePilots = ref([])
+
+/** 数据加载状态 */
+const isLoading = ref(true)
+
+/** 数据加载错误 */
+const loadError = ref(null)
 
 /** 当前选中的飞行员索引 */
 const currentPilotIndex = ref(0)
@@ -185,7 +197,27 @@ let pendingY = 0
 let rotateTimer = null
 
 /** 当前飞行员信息（计算属性） */
-const currentPilot = computed(() => acePilots[currentPilotIndex.value])
+const currentPilot = computed(() => acePilots.value[currentPilotIndex.value] || {})
+
+/**
+ * 加载页面数据
+ */
+async function loadData() {
+  isLoading.value = true
+  loadError.value = null
+
+  try {
+    const [statsResult, pilotsResult] = await Promise.all([dataService.getStats(), dataService.getPilots()])
+
+    teamStats.value = statsResult.stats || []
+    acePilots.value = pilotsResult.data || []
+  } catch (error) {
+    console.error('加载首页数据失败:', error)
+    loadError.value = error.message
+  } finally {
+    isLoading.value = false
+  }
+}
 
 /**
  * 选择指定索引的飞行员
@@ -201,7 +233,6 @@ const selectPilot = (index) => {
  * @param {MouseEvent} event - 鼠标事件
  */
 const handleHeroMove = (event) => {
-  // 忽略触控设备
   if (window.matchMedia('(pointer: coarse)').matches) return
 
   const el = heroRef.value
@@ -214,7 +245,6 @@ const handleHeroMove = (event) => {
   pendingX = x * 6
   pendingY = y * 4
 
-  // 节流：使用 requestAnimationFrame
   if (pointerFrame !== null) return
 
   pointerFrame = window.requestAnimationFrame(() => {
@@ -242,14 +272,16 @@ const heroTransformStyle = computed(() => ({
  * 切换到下一位飞行员
  */
 const nextPilot = () => {
-  currentPilotIndex.value = (currentPilotIndex.value + 1) % acePilots.length
+  if (acePilots.value.length === 0) return
+  currentPilotIndex.value = (currentPilotIndex.value + 1) % acePilots.value.length
 }
 
 /**
  * 切换到上一位飞行员
  */
 const prevPilot = () => {
-  currentPilotIndex.value = (currentPilotIndex.value - 1 + acePilots.length) % acePilots.length
+  if (acePilots.value.length === 0) return
+  currentPilotIndex.value = (currentPilotIndex.value - 1 + acePilots.value.length) % acePilots.value.length
 }
 
 /**
@@ -272,8 +304,9 @@ const stopAutoRotate = () => {
   }
 }
 
-/** 组件挂载时启动自动轮播 */
-onMounted(() => {
+/** 组件挂载时加载数据并启动自动轮播 */
+onMounted(async () => {
+  await loadData()
   startAutoRotate()
 })
 

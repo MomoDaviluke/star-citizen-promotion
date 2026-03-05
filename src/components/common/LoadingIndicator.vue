@@ -34,8 +34,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onUnmounted } from 'vue'
 
 /**
  * 组件属性定义
@@ -72,9 +71,6 @@ const minDurationTimer = ref(null)
 
 /** 进度模拟定时器 */
 const progressTimer = ref(null)
-
-/** 路由实例 */
-const router = useRouter()
 
 /**
  * 开始加载
@@ -140,38 +136,7 @@ const forceStop = () => {
   isLoading.value = false
 }
 
-/*
- * ============================================
- * 路由导航钩子集成
- * ============================================
- */
 
-/**
- * 路由前置守卫
- * @description 在路由切换开始时显示加载指示器
- */
-router.beforeEach((to, from, next) => {
-  if (to.path !== from.path) {
-    startLoading()
-  }
-  next()
-})
-
-/**
- * 路由后置守卫
- * @description 在路由切换完成后隐藏加载指示器
- */
-router.afterEach(() => {
-  stopLoading()
-})
-
-/**
- * 路由错误处理
- * @description 路由导航出错时强制停止加载
- */
-router.onError(() => {
-  forceStop()
-})
 
 /**
  * 组件卸载清理
