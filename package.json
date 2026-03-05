@@ -15,15 +15,14 @@
     "format": "prettier --write \"src/**/*.{js,vue,css,json}\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "prepare": "husky || true"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "vue": "^3.5.29",
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.2",
+    "@eslint/js": "^9.22.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/test-utils": "^2.4.6",
     "eslint": "^9.22.0",

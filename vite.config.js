@@ -23,13 +23,11 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: env.VITE_BACKEND_URL || 'http://localhost:3001',
-          changeOrigin: true,
-          rewrite: path => path.replace(/^\/api/, '')
+          changeOrigin: true
         },
         '/ai': {
           target: env.VITE_AI_SERVICE_URL || 'http://localhost:3002',
-          changeOrigin: true,
-          rewrite: path => path.replace(/^\/ai/, '')
+          changeOrigin: true
         }
       }
     },

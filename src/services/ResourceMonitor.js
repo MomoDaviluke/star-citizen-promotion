@@ -191,9 +191,9 @@ class ResourceMonitor {
       isAvailable: false
     }
 
-    if ('requestIdleCallback' in window) {
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       const start = performance.now()
-      requestIdleCallback((deadline) => {
+      window.requestIdleCallback((deadline) => {
         const elapsed = performance.now() - start
         this.cpuUsage = 1 - (deadline.timeRemaining() / elapsed)
         cpuInfo.estimated = this.cpuUsage

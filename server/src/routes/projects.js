@@ -21,6 +21,9 @@ router.get('/', async (req, res, next) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query
 
+    const limitNum = parseInt(limit, 10)
+    const offsetNum = parseInt(offset, 10)
+
     let sql = 'SELECT * FROM projects'
     const params = []
 
@@ -29,8 +32,7 @@ router.get('/', async (req, res, next) => {
       params.push(status)
     }
 
-    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    params.push(parseInt(limit, 10), parseInt(offset, 10))
+    sql += ` ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`
 
     const projects = await query(sql, params)
 
@@ -45,9 +47,9 @@ router.get('/', async (req, res, next) => {
       data: projects,
       pagination: {
         total,
-        limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10),
-        hasMore: parseInt(offset, 10) + projects.length < total
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + projects.length < total
       }
     })
   } catch (error) {

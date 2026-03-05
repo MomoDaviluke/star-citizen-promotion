@@ -446,7 +446,7 @@ class AIService {
  * @description 提供全局共享的服务实例
  * @type {AIService}
  */
-const aiService = new AIService()
+const aiService = new AIService({ enableMonitoring: typeof window !== 'undefined' })
 
 export { AIService, TASK_STATUS, PRIORITY, aiService }
 export default AIService

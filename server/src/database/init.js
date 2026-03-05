@@ -4,8 +4,10 @@
  * @module server/database/init
  */
 
-import { createPool, query, queryOne, testConnection } from './pool.js'
+import { createPool, query, queryOne, testConnection, closePool } from './pool.js'
 import { config } from '../config/index.js'
+
+export { closePool }
 
 /**
  * 初始化数据库
@@ -159,8 +161,8 @@ async function createTables() {
  * 填充初始数据
  */
 async function seedInitialData() {
-  const userCount = await queryOne('SELECT COUNT(*) as count FROM users')
-  if (userCount.count > 0) {
+  const memberCount = await queryOne('SELECT COUNT(*) as count FROM members')
+  if (memberCount.count > 0) {
     console.log('🌱 数据已存在，跳过种子数据填充')
     return
   }

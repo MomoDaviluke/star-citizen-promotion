@@ -4,6 +4,16 @@
  * @module server/config
  */
 
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
+dotenv.config({ path: join(__dirname, '../../', envFile) })
+
 /**
  * 环境配置
  * @type {Object}

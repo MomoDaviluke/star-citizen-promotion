@@ -17,7 +17,8 @@ describe('PageTitle 组件', () => {
     })
 
     expect(wrapper.find('h1').text()).toBe('测试标题')
-    expect(wrapper.find('p').text()).toBe('测试副标题')
+    expect(wrapper.find('p.subtitle').text()).toBe('测试副标题')
+    expect(wrapper.find('p.kicker').text()).toBe('UEE TRANSMISSION')
   })
 
   it('副标题应为可选', () => {
@@ -28,6 +29,28 @@ describe('PageTitle 组件', () => {
     })
 
     expect(wrapper.find('h1').text()).toBe('测试标题')
-    expect(wrapper.find('p').exists()).toBe(false)
+    expect(wrapper.find('p.subtitle').text()).toBe('')
+  })
+
+  it('应包含装饰元素', () => {
+    const wrapper = mount(PageTitle, {
+      props: {
+        title: '测试标题'
+      }
+    })
+
+    expect(wrapper.find('.title-decoration').exists()).toBe(true)
+    expect(wrapper.find('.deco-line').exists()).toBe(true)
+    expect(wrapper.find('.deco-dot').exists()).toBe(true)
+  })
+
+  it('应包含底部装饰元素', () => {
+    const wrapper = mount(PageTitle, {
+      props: {
+        title: '测试标题'
+      }
+    })
+
+    expect(wrapper.find('.title-decoration-bottom').exists()).toBe(true)
   })
 })

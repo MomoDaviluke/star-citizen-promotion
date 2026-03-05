@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
+import globals from 'globals'
 
 export default [
   {
@@ -14,8 +15,8 @@ export default [
       'vue/multi-word-component-names': 'off',
       'vue/no-unused-vars': 'warn',
       'no-unused-vars': 'warn',
-      'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-      'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
+      'no-console': 'off',
+      'no-debugger': 'off'
     }
   },
   {
@@ -23,6 +24,11 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021
+      },
       parserOptions: {
         parser: {
           vue: 'vue-eslint-parser',

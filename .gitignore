@@ -44,13 +44,12 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 
-# Environment files (keep examples)
+# Environment files (keep examples only)
 .env
 .env.local
 .env.*.local
 !.env.example
-!.env.development
-!.env.production
+# Do NOT commit .env.development or .env.production - they contain secrets!
 
 # OS files
 .DS_Store

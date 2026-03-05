@@ -21,9 +21,12 @@ router.get('/', authenticate, requireAdmin, async (req, res, next) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query
 
+    const limitNum = parseInt(limit, 10)
+    const offsetNum = parseInt(offset, 10)
+
     let sql = `
-      SELECT a.*, u.username as reviewer_name 
-      FROM applications a 
+      SELECT a.*, u.username as reviewer_name
+      FROM applications a
       LEFT JOIN users u ON a.reviewed_by = u.id
     `
     const params = []
@@ -33,8 +36,7 @@ router.get('/', authenticate, requireAdmin, async (req, res, next) => {
       params.push(status)
     }
 
-    sql += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?'
-    params.push(parseInt(limit, 10), parseInt(offset, 10))
+    sql += ` ORDER BY a.created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`
 
     const applications = await query(sql, params)
 
@@ -49,9 +51,9 @@ router.get('/', authenticate, requireAdmin, async (req, res, next) => {
       data: applications,
       pagination: {
         total,
-        limit: parseInt(limit, 10),
-        offset: parseInt(offset, 10),
-        hasMore: parseInt(offset, 10) + applications.length < total
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + applications.length < total
       }
     })
   } catch (error) {
@@ -71,8 +73,8 @@ router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')
     }
 
     const application = await queryOne(
-      `SELECT a.*, u.username as reviewer_name 
-       FROM applications a 
+      `SELECT a.*, u.username as reviewer_name
+       FROM applications a
        LEFT JOIN users u ON a.reviewed_by = u.id
        WHERE a.id = ?`,
       [req.params.id]
@@ -119,7 +121,7 @@ router.post(
       const { name, email, discord, experience, availability, reason } = req.body
 
       const recentApplication = await queryOne(
-        `SELECT id, created_at FROM applications 
+        `SELECT id, created_at FROM applications
          WHERE email = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
         [email]
       )
@@ -183,15 +185,15 @@ router.put(
       }
 
       await update(
-        `UPDATE applications 
-         SET status = ?, reviewed_by = ?, reviewed_at = NOW() 
+        `UPDATE applications
+         SET status = ?, reviewed_by = ?, reviewed_at = NOW()
          WHERE id = ?`,
         [status, req.user.id, id]
       )
 
       const updatedApplication = await queryOne(
-        `SELECT a.*, u.username as reviewer_name 
-         FROM applications a 
+        `SELECT a.*, u.username as reviewer_name
+         FROM applications a
          LEFT JOIN users u ON a.reviewed_by = u.id
          WHERE a.id = ?`,
         [id]
