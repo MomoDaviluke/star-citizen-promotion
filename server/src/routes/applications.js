@@ -7,7 +7,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { v4 as uuidv4 } from 'uuid'
-import { db } from '../database/init.js'
+import { query, queryOne, update } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth.js'
 
@@ -17,11 +17,11 @@ const router = Router()
  * GET /api/applications
  * 获取申请列表（需要管理员权限）
  */
-router.get('/', authenticate, requireAdmin, (req, res, next) => {
+router.get('/', authenticate, requireAdmin, async (req, res, next) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query
 
-    let query = `
+    let sql = `
       SELECT a.*, u.username as reviewer_name 
       FROM applications a 
       LEFT JOIN users u ON a.reviewed_by = u.id
@@ -29,18 +29,20 @@ router.get('/', authenticate, requireAdmin, (req, res, next) => {
     const params = []
 
     if (status) {
-      query += ' WHERE a.status = ?'
+      sql += ' WHERE a.status = ?'
       params.push(status)
     }
 
-    query += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?'
+    sql += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?'
     params.push(parseInt(limit, 10), parseInt(offset, 10))
 
-    const applications = db.prepare(query).all(...params)
+    const applications = await query(sql, params)
 
-    const countQuery = status ? 'SELECT COUNT(*) as total FROM applications WHERE status = ?' : 'SELECT COUNT(*) as total FROM applications'
+    const countSql = status
+      ? 'SELECT COUNT(*) as total FROM applications WHERE status = ?'
+      : 'SELECT COUNT(*) as total FROM applications'
     const countParams = status ? [status] : []
-    const { total } = db.prepare(countQuery).get(...countParams)
+    const { total } = await queryOne(countSql, countParams)
 
     res.json({
       success: true,
@@ -61,19 +63,20 @@ router.get('/', authenticate, requireAdmin, (req, res, next) => {
  * GET /api/applications/:id
  * 获取单个申请详情
  */
-router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')], optionalAuth, (req, res, next) => {
+router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')], optionalAuth, async (req, res, next) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const application = db.prepare(`
-      SELECT a.*, u.username as reviewer_name 
-      FROM applications a 
-      LEFT JOIN users u ON a.reviewed_by = u.id
-      WHERE a.id = ?
-    `).get(req.params.id)
+    const application = await queryOne(
+      `SELECT a.*, u.username as reviewer_name 
+       FROM applications a 
+       LEFT JOIN users u ON a.reviewed_by = u.id
+       WHERE a.id = ?`,
+      [req.params.id]
+    )
 
     if (!application) {
       throw ApiError.notFound('申请不存在')
@@ -106,7 +109,7 @@ router.post(
     body('availability').optional().trim().isLength({ max: 200 }),
     body('reason').optional().trim().isLength({ max: 500 }).withMessage('加入原因不能超过 500 个字符')
   ],
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -115,12 +118,11 @@ router.post(
 
       const { name, email, discord, experience, availability, reason } = req.body
 
-      const recentApplication = db
-        .prepare(
-          `SELECT id, created_at FROM applications 
-         WHERE email = ? AND created_at > datetime('now', '-24 hours')`
-        )
-        .get(email)
+      const recentApplication = await queryOne(
+        `SELECT id, created_at FROM applications 
+         WHERE email = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+        [email]
+      )
 
       if (recentApplication) {
         throw ApiError.conflict('您已提交过申请，请等待审核')
@@ -128,12 +130,13 @@ router.post(
 
       const id = uuidv4()
 
-      db.prepare(`
-        INSERT INTO applications (id, name, email, discord, experience, availability, reason, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
-      `).run(id, name, email, discord || null, experience || null, availability || null, reason || null)
+      await query(
+        `INSERT INTO applications (id, name, email, discord, experience, availability, reason, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, name, email, discord || null, experience || null, availability || null, reason || null, 'pending']
+      )
 
-      const newApplication = db.prepare('SELECT * FROM applications WHERE id = ?').get(id)
+      const newApplication = await queryOne('SELECT * FROM applications WHERE id = ?', [id])
 
       res.status(201).json({
         success: true,
@@ -163,7 +166,7 @@ router.put(
     body('status').isIn(['pending', 'approved', 'rejected']).withMessage('状态值无效'),
     body('note').optional().trim()
   ],
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -173,24 +176,26 @@ router.put(
       const { id } = req.params
       const { status } = req.body
 
-      const existingApplication = db.prepare('SELECT * FROM applications WHERE id = ?').get(id)
+      const existingApplication = await queryOne('SELECT * FROM applications WHERE id = ?', [id])
 
       if (!existingApplication) {
         throw ApiError.notFound('申请不存在')
       }
 
-      db.prepare(
+      await update(
         `UPDATE applications 
-       SET status = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = ?`
-      ).run(status, req.user.id, id)
+         SET status = ?, reviewed_by = ?, reviewed_at = NOW() 
+         WHERE id = ?`,
+        [status, req.user.id, id]
+      )
 
-      const updatedApplication = db.prepare(`
-        SELECT a.*, u.username as reviewer_name 
-        FROM applications a 
-        LEFT JOIN users u ON a.reviewed_by = u.id
-        WHERE a.id = ?
-      `).get(id)
+      const updatedApplication = await queryOne(
+        `SELECT a.*, u.username as reviewer_name 
+         FROM applications a 
+         LEFT JOIN users u ON a.reviewed_by = u.id
+         WHERE a.id = ?`,
+        [id]
+      )
 
       res.json({
         success: true,
@@ -207,29 +212,35 @@ router.put(
  * DELETE /api/applications/:id
  * 删除申请（需要管理员权限）
  */
-router.delete('/:id', authenticate, requireAdmin, [param('id').notEmpty().withMessage('申请 ID 不能为空')], (req, res, next) => {
-  try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      throw ApiError.badRequest('参数验证失败', errors.array())
+router.delete(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  [param('id').notEmpty().withMessage('申请 ID 不能为空')],
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        throw ApiError.badRequest('参数验证失败', errors.array())
+      }
+
+      const { id } = req.params
+      const existingApplication = await queryOne('SELECT * FROM applications WHERE id = ?', [id])
+
+      if (!existingApplication) {
+        throw ApiError.notFound('申请不存在')
+      }
+
+      await query('DELETE FROM applications WHERE id = ?', [id])
+
+      res.json({
+        success: true,
+        message: '申请删除成功'
+      })
+    } catch (error) {
+      next(error)
     }
-
-    const { id } = req.params
-    const existingApplication = db.prepare('SELECT * FROM applications WHERE id = ?').get(id)
-
-    if (!existingApplication) {
-      throw ApiError.notFound('申请不存在')
-    }
-
-    db.prepare('DELETE FROM applications WHERE id = ?').run(id)
-
-    res.json({
-      success: true,
-      message: '申请删除成功'
-    })
-  } catch (error) {
-    next(error)
   }
-})
+)
 
 export default router

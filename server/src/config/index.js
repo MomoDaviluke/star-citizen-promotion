@@ -19,7 +19,16 @@ export const config = {
   },
 
   database: {
-    path: process.env.DATABASE_PATH || './data/database.sqlite'
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT, 10) || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'star_citizen_promotion',
+    waitForConnections: true,
+    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT, 10) || 10,
+    queueLimit: 0,
+    timezone: '+08:00',
+    charset: 'utf8mb4'
   },
 
   bcrypt: {
@@ -46,6 +55,9 @@ export function validateConfig() {
   if (config.nodeEnv === 'production') {
     if (config.jwt.secret === 'star-citizen-secret-key-change-in-production') {
       console.warn('⚠️ 警告: 生产环境应设置自定义 JWT_SECRET')
+    }
+    if (!process.env.DB_PASSWORD) {
+      console.warn('⚠️ 警告: 生产环境应设置数据库密码')
     }
   }
 

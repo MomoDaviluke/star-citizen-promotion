@@ -10,7 +10,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 import { config } from '../config/index.js'
-import { db } from '../database/init.js'
+import { query, queryOne, update } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate } from '../middleware/auth.js'
 
@@ -59,7 +59,10 @@ router.post('/register', registerValidation, async (req, res, next) => {
 
     const { username, email, password } = req.body
 
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').get(email, username)
+    const existingUser = await queryOne(
+      'SELECT id FROM users WHERE email = ? OR username = ?',
+      [email, username]
+    )
     if (existingUser) {
       throw ApiError.conflict('用户名或邮箱已被注册')
     }
@@ -67,10 +70,10 @@ router.post('/register', registerValidation, async (req, res, next) => {
     const passwordHash = await bcrypt.hash(password, config.bcrypt.saltRounds)
     const userId = uuidv4()
 
-    db.prepare(`
-      INSERT INTO users (id, username, email, password_hash, role)
-      VALUES (?, ?, ?, ?, 'member')
-    `).run(userId, username, email, passwordHash)
+    await query(
+      'INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
+      [userId, username, email, passwordHash, 'member']
+    )
 
     const token = jwt.sign({ userId }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
 
@@ -105,7 +108,7 @@ router.post('/login', loginValidation, async (req, res, next) => {
 
     const { email, password } = req.body
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email)
+    const user = await queryOne('SELECT * FROM users WHERE email = ?', [email])
     if (!user) {
       throw ApiError.unauthorized('邮箱或密码错误')
     }
@@ -140,9 +143,12 @@ router.post('/login', loginValidation, async (req, res, next) => {
  * GET /api/auth/me
  * 获取当前用户信息
  */
-router.get('/me', authenticate, (req, res, next) => {
+router.get('/me', authenticate, async (req, res, next) => {
   try {
-    const user = db.prepare('SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?').get(req.user.id)
+    const user = await queryOne(
+      'SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?',
+      [req.user.id]
+    )
 
     if (!user) {
       throw ApiError.notFound('用户不存在')
@@ -184,7 +190,10 @@ router.put(
       const values = []
 
       if (username) {
-        const existingUser = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, req.user.id)
+        const existingUser = await queryOne(
+          'SELECT id FROM users WHERE username = ? AND id != ?',
+          [username, req.user.id]
+        )
         if (existingUser) {
           throw ApiError.conflict('用户名已被使用')
         }
@@ -201,12 +210,17 @@ router.put(
         throw ApiError.badRequest('没有要更新的内容')
       }
 
-      updates.push('updated_at = CURRENT_TIMESTAMP')
       values.push(req.user.id)
 
-      db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values)
+      await update(
+        `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        values
+      )
 
-      const updatedUser = db.prepare('SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?').get(req.user.id)
+      const updatedUser = await queryOne(
+        'SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?',
+        [req.user.id]
+      )
 
       res.json({
         success: true,
@@ -243,7 +257,7 @@ router.put(
 
       const { currentPassword, newPassword } = req.body
 
-      const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id)
+      const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.user.id])
 
       const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash)
       if (!isPasswordValid) {
@@ -252,7 +266,10 @@ router.put(
 
       const newPasswordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds)
 
-      db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newPasswordHash, req.user.id)
+      await update(
+        'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [newPasswordHash, req.user.id]
+      )
 
       res.json({
         success: true,

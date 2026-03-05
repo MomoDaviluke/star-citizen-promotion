@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express'
-import { db } from '../database/init.js'
+import { query, queryOne } from '../database/pool.js'
 
 const router = Router()
 
@@ -13,16 +13,22 @@ const router = Router()
  * GET /api/stats
  * 获取团队统计数据
  */
-router.get('/', (req, res) => {
-  const stats = db.prepare('SELECT * FROM stats ORDER BY sort_order ASC').all()
+router.get('/', async (req, res) => {
+  const stats = await query('SELECT * FROM stats ORDER BY sort_order ASC')
 
-  const memberCount = db.prepare("SELECT COUNT(*) as count FROM members WHERE status = 'active'").get()
+  const memberCount = await queryOne(
+    "SELECT COUNT(*) as count FROM members WHERE status = 'active'"
+  )
 
-  const projectCount = db.prepare("SELECT COUNT(*) as count FROM projects WHERE status = 'active'").get()
+  const projectCount = await queryOne(
+    "SELECT COUNT(*) as count FROM projects WHERE status = 'active'"
+  )
 
-  const pilotCount = db.prepare("SELECT COUNT(*) as count FROM pilots WHERE status = 'active'").get()
+  const pilotCount = await queryOne(
+    "SELECT COUNT(*) as count FROM pilots WHERE status = 'active'"
+  )
 
-  const totalMissions = db.prepare('SELECT SUM(missions) as total FROM pilots').get()
+  const totalMissions = await queryOne('SELECT SUM(missions) as total FROM pilots')
 
   res.json({
     success: true,

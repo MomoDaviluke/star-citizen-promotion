@@ -7,7 +7,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { v4 as uuidv4 } from 'uuid'
-import { db } from '../database/init.js'
+import { query, queryOne, update } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
 
@@ -17,26 +17,28 @@ const router = Router()
  * GET /api/pilots
  * 获取所有飞行员列表
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query
 
-    let query = 'SELECT * FROM pilots'
+    let sql = 'SELECT * FROM pilots'
     const params = []
 
     if (status) {
-      query += ' WHERE status = ?'
+      sql += ' WHERE status = ?'
       params.push(status)
     }
 
-    query += ' ORDER BY missions DESC LIMIT ? OFFSET ?'
+    sql += ' ORDER BY missions DESC LIMIT ? OFFSET ?'
     params.push(parseInt(limit, 10), parseInt(offset, 10))
 
-    const pilots = db.prepare(query).all(...params)
+    const pilots = await query(sql, params)
 
-    const countQuery = status ? 'SELECT COUNT(*) as total FROM pilots WHERE status = ?' : 'SELECT COUNT(*) as total FROM pilots'
+    const countSql = status
+      ? 'SELECT COUNT(*) as total FROM pilots WHERE status = ?'
+      : 'SELECT COUNT(*) as total FROM pilots'
     const countParams = status ? [status] : []
-    const { total } = db.prepare(countQuery).get(...countParams)
+    const { total } = await queryOne(countSql, countParams)
 
     res.json({
       success: true,
@@ -57,14 +59,14 @@ router.get('/', (req, res, next) => {
  * GET /api/pilots/:id
  * 获取单个飞行员详情
  */
-router.get('/:id', [param('id').notEmpty().withMessage('飞行员 ID 不能为空')], (req, res, next) => {
+router.get('/:id', [param('id').notEmpty().withMessage('飞行员 ID 不能为空')], async (req, res, next) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const pilot = db.prepare('SELECT * FROM pilots WHERE id = ?').get(req.params.id)
+    const pilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [req.params.id])
 
     if (!pilot) {
       throw ApiError.notFound('飞行员不存在')
@@ -96,7 +98,7 @@ router.post(
     body('missions').optional().isInt({ min: 0 }).withMessage('任务数不能为负数'),
     body('kills').optional().isInt({ min: 0 }).withMessage('击杀数不能为负数')
   ],
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -106,12 +108,13 @@ router.post(
       const { name, callsign, ship, description, image, missions, kills } = req.body
       const id = uuidv4()
 
-      db.prepare(`
-        INSERT INTO pilots (id, name, callsign, ship, description, image, missions, kills, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
-      `).run(id, name, callsign, ship, description || null, image || null, missions || 0, kills || 0)
+      await query(
+        `INSERT INTO pilots (id, name, callsign, ship, description, image, missions, kills, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, name, callsign, ship, description || null, image || null, missions || 0, kills || 0, 'active']
+      )
 
-      const newPilot = db.prepare('SELECT * FROM pilots WHERE id = ?').get(id)
+      const newPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
 
       res.status(201).json({
         success: true,
@@ -141,9 +144,9 @@ router.put(
     body('image').optional().trim(),
     body('missions').optional().isInt({ min: 0 }).withMessage('任务数不能为负数'),
     body('kills').optional().isInt({ min: 0 }).withMessage('击杀数不能为负数'),
-    body('status').optional().isIn(['active', 'inactive']).withMessage('状态值无效')
+    body('status').optional().isIn(['active', 'inactive', 'kia']).withMessage('状态值无效')
   ],
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -151,7 +154,7 @@ router.put(
       }
 
       const { id } = req.params
-      const existingPilot = db.prepare('SELECT * FROM pilots WHERE id = ?').get(id)
+      const existingPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
 
       if (!existingPilot) {
         throw ApiError.notFound('飞行员不存在')
@@ -198,12 +201,14 @@ router.put(
         throw ApiError.badRequest('没有要更新的内容')
       }
 
-      updates.push('updated_at = CURRENT_TIMESTAMP')
       values.push(id)
 
-      db.prepare(`UPDATE pilots SET ${updates.join(', ')} WHERE id = ?`).run(...values)
+      await update(
+        `UPDATE pilots SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      )
 
-      const updatedPilot = db.prepare('SELECT * FROM pilots WHERE id = ?').get(id)
+      const updatedPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
 
       res.json({
         success: true,
@@ -220,29 +225,35 @@ router.put(
  * DELETE /api/pilots/:id
  * 删除飞行员（需要管理员权限）
  */
-router.delete('/:id', authenticate, requireAdmin, [param('id').notEmpty().withMessage('飞行员 ID 不能为空')], (req, res, next) => {
-  try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      throw ApiError.badRequest('参数验证失败', errors.array())
+router.delete(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  [param('id').notEmpty().withMessage('飞行员 ID 不能为空')],
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        throw ApiError.badRequest('参数验证失败', errors.array())
+      }
+
+      const { id } = req.params
+      const existingPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
+
+      if (!existingPilot) {
+        throw ApiError.notFound('飞行员不存在')
+      }
+
+      await query('DELETE FROM pilots WHERE id = ?', [id])
+
+      res.json({
+        success: true,
+        message: '飞行员删除成功'
+      })
+    } catch (error) {
+      next(error)
     }
-
-    const { id } = req.params
-    const existingPilot = db.prepare('SELECT * FROM pilots WHERE id = ?').get(id)
-
-    if (!existingPilot) {
-      throw ApiError.notFound('飞行员不存在')
-    }
-
-    db.prepare('DELETE FROM pilots WHERE id = ?').run(id)
-
-    res.json({
-      success: true,
-      message: '飞行员删除成功'
-    })
-  } catch (error) {
-    next(error)
   }
-})
+)
 
 export default router

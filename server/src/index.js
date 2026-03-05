@@ -11,7 +11,7 @@ import morgan from 'morgan'
 import { rateLimit } from 'express-rate-limit'
 
 import { config } from './config/index.js'
-import { initDatabase } from './database/init.js'
+import { initDatabase, closePool } from './database/init.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
 
@@ -120,17 +120,19 @@ async function startServer() {
       console.log(`📡 环境: ${config.nodeEnv}`)
     })
 
-    process.on('SIGTERM', () => {
+    process.on('SIGTERM', async () => {
       console.log('收到 SIGTERM 信号，正在关闭服务器...')
-      server.close(() => {
+      server.close(async () => {
+        await closePool()
         console.log('服务器已关闭')
         process.exit(0)
       })
     })
 
-    process.on('SIGINT', () => {
+    process.on('SIGINT', async () => {
       console.log('收到 SIGINT 信号，正在关闭服务器...')
-      server.close(() => {
+      server.close(async () => {
+        await closePool()
         console.log('服务器已关闭')
         process.exit(0)
       })

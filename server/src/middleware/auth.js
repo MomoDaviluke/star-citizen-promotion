@@ -7,7 +7,7 @@
 import jwt from 'jsonwebtoken'
 import { config } from '../config/index.js'
 import { ApiError } from './errorHandler.js'
-import { db } from '../database/init.js'
+import { queryOne } from '../database/pool.js'
 
 /**
  * 验证 JWT 令牌中间件
@@ -15,7 +15,7 @@ import { db } from '../database/init.js'
  * @param {Response} res - Express 响应对象
  * @param {NextFunction} next - Express next 函数
  */
-export function authenticate(req, res, next) {
+export async function authenticate(req, res, next) {
   try {
     const authHeader = req.headers.authorization
 
@@ -27,7 +27,10 @@ export function authenticate(req, res, next) {
 
     const decoded = jwt.verify(token, config.jwt.secret)
 
-    const user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ?').get(decoded.userId)
+    const user = await queryOne(
+      'SELECT id, username, email, role FROM users WHERE id = ?',
+      [decoded.userId]
+    )
 
     if (!user) {
       throw ApiError.unauthorized('用户不存在')
@@ -54,7 +57,7 @@ export function authenticate(req, res, next) {
  * @param {Response} res - Express 响应对象
  * @param {NextFunction} next - Express next 函数
  */
-export function optionalAuth(req, res, next) {
+export async function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization
 
@@ -67,7 +70,10 @@ export function optionalAuth(req, res, next) {
 
     const decoded = jwt.verify(token, config.jwt.secret)
 
-    const user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ?').get(decoded.userId)
+    const user = await queryOne(
+      'SELECT id, username, email, role FROM users WHERE id = ?',
+      [decoded.userId]
+    )
 
     req.user = user || null
     next()

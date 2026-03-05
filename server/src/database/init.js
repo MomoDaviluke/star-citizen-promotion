@@ -1,159 +1,169 @@
 /**
  * @file 数据库初始化
- * @description SQLite 数据库连接和表结构初始化
+ * @description MySQL 数据库表结构初始化和种子数据填充
  * @module server/database/init
  */
 
-import Database from 'better-sqlite3'
+import { createPool, query, queryOne, testConnection } from './pool.js'
 import { config } from '../config/index.js'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import { mkdirSync, existsSync } from 'fs'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const dbPath = join(__dirname, '../../data/database.sqlite')
-const dataDir = dirname(dbPath)
-
-if (!existsSync(dataDir)) {
-  mkdirSync(dataDir, { recursive: true })
-}
-
-const db = new Database(dbPath)
-
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
 
 /**
- * 初始化数据库表结构
+ * 初始化数据库
+ * @description 创建连接池、测试连接、初始化表结构、填充种子数据
  */
 export async function initDatabase() {
+  await createPool()
+
+  const isConnected = await testConnection()
+  if (!isConnected) {
+    throw new Error('数据库连接失败')
+  }
+
+  await createTables()
+  await seedInitialData()
+
+  console.log('📊 数据库初始化完成')
+}
+
+/**
+ * 创建数据库表结构
+ */
+async function createTables() {
   const createUsersTable = `
     CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      username TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      role TEXT DEFAULT 'member',
-      avatar TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
+      id VARCHAR(36) PRIMARY KEY,
+      username VARCHAR(50) UNIQUE NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      role ENUM('admin', 'member', 'guest') DEFAULT 'member',
+      avatar VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_username (username),
+      INDEX idx_email (email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
   const createMembersTable = `
     CREATE TABLE IF NOT EXISTS members (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      role TEXT NOT NULL,
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(50) NOT NULL,
+      role VARCHAR(50) NOT NULL,
       intro TEXT,
-      avatar TEXT,
+      avatar VARCHAR(255),
       join_date DATE,
-      status TEXT DEFAULT 'active',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
+      status ENUM('active', 'inactive', 'retired') DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
   const createProjectsTable = `
     CREATE TABLE IF NOT EXISTS projects (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      period TEXT,
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      period VARCHAR(50),
       description TEXT,
-      status TEXT DEFAULT 'active',
-      progress INTEGER DEFAULT 0,
-      participants INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
+      status ENUM('planning', 'active', 'completed', 'cancelled') DEFAULT 'planning',
+      progress INT DEFAULT 0,
+      participants INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
   const createPilotsTable = `
     CREATE TABLE IF NOT EXISTS pilots (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      callsign TEXT NOT NULL,
-      ship TEXT NOT NULL,
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(50) NOT NULL,
+      callsign VARCHAR(50) NOT NULL,
+      ship VARCHAR(100) NOT NULL,
       description TEXT,
-      image TEXT,
-      missions INTEGER DEFAULT 0,
-      kills INTEGER DEFAULT 0,
-      status TEXT DEFAULT 'active',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
+      image VARCHAR(255),
+      missions INT DEFAULT 0,
+      kills INT DEFAULT 0,
+      status ENUM('active', 'inactive', 'kia') DEFAULT 'active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_status (status),
+      INDEX idx_missions (missions DESC)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
   const createApplicationsTable = `
     CREATE TABLE IF NOT EXISTS applications (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      discord TEXT,
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(50) NOT NULL,
+      email VARCHAR(100) NOT NULL,
+      discord VARCHAR(50),
       experience TEXT,
-      availability TEXT,
+      availability VARCHAR(50),
       reason TEXT,
-      status TEXT DEFAULT 'pending',
-      reviewed_by TEXT,
-      reviewed_at DATETIME,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (reviewed_by) REFERENCES users(id)
-    )
+      status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+      reviewed_by VARCHAR(36),
+      reviewed_at TIMESTAMP NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_status (status),
+      INDEX idx_email (email),
+      INDEX idx_created (created_at),
+      FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
   const createStatsTable = `
     CREATE TABLE IF NOT EXISTS stats (
-      id TEXT PRIMARY KEY,
-      label TEXT NOT NULL,
-      value TEXT NOT NULL,
-      icon TEXT,
-      sort_order INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
+      id VARCHAR(36) PRIMARY KEY,
+      label VARCHAR(50) NOT NULL,
+      value VARCHAR(50) NOT NULL,
+      icon VARCHAR(50),
+      sort_order INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_sort (sort_order)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
   const createActivityLogsTable = `
     CREATE TABLE IF NOT EXISTS activity_logs (
-      id TEXT PRIMARY KEY,
-      user_id TEXT,
-      action TEXT NOT NULL,
-      entity_type TEXT,
-      entity_id TEXT,
-      details TEXT,
-      ip_address TEXT,
-      user_agent TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    )
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(36),
+      action VARCHAR(50) NOT NULL,
+      entity_type VARCHAR(50),
+      entity_id VARCHAR(36),
+      details JSON,
+      ip_address VARCHAR(45),
+      user_agent VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_user (user_id),
+      INDEX idx_action (action),
+      INDEX idx_created (created_at),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `
 
-  db.exec(createUsersTable)
-  db.exec(createMembersTable)
-  db.exec(createProjectsTable)
-  db.exec(createPilotsTable)
-  db.exec(createApplicationsTable)
-  db.exec(createStatsTable)
-  db.exec(createActivityLogsTable)
+  await query(createUsersTable)
+  await query(createMembersTable)
+  await query(createProjectsTable)
+  await query(createPilotsTable)
+  await query(createApplicationsTable)
+  await query(createStatsTable)
+  await query(createActivityLogsTable)
 
-  await seedInitialData()
-
-  console.log('📊 数据库表初始化完成')
+  console.log('📋 数据库表结构创建完成')
 }
 
 /**
  * 填充初始数据
  */
 async function seedInitialData() {
-  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
-  if (userCount.count > 0) return
-
-  const insertMember = db.prepare(`
-    INSERT INTO members (id, name, role, intro, status) VALUES (?, ?, ?, ?, ?)
-  `)
+  const userCount = await queryOne('SELECT COUNT(*) as count FROM users')
+  if (userCount.count > 0) {
+    console.log('🌱 数据已存在，跳过种子数据填充')
+    return
+  }
 
   const members = [
     { id: 'm1', name: 'Echo', role: '舰队指挥', intro: '负责大型行动协调与战术安排。', status: 'active' },
@@ -162,13 +172,11 @@ async function seedInitialData() {
   ]
 
   for (const member of members) {
-    insertMember.run(member.id, member.name, member.role, member.intro, member.status)
+    await query(
+      'INSERT INTO members (id, name, role, intro, status) VALUES (?, ?, ?, ?, ?)',
+      [member.id, member.name, member.role, member.intro, member.status]
+    )
   }
-
-  const insertPilot = db.prepare(`
-    INSERT INTO pilots (id, name, callsign, ship, description, image, missions, kills, status) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
 
   const pilots = [
     {
@@ -207,23 +215,11 @@ async function seedInitialData() {
   ]
 
   for (const pilot of pilots) {
-    insertPilot.run(
-      pilot.id,
-      pilot.name,
-      pilot.callsign,
-      pilot.ship,
-      pilot.description,
-      pilot.image,
-      pilot.missions,
-      pilot.kills,
-      pilot.status
+    await query(
+      'INSERT INTO pilots (id, name, callsign, ship, description, image, missions, kills, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [pilot.id, pilot.name, pilot.callsign, pilot.ship, pilot.description, pilot.image, pilot.missions, pilot.kills, pilot.status]
     )
   }
-
-  const insertProject = db.prepare(`
-    INSERT INTO projects (id, name, period, description, status, progress, participants) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `)
 
   const projects = [
     {
@@ -256,20 +252,11 @@ async function seedInitialData() {
   ]
 
   for (const project of projects) {
-    insertProject.run(
-      project.id,
-      project.name,
-      project.period,
-      project.description,
-      project.status,
-      project.progress,
-      project.participants
+    await query(
+      'INSERT INTO projects (id, name, period, description, status, progress, participants) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [project.id, project.name, project.period, project.description, project.status, project.progress, project.participants]
     )
   }
-
-  const insertStat = db.prepare(`
-    INSERT INTO stats (id, label, value, sort_order) VALUES (?, ?, ?, ?)
-  `)
 
   const stats = [
     { id: 's1', label: '团队成员', value: '20+', sortOrder: 1 },
@@ -278,11 +265,13 @@ async function seedInitialData() {
   ]
 
   for (const stat of stats) {
-    insertStat.run(stat.id, stat.label, stat.value, stat.sortOrder)
+    await query(
+      'INSERT INTO stats (id, label, value, sort_order) VALUES (?, ?, ?, ?)',
+      [stat.id, stat.label, stat.value, stat.sortOrder]
+    )
   }
 
   console.log('🌱 初始数据填充完成')
 }
 
-export { db }
-export default db
+export default initDatabase
