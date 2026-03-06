@@ -149,13 +149,10 @@ jobs:
       - name: 安装依赖
         run: npm ci
 
-      - name: 下载构建产物
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      - name: 构建项目
+        run: npm run build
 
-      - name: 安装 Playwright
+      - name: 安装 Playwright 浏览器
         run: npx playwright install chromium --with-deps
 
       - name: 运行 E2E 测试
