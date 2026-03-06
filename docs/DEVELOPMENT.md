@@ -1,569 +1,825 @@
-# 星际公民战队宣传网站 - 开发文档
+# 开发指南文档
+
+本文档为开发者提供详细的开发指南，帮助快速理解和参与项目开发。
 
 ## 目录
 
-1. [项目概述](#项目概述)
-2. [系统架构](#系统架构)
-3. [模块功能介绍](#模块功能介绍)
-4. [API 接口文档](#api-接口文档)
-5. [部署指南](#部署指南)
-6. [配置说明](#配置说明)
-7. [开发指南](#开发指南)
-8. [模板定制](#模板定制)
+- [开发环境搭建](#开发环境搭建)
+- [项目架构详解](#项目架构详解)
+- [前端开发指南](#前端开发指南)
+- [后端开发指南](#后端开发指南)
+- [服务层详解](#服务层详解)
+- [测试指南](#测试指南)
+- [调试技巧](#调试技巧)
+- [最佳实践](#最佳实践)
 
 ---
 
-## 项目概述
+## 开发环境搭建
 
-本项目是一个基于 **Vue 3 + Vite + Express.js** 构建的全栈星际公民战队宣传网站。采用科幻风格的UI设计，具有流畅的页面过渡动画、完善的AI服务架构和RESTful API后端，为战队提供专业的展示平台。
+### 必需软件
 
-### 核心特性
+| 软件 | 版本要求 | 说明 |
+|------|----------|------|
+| Node.js | ^20.19.0 或 >=22.12.0 | JavaScript运行环境 |
+| npm | ≥9.0.0 | 包管理器 |
+| MySQL | ≥8.0 | 数据库服务 |
+| Git | ≥2.0 | 版本控制 |
 
-- 🚀 **现代化技术栈** - Vue 3.5 + Vite 7.3 + Express.js 4.21
-- 🎨 **科幻风格设计** - 独特的星际公民主题UI
-- 📱 **响应式布局** - 完美适配桌面端和移动端
-- 🔐 **完善的认证系统** - JWT + bcrypt 安全认证
-- 🤖 **AI 服务架构** - 任务队列、并发控制、资源监控
-- 📊 **管理后台** - 完整的后台管理系统
-- ⚡ **性能优化** - 路由懒加载、组件预加载、代码分割
+### 推荐IDE配置
+
+**VS Code 扩展：**
+
+- Vue - Official (Vue.volar)
+- ESLint (dbaeumer.vscode-eslint)
+- Prettier (esbenp.prettier-vscode)
+- EditorConfig (EditorConfig.EditorConfig)
+
+**VS Code settings.json：**
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
+```
+
+### 初始化项目
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/MomoDaviluke/star-citizen-promotion.git
+cd star-citizen-promotion
+
+# 2. 安装前端依赖
+npm install
+
+# 3. 安装后端依赖
+cd server && npm install && cd ..
+
+# 4. 配置环境变量
+cp .env.example .env.development
+cp server/.env.example server/.env.development
+
+# 5. 编辑 server/.env.development 配置数据库
+
+# 6. 初始化数据库
+cd server && npm run db:init && cd ..
+
+# 7. 启动开发服务
+# 终端1: cd server && npm run dev
+# 终端2: npm run dev
+```
 
 ---
 
-## 系统架构
+## 项目架构详解
+
+### 技术架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        前端 (Vue 3)                          │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
-│  │  首页   │  │  团队   │  │  成员   │  │  申请   │        │
+│  │  Views  │  │Components│  │Services │  │Composables│      │
 │  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘        │
-│       │            │            │            │              │
 │       └────────────┴────────────┴────────────┘              │
 │                         │                                    │
-│                    HTTP/WebSocket                            │
+│                    Router + Store                            │
 │                         │                                    │
 └─────────────────────────┼───────────────────────────────────┘
+                          │
+                     HTTP/REST
                           │
 ┌─────────────────────────┼───────────────────────────────────┐
 │                         ▼                                    │
 │                   后端 API (Express.js)                      │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
-│  │  Auth   │  │Members  │  │Projects │  │  Apply  │        │
+│  │  Routes │  │Middleware│  │  Utils  │  │ Config  │        │
 │  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘        │
 │       └────────────┴────────────┴────────────┘              │
 │                         │                                    │
 │                    MySQL Pool                                │
-│                         │                                    │
 └─────────────────────────┼───────────────────────────────────┘
                           │
-┌─────────────────────────┼───────────────────────────────────┐
-│                         ▼                                    │
-│                    MySQL 数据库                              │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
-│  │  users  │  │ members │  │ projects│  │  apps   │        │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘        │
-└─────────────────────────────────────────────────────────────┘
+                     MySQL 数据库
 ```
 
-### 目录结构
+### 目录结构详解
 
 ```
 star-citizen-promotion/
-├── public/                        # 静态资源
 ├── src/                           # 前端源码
-│   ├── components/                # 组件
+│   ├── components/                # 组件目录
 │   │   ├── common/                # 通用组件
+│   │   │   ├── ErrorBoundary.vue  # 错误边界
+│   │   │   ├── LoadingIndicator.vue # 加载指示器
+│   │   │   ├── PageTitle.vue      # 页面标题
+│   │   │   └── PageTransition.vue # 页面过渡
 │   │   └── layout/                # 布局组件
-│   ├── composables/               # 组合式API
+│   │       ├── SiteHeader.vue     # 网站头部
+│   │       └── SiteFooter.vue     # 网站页脚
+│   ├── composables/               # 组合式函数
+│   │   ├── useAI.js               # AI服务封装
+│   │   └── index.js               # 导出模块
 │   ├── config/                    # 配置文件
-│   │   ├── index.js               # 应用配置
-│   │   └── site.config.js         # 站点配置（模板化）
+│   │   ├── site.config.js         # 站点配置
+│   │   └── index.js               # 配置导出
 │   ├── data/                      # 静态数据
+│   │   └── siteContent.js         # 站点内容
 │   ├── router/                    # 路由配置
+│   │   └── index.js               # 路由定义
 │   ├── services/                  # 服务层
-│   │   ├── AIService.js           # AI 服务
+│   │   ├── AIService.js           # AI服务核心
+│   │   ├── PriorityQueue.js       # 优先级队列
+│   │   ├── ResourceMonitor.js     # 资源监控
 │   │   ├── authService.js         # 认证服务
 │   │   ├── dataService.js         # 数据服务
-│   │   └── http.js                # HTTP 客户端
+│   │   ├── http.js                # HTTP客户端
+│   │   └── index.js               # 服务导出
 │   ├── styles/                    # 样式文件
-│   └── views/                     # 页面视图
-│       ├── admin/                 # 管理后台页面
-│       ├── Home.vue               # 首页
-│       ├── About.vue              # 团队介绍
-│       ├── Members.vue            # 核心成员
-│       ├── Projects.vue           # 活动项目
-│       ├── Join.vue               # 加入我们
-│       ├── Contact.vue            # 联系我们
-│       ├── Login.vue              # 登录
-│       ├── Profile.vue            # 个人中心
-│       └── ApplicationStatus.vue  # 申请状态
+│   │   └── base.css               # 基础样式
+│   ├── views/                     # 页面视图
+│   │   ├── admin/                 # 管理后台
+│   │   └── *.vue                  # 各页面组件
+│   ├── App.vue                    # 根组件
+│   └── main.js                    # 应用入口
+│
 ├── server/                        # 后端源码
 │   ├── src/
 │   │   ├── config/                # 配置
+│   │   │   └── index.js           # 配置加载
 │   │   ├── database/              # 数据库
+│   │   │   ├── init.js            # 初始化
+│   │   │   ├── migrate.js         # 迁移
+│   │   │   ├── pool.js            # 连接池
+│   │   │   └── seed.js            # 种子数据
 │   │   ├── middleware/            # 中间件
-│   │   └── routes/                # 路由
-│   └── tests/                     # 测试文件
-└── tests/                         # 前端测试
+│   │   │   ├── auth.js            # JWT认证
+│   │   │   ├── errorHandler.js    # 错误处理
+│   │   │   └── requestLogger.js   # 请求日志
+│   │   ├── routes/                # API路由
+│   │   │   ├── applications.js    # 申请管理
+│   │   │   ├── auth.js            # 用户认证
+│   │   │   ├── members.js         # 成员管理
+│   │   │   ├── pilots.js          # 飞行员管理
+│   │   │   ├── projects.js        # 项目管理
+│   │   │   └── stats.js           # 统计数据
+│   │   └── index.js               # 服务入口
+│   └── tests/                     # 后端测试
+│
+├── tests/                         # 前端测试
+│   ├── components/                # 组件测试
+│   ├── composables/               # 组合式函数测试
+│   ├── config/                    # 配置测试
+│   ├── router/                    # 路由测试
+│   ├── services/                  # 服务测试
+│   └── views/                     # 视图测试
+│
+├── e2e/                           # E2E测试
+│   ├── home.spec.js               # 首页测试
+│   └── join.spec.js               # 申请页测试
+│
+└── docs/                          # 文档目录
+    ├── API.md                     # API文档
+    ├── CONFIG.md                  # 配置文档
+    └── DEVELOPMENT.md             # 开发文档
 ```
 
 ---
 
-## 模块功能介绍
+## 前端开发指南
 
-### 前端模块
+### 组件开发规范
 
-| 模块 | 文件 | 功能描述 |
-|------|------|----------|
-| 首页展示 | [Home.vue](src/views/Home.vue) | 英雄区域、团队统计、王牌飞行员轮播 |
-| 团队介绍 | [About.vue](src/views/About.vue) | 组织定位、发展历程时间线 |
-| 核心成员 | [Members.vue](src/views/Members.vue) | 成员卡片列表、角色展示 |
-| 活动项目 | [Projects.vue](src/views/Projects.vue) | 活动任务卡片、进度展示 |
-| 加入我们 | [Join.vue](src/views/Join.vue) | 招募条件、在线申请表单 |
-| 联系我们 | [Contact.vue](src/views/Contact.vue) | 联系渠道、社交链接 |
-| 管理后台 | [views/admin/](src/views/admin/) | 仪表盘、申请管理、成员管理等 |
-| AI 服务 | [AIService.js](src/services/AIService.js) | 任务队列、并发控制、资源监控 |
+#### 组件结构
 
-### 后端模块
+```vue
+<template>
+  <div class="component-name">
+    <!-- 模板内容 -->
+  </div>
+</template>
 
-| 模块 | 文件 | 功能描述 |
-|------|------|----------|
-| 认证路由 | [auth.js](server/src/routes/auth.js) | 用户注册、登录、令牌管理 |
-| 成员路由 | [members.js](server/src/routes/members.js) | 成员 CRUD 操作 |
-| 项目路由 | [projects.js](server/src/routes/projects.js) | 项目 CRUD 操作 |
-| 申请路由 | [applications.js](server/src/routes/applications.js) | 入队申请管理 |
-| 飞行员路由 | [pilots.js](server/src/routes/pilots.js) | 飞行员 CRUD 操作 |
-| 统计路由 | [stats.js](server/src/routes/stats.js) | 团队统计数据 |
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 
----
-
-## API 接口文档
-
-### 基础信息
-
-- **基础URL**: `http://localhost:3001/api`
-- **认证方式**: Bearer Token (JWT)
-- **内容类型**: `application/json`
-
-### 认证接口
-
-#### 用户注册
-
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "username": "string (3-20字符)",
-  "email": "string (有效邮箱)",
-  "password": "string (至少8位，包含大小写字母和数字)"
-}
-```
-
-**响应示例**:
-```json
-{
-  "success": true,
-  "message": "注册成功",
-  "data": {
-    "user": {
-      "id": "uuid",
-      "username": "用户名",
-      "email": "邮箱",
-      "role": "member"
-    },
-    "token": "jwt_token"
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
   }
+})
+
+const emit = defineEmits(['update', 'delete'])
+
+const localState = ref(null)
+
+const computedValue = computed(() => {
+  return props.title.toUpperCase()
+})
+
+onMounted(() => {
+  // 初始化逻辑
+})
+</script>
+
+<style scoped>
+.component-name {
+  /* 组件样式 */
 }
+</style>
 ```
 
-#### 用户登录
+#### 命名规范
 
-```http
-POST /api/auth/login
-Content-Type: application/json
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 组件文件 | PascalCase | `UserProfile.vue` |
+| 组件注册 | PascalCase | `<UserProfile />` |
+| Props | camelCase | `userName` |
+| Events | kebab-case | `@update-user` |
+| CSS类 | kebab-case | `.user-profile` |
 
-{
-  "email": "string",
-  "password": "string"
-}
+### 路由开发
+
+#### 添加新路由
+
+1. 创建视图组件：
+
+```vue
+<!-- src/views/NewPage.vue -->
+<template>
+  <div class="new-page">
+    <PageTitle title="新页面" />
+    <!-- 页面内容 -->
+  </div>
+</template>
+
+<script setup>
+import PageTitle from '@/components/common/PageTitle.vue'
+</script>
 ```
 
-#### 获取当前用户
-
-```http
-GET /api/auth/me
-Authorization: Bearer <token>
-```
-
-### 成员接口
-
-#### 获取成员列表
-
-```http
-GET /api/members?status=active&limit=50&offset=0
-```
-
-**响应示例**:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "uuid",
-      "name": "成员名称",
-      "role": "角色",
-      "intro": "简介",
-      "status": "active"
-    }
-  ],
-  "pagination": {
-    "total": 100,
-    "limit": 50,
-    "offset": 0,
-    "hasMore": true
-  }
-}
-```
-
-#### 创建成员（管理员）
-
-```http
-POST /api/members
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "name": "string",
-  "role": "string",
-  "intro": "string (可选)",
-  "avatar": "string (可选)"
-}
-```
-
-### 申请接口
-
-#### 提交申请
-
-```http
-POST /api/applications
-Content-Type: application/json
-
-{
-  "name": "string (必填)",
-  "email": "string (必填)",
-  "discord": "string (可选)",
-  "experience": "string (可选)",
-  "availability": "string (可选)",
-  "reason": "string (可选)"
-}
-```
-
-#### 更新申请状态（管理员）
-
-```http
-PUT /api/applications/:id/status
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "status": "pending | approved | rejected",
-  "note": "string (可选)"
-}
-```
-
-### 统计接口
-
-#### 获取统计数据
-
-```http
-GET /api/stats
-```
-
-**响应示例**:
-```json
-{
-  "success": true,
-  "data": {
-    "stats": [
-      { "label": "团队成员", "value": "20+" }
-    ],
-    "summary": {
-      "activeMembers": 20,
-      "activeProjects": 5,
-      "activePilots": 10,
-      "totalMissions": 500
-    }
-  }
-}
-```
-
----
-
-## 部署指南
-
-### 环境要求
-
-| 软件 | 版本要求 |
-|------|----------|
-| Node.js | ≥20.0.0 |
-| npm | ≥9.0.0 |
-| MySQL | ≥8.0 |
-| Docker | ≥20.0 (可选) |
-
-### 快速部署
-
-#### 1. 克隆项目
-
-```bash
-git clone https://github.com/your-org/star-citizen-promotion.git
-cd star-citizen-promotion
-```
-
-#### 2. 安装依赖
-
-```bash
-# 前端依赖
-npm install
-
-# 后端依赖
-cd server && npm install && cd ..
-```
-
-#### 3. 配置环境变量
-
-```bash
-# 复制环境变量模板
-cp .env.example .env.development
-cp server/.env.example server/.env.development
-```
-
-编辑 `server/.env.development`：
-
-```env
-# 数据库配置
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=star_citizen_promotion
-
-# JWT 配置
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
-
-# 服务配置
-PORT=3001
-FRONTEND_URL=http://localhost:3000
-```
-
-#### 4. 初始化数据库
-
-```bash
-cd server
-npm run db:init
-npm run db:seed  # 可选：填充测试数据
-```
-
-#### 5. 启动服务
-
-```bash
-# 终端1 - 启动后端
-cd server && npm run dev
-
-# 终端2 - 启动前端
-npm run dev
-```
-
-### Docker 部署
-
-```bash
-# 构建并启动所有服务
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 停止服务
-docker-compose down
-```
-
----
-
-## 配置说明
-
-### 站点配置文件
-
-通过修改 `src/config/site.config.js` 可以快速定制站点内容：
+2. 注册路由：
 
 ```javascript
-export const siteConfig = {
-  // 站点基本信息
-  siteInfo: {
-    name: '您的团队名称',
-    nameEn: 'Your Team Name',
-    description: '团队描述',
-    version: '1.0.0',
-    author: '您的名称',
-    email: 'contact@example.com',
-    discord: 'https://discord.gg/xxx',
-    qqGroup: '123456789',
-    github: 'https://github.com/your-org',
-    year: new Date().getFullYear()
-  },
-
-  // 导航菜单
-  navigation: [
-    { label: '首页', to: '/', icon: 'home' },
-    { label: '团队介绍', to: '/about', icon: 'team' },
-    // ... 添加更多菜单项
-  ],
-
-  // 首页配置
-  home: {
-    hero: {
-      badge: 'YOUR BADGE TEXT',
-      title: '您的标题',
-      subtitle: '副标题',
-      description: '详细描述'
-    },
-    stats: [
-      { label: '团队成员', value: '20+', icon: 'users' },
-      // ... 添加更多统计项
-    ]
-  },
-
-  // 主题配置
-  theme: {
-    colors: {
-      primary: '#5fa9ff',
-      secondary: '#8fd7ff',
-      // ... 自定义颜色
-    }
+// src/router/index.js
+const routes = [
+  // ... 现有路由
+  {
+    path: '/new-page',
+    name: '新页面',
+    component: () => import('../views/NewPage.vue'),
+    meta: { preload: true }
   }
-}
+]
 ```
 
-### 环境变量
+3. 添加导航：
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `VITE_SERVER_PORT` | 前端开发服务器端口 | 3000 |
-| `VITE_BACKEND_URL` | 后端 API 地址 | http://localhost:3001 |
-| `VITE_USE_API` | 是否使用 API | false |
-| `PORT` | 后端服务端口 | 3001 |
-| `DB_HOST` | 数据库主机 | localhost |
-| `DB_PASSWORD` | 数据库密码 | - |
-| `JWT_SECRET` | JWT 密钥 | - |
+```javascript
+// src/config/site.config.js
+navigation: [
+  // ... 现有导航
+  { name: '新页面', path: '/new-page' }
+]
+```
+
+#### 路由元信息
+
+| Meta属性 | 说明 |
+|----------|------|
+| `preload: true` | 页面加载后预加载该路由 |
+| `guest: true` | 仅限未登录用户访问 |
+| `requiresAuth: true` | 需要登录认证 |
+| `requiresAdmin: true` | 需要管理员权限 |
+
+### 服务调用
+
+#### HTTP请求
+
+```javascript
+import { http } from '@/services'
+
+// GET请求
+const data = await http.get('/api/members')
+
+// POST请求
+const result = await http.post('/api/applications', {
+  name: '申请人',
+  email: 'test@example.com'
+})
+
+// PUT请求
+await http.put('/api/members/1', { name: '新名称' })
+
+// DELETE请求
+await http.delete('/api/members/1')
+```
+
+#### 认证服务
+
+```javascript
+import { authService } from '@/services'
+
+// 登录
+const user = await authService.login({
+  email: 'user@example.com',
+  password: 'password123'
+})
+
+// 注册
+const newUser = await authService.register({
+  username: 'newuser',
+  email: 'new@example.com',
+  password: 'password123'
+})
+
+// 登出
+authService.logout()
+
+// 获取当前用户
+const currentUser = authService.getCurrentUser()
+
+// 检查登录状态
+const isLoggedIn = authService.isAuthenticated()
+```
 
 ---
 
-## 开发指南
+## 后端开发指南
 
-### 可用脚本
+### 路由开发
 
-**前端**:
-```bash
-npm run dev          # 启动开发服务器
-npm run build        # 构建生产版本
-npm run preview      # 预览生产构建
-npm run lint         # 运行 ESLint 检查
-npm run test         # 运行测试
+#### 创建新路由
+
+```javascript
+// server/src/routes/example.js
+import { Router } from 'express'
+import { body, validationResult } from 'express-validator'
+import { query, queryOne } from '../database/pool.js'
+import { ApiError } from '../middleware/errorHandler.js'
+import { authenticate, requireAdmin } from '../middleware/auth.js'
+
+const router = Router()
+
+/**
+ * GET /api/example
+ * 获取列表
+ */
+router.get('/', async (req, res, next) => {
+  try {
+    const items = await query('SELECT * FROM example ORDER BY created_at DESC')
+    res.json({
+      success: true,
+      data: items
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+/**
+ * POST /api/example
+ * 创建项目（需要认证）
+ */
+router.post('/',
+  authenticate,
+  [
+    body('name').trim().notEmpty().withMessage('名称不能为空'),
+    body('description').optional().trim()
+  ],
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        throw ApiError.badRequest('输入验证失败', errors.array())
+      }
+
+      const { name, description } = req.body
+
+      const result = await query(
+        'INSERT INTO example (name, description) VALUES (?, ?)',
+        [name, description]
+      )
+
+      res.status(201).json({
+        success: true,
+        message: '创建成功',
+        data: { id: result.insertId, name, description }
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+export default router
 ```
 
-**后端**:
-```bash
-npm run dev          # 启动开发服务器（热重载）
-npm start            # 启动生产服务器
-npm run db:init      # 初始化数据库
-npm run db:seed      # 填充种子数据
-npm run test         # 运行测试
+#### 注册路由
+
+```javascript
+// server/src/index.js
+import exampleRoutes from './routes/example.js'
+
+// 注册路由
+app.use('/api/example', exampleRoutes)
 ```
+
+### 中间件使用
+
+#### 认证中间件
+
+```javascript
+import { authenticate, optionalAuth, requireAdmin, requireRole } from '../middleware/auth.js'
+
+// 需要登录
+router.get('/protected', authenticate, handler)
+
+// 可选认证（有token则解析，无token也可访问）
+router.get('/public', optionalAuth, handler)
+
+// 需要管理员权限
+router.post('/admin', authenticate, requireAdmin, handler)
+
+// 需要特定角色
+router.put('/moderator', authenticate, requireRole('moderator'), handler)
+```
+
+### 数据库操作
+
+```javascript
+import { query, queryOne, insert, update, remove, transaction } from '../database/pool.js'
+
+// 查询多条
+const users = await query('SELECT * FROM users WHERE status = ?', ['active'])
+
+// 查询单条
+const user = await queryOne('SELECT * FROM users WHERE id = ?', [userId])
+
+// 插入
+const insertId = await insert(
+  'INSERT INTO users (name, email) VALUES (?, ?)',
+  ['张三', 'zhang@example.com']
+)
+
+// 更新
+const affectedRows = await update(
+  'UPDATE users SET name = ? WHERE id = ?',
+  ['李四', userId]
+)
+
+// 删除
+const deletedRows = await remove('DELETE FROM users WHERE id = ?', [userId])
+
+// 事务
+await transaction(async (connection) => {
+  await connection.execute('INSERT INTO orders ...')
+  await connection.execute('UPDATE products SET stock = stock - 1 ...')
+})
+```
+
+---
+
+## 服务层详解
+
+### AIService
+
+AI服务提供任务队列管理、并发控制、超时处理和重试机制。
+
+#### 基本使用
+
+```javascript
+import { aiService, PRIORITY } from '@/services/AIService'
+
+// 提交任务
+const result = await aiService.submit(async (context) => {
+  const { signal, taskId } = context
+
+  // 检查是否被取消
+  if (signal.aborted) {
+    throw new Error('Task cancelled')
+  }
+
+  // 执行异步操作
+  const response = await fetch('/api/ai/generate', { signal })
+  return response.json()
+}, {
+  priority: PRIORITY.HIGH,
+  timeout: 60000,
+  retries: 3
+})
+```
+
+#### 任务优先级
+
+| 优先级 | 值 | 说明 |
+|--------|-----|------|
+| CRITICAL | 4 | 最高优先级 |
+| HIGH | 3 | 高优先级 |
+| NORMAL | 2 | 普通优先级（默认） |
+| LOW | 1 | 低优先级 |
+
+#### 任务状态
+
+| 状态 | 说明 |
+|------|------|
+| PENDING | 等待执行 |
+| RUNNING | 正在执行 |
+| COMPLETED | 执行完成 |
+| FAILED | 执行失败 |
+| TIMEOUT | 执行超时 |
+| CANCELLED | 已取消 |
+
+#### useAI 组合式函数
+
+```vue
+<script setup>
+import { useAI } from '@/composables'
+
+const { execute, isLoading, error, result, progress } = useAI()
+
+const handleSubmit = async () => {
+  await execute(async (context) => {
+    // AI任务逻辑
+    return data
+  })
+}
+</script>
+
+<template>
+  <button @click="handleSubmit" :disabled="isLoading">
+    {{ isLoading ? '处理中...' : '提交' }}
+  </button>
+  <p v-if="error">错误: {{ error.message }}</p>
+  <p v-if="result">结果: {{ result }}</p>
+</template>
+```
+
+### HTTP客户端
+
+```javascript
+import { http } from '@/services'
+
+// 配置
+http.setBaseUrl('https://api.example.com')
+http.setTimeout(30000)
+
+// 请求拦截
+http.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// 响应拦截
+http.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    if (error.status === 401) {
+      // 处理认证失败
+    }
+    return Promise.reject(error)
+  }
+)
+```
+
+---
+
+## 测试指南
+
+### 单元测试
+
+#### 测试组件
+
+```javascript
+// tests/components/MyComponent.test.js
+import { mount } from '@vue/test-utils'
+import { describe, it, expect } from 'vitest'
+import MyComponent from '@/components/MyComponent.vue'
+
+describe('MyComponent', () => {
+  it('should render correctly', () => {
+    const wrapper = mount(MyComponent, {
+      props: {
+        title: 'Test Title'
+      }
+    })
+
+    expect(wrapper.find('h1').text()).toBe('Test Title')
+  })
+})
+```
+
+#### 测试服务
+
+```javascript
+// tests/services/myService.test.js
+import { describe, it, expect, vi } from 'vitest'
+import { myService } from '@/services'
+
+describe('myService', () => {
+  it('should fetch data correctly', async () => {
+    const data = await myService.getData()
+    expect(data).toBeDefined()
+  })
+})
+```
+
+### E2E测试
+
+```javascript
+// e2e/myPage.spec.js
+import { test, expect } from '@playwright/test'
+
+test.describe('我的页面测试', () => {
+  test('应正确加载页面', async ({ page }) => {
+    await page.goto('/my-page')
+    await expect(page).toHaveTitle(/预期标题/)
+  })
+
+  test('应能提交表单', async ({ page }) => {
+    await page.goto('/my-page')
+    await page.fill('input[name="email"]', 'test@example.com')
+    await page.click('button[type="submit"]')
+    await expect(page.locator('.success-message')).toBeVisible()
+  })
+})
+```
+
+### 运行测试
+
+```bash
+# 单元测试
+npm run test
+
+# 监听模式
+npm run test:watch
+
+# 覆盖率报告
+npm run test:coverage
+
+# E2E测试
+npm run test:e2e
+
+# E2E测试UI模式
+npm run test:e2e:ui
+
+# 所有测试
+npm run test:all
+```
+
+---
+
+## 调试技巧
+
+### 前端调试
+
+#### Vue Devtools
+
+安装Vue Devtools浏览器扩展，可以：
+- 查看组件树
+- 检查组件状态和props
+- 追踪事件
+- 查看路由状态
+
+#### 控制台调试
+
+```javascript
+// 在组件中
+import { getCurrentInstance } from 'vue'
+
+const instance = getCurrentInstance()
+console.log('Component instance:', instance)
+```
+
+#### 网络请求调试
+
+```javascript
+// 在 http.js 中添加日志
+http.interceptors.request.use((config) => {
+  console.log('Request:', config)
+  return config
+})
+
+http.interceptors.response.use((response) => {
+  console.log('Response:', response)
+  return response
+})
+```
+
+### 后端调试
+
+#### 日志记录
+
+```javascript
+// server/src/middleware/requestLogger.js
+console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`)
+```
+
+#### 数据库查询调试
+
+```javascript
+// 在 pool.js 中
+export async function query(sql, params = []) {
+  console.log('SQL:', sql)
+  console.log('Params:', params)
+  const [rows] = await connection.execute(sql, params)
+  return rows
+}
+```
+
+---
+
+## 最佳实践
 
 ### 代码规范
 
-- 使用 ESLint 进行代码检查
-- 使用 Prettier 进行代码格式化
-- 遵循 Conventional Commits 提交规范
+1. **使用组合式API**：推荐使用 `<script setup>` 语法
+2. **类型安全**：使用JSDoc或TypeScript提供类型提示
+3. **组件拆分**：保持组件职责单一
+4. **命名清晰**：使用有意义的变量和函数名
 
-### 添加新页面
+### 性能优化
 
-1. 在 `src/views/` 创建 Vue 组件
-2. 在 `src/router/index.js` 添加路由配置
-3. 在 `src/config/site.config.js` 添加导航项（如需要）
+1. **路由懒加载**：所有路由组件使用动态导入
+2. **组件预加载**：标记关键路由 `meta.preload: true`
+3. **图片优化**：使用适当尺寸和格式
+4. **避免不必要的响应式**：使用 `shallowRef` 和 `markRaw`
 
-### 添加新 API
+### 安全建议
 
-1. 在 `server/src/routes/` 创建路由文件
-2. 在 `server/src/index.js` 注册路由
-3. 在 `src/services/dataService.js` 添加前端调用方法
+1. **输入验证**：前后端都要验证用户输入
+2. **XSS防护**：使用Vue的模板语法自动转义
+3. **CSRF防护**：使用SameSite Cookie
+4. **敏感信息**：不要在前端存储敏感数据
 
----
+### Git提交规范
 
-## 模板定制
+遵循 Conventional Commits：
 
-### 快速定制步骤
-
-1. **修改站点信息**: 编辑 `src/config/site.config.js`
-2. **替换静态数据**: 编辑 `src/data/siteContent.js`
-3. **自定义主题**: 修改 `src/styles/base.css` 中的 CSS 变量
-4. **添加图片资源**: 放入 `public/images/` 目录
-
-### 常见定制场景
-
-#### 修改主题颜色
-
-编辑 `src/styles/base.css`:
-
-```css
-:root {
-  --accent: #your-color;
-  --accent-2: #your-secondary-color;
-  --bg: #your-background;
-}
 ```
-
-#### 修改首页内容
-
-编辑 `src/config/site.config.js` 中的 `home` 配置块。
-
-#### 添加新的统计项
-
-在 `siteConfig.home.stats` 数组中添加新项：
-
-```javascript
-stats: [
-  { label: '新统计项', value: '100', icon: 'chart' }
-]
+feat: 添加用户登录功能
+fix(router): 修复页面跳转问题
+docs: 更新API文档
+style: 格式化代码
+refactor(services): 重构AI服务
+test: 添加登录测试
+chore: 更新依赖版本
 ```
 
 ---
 
 ## 常见问题
 
-### 数据库连接失败
+### 开发环境问题
 
-检查以下项目：
-1. MySQL 服务是否启动
-2. `.env.development` 中的数据库配置是否正确
-3. 数据库用户是否有足够权限
+**Q: 热更新不生效？**
 
-### 前端无法访问后端 API
+A: 检查以下项目：
+1. 确保使用 `npm run dev` 启动开发服务器
+2. 检查文件是否正确保存
+3. 尝试重启开发服务器
 
-检查以下项目：
-1. 后端服务是否启动
-2. Vite 代理配置是否正确
-3. CORS 配置是否正确
+**Q: 跨域请求失败？**
 
-### JWT 令牌无效
+A: 确保Vite代理配置正确：
 
-检查以下项目：
-1. `JWT_SECRET` 配置是否一致
-2. 令牌是否过期
-3. 请求头是否包含正确的 Authorization
+```javascript
+// vite.config.js
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:3001',
+      changeOrigin: true
+    }
+  }
+}
+```
 
----
+### 构建问题
 
-## 许可证
+**Q: 构建后路由不工作？**
 
-本项目基于 MIT 许可证开源。
+A: 确保服务器配置了SPA回退：
+
+```nginx
+# nginx.conf
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
+**Q: 构建产物过大？**
+
+A: 检查代码分割配置，确保第三方库被正确分离。

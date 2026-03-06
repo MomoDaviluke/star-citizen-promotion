@@ -10,7 +10,7 @@
 
 **面向星际公民玩家的团队门户，展示组织定位、核心成员、活动任务与招募信息**
 
-[在线预览](#) · [功能特点](#功能特点) · [快速开始](#快速开始) · [API文档](#api文档)
+[在线预览](#) · [功能特点](#功能特点) · [快速开始](#快速开始) · [API文档](docs/API.md)
 
 </div>
 
@@ -29,8 +29,8 @@
 - [开发指南](#开发指南)
 - [部署说明](#部署说明)
 - [测试说明](#测试说明)
+- [常见问题](#常见问题)
 - [贡献指南](#贡献指南)
-- [维护说明](#维护说明)
 - [许可证](#许可证)
 
 ---
@@ -75,26 +75,42 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 核心特性
+
+| 特性 | 描述 |
+|------|------|
+| 🎨 科幻UI设计 | 网格背景、光晕效果、扫描线动画 |
+| ⚡ 路由预加载 | 智能预加载相邻路由，提升导航体验 |
+| 🔄 AI服务架构 | 任务队列、优先级调度、并发控制、超时重试 |
+| 🔐 完整认证 | JWT认证、令牌刷新、角色权限控制 |
+| 📱 响应式设计 | 移动端适配，支持减少动画偏好 |
+| 🧪 全面测试 | 单元测试、集成测试、E2E测试 |
+
 ---
 
 ## 核心功能
 
 ### 前端功能
 
-| 模块 | 功能描述 |
-|------|----------|
-| 🏠 首页展示 | Hero区域、团队统计、王牌飞行员轮播 |
-| 👥 团队介绍 | 组织定位、发展历程时间线 |
-| 🎖️ 核心成员 | 成员卡片列表、角色展示 |
-| 📋 活动项目 | 活动任务卡片、进度展示 |
-| 📝 加入我们 | 招募条件、在线申请表单 |
-| 📞 联系我们 | 联系渠道、社交链接 |
+| 模块 | 路由 | 功能描述 |
+|------|------|----------|
+| 🏠 首页展示 | `/` | Hero区域、团队统计、王牌飞行员轮播 |
+| 👥 团队介绍 | `/about` | 组织定位、发展历程时间线 |
+| 🎖️ 核心成员 | `/members` | 成员卡片列表、角色展示 |
+| 📋 活动项目 | `/projects` | 活动任务卡片、进度展示 |
+| 📝 加入我们 | `/join` | 招募条件、在线申请表单 |
+| 📞 联系我们 | `/contact` | 联系渠道、社交链接 |
+| 🔑 用户登录 | `/login` | 邮箱密码登录 |
+| 📋 注册 | `/register` | 用户注册 |
+| 👤 个人中心 | `/profile` | 个人资料管理（需认证） |
+| 📊 申请状态 | `/application/status` | 查询申请进度 |
+| ⚙️ 管理后台 | `/admin/*` | 仪表盘、申请管理、成员管理等 |
 
 ### 后端功能
 
 | 模块 | API端点 | 功能描述 |
 |------|---------|----------|
-| 🔐 认证 | `/api/auth/*` | 用户注册、登录、令牌刷新 |
+| 🔐 认证 | `/api/auth/*` | 用户注册、登录、资料管理、密码修改 |
 | 👥 成员 | `/api/members/*` | 成员CRUD操作 |
 | 📋 项目 | `/api/projects/*` | 项目CRUD操作 |
 | ✈️ 飞行员 | `/api/pilots/*` | 飞行员CRUD操作 |
@@ -113,6 +129,7 @@
 | 路由 | Vue Router | 5.0 | 官方路由管理器 |
 | 构建工具 | Vite | 7.3 | 下一代前端构建工具 |
 | 测试 | Vitest | 3.0 | 单元测试框架 |
+| E2E测试 | Playwright | 1.58 | 端到端测试框架 |
 | 代码规范 | ESLint | 9.x | 代码质量检查 |
 | 代码格式 | Prettier | 3.x | 代码格式化工具 |
 
@@ -135,93 +152,117 @@
 
 ```
 star-citizen-promotion/
-├── public/                        # 静态资源
-│   ├── images/                    # 图片资源
-│   │   ├── F8C.png
-│   │   └── f8c-lightning.svg
+├── .github/workflows/           # CI/CD 配置
+│   └── ci.yml
+├── .trae/rules/                 # 项目规范
+│   └── commit_convention.md
+├── docs/                        # 文档目录
+│   ├── API.md                   # API参考文档
+│   ├── CONFIG.md                # 配置说明文档
+│   └── DEVELOPMENT.md           # 开发指南
+├── e2e/                         # E2E 测试
+│   ├── home.spec.js
+│   └── join.spec.js
+├── public/                      # 静态资源
+│   ├── images/
 │   ├── favicon.ico
 │   └── og-cover.svg
-│
-├── src/                           # 前端源码
-│   ├── components/                # 组件
-│   │   ├── common/                # 通用组件
-│   │   │   ├── LoadingIndicator.vue
-│   │   │   ├── PageTitle.vue
-│   │   │   └── PageTransition.vue
-│   │   └── layout/                # 布局组件
-│   │       ├── SiteHeader.vue
-│   │       └── SiteFooter.vue
-│   ├── composables/               # 组合式API
-│   │   ├── useAI.js
-│   │   └── index.js
-│   ├── config/                    # 配置文件
-│   ├── data/                      # 静态数据
-│   │   └── siteContent.js
-│   ├── router/                    # 路由配置
-│   │   └── index.js
-│   ├── services/                  # 服务层
-│   │   ├── AIService.js
-│   │   ├── PriorityQueue.js
-│   │   ├── ResourceMonitor.js
-│   │   ├── dataService.js
-│   │   ├── http.js
-│   │   └── index.js
-│   ├── styles/                    # 样式文件
-│   │   └── base.css
-│   ├── views/                     # 页面视图
-│   │   ├── Home.vue
-│   │   ├── About.vue
-│   │   ├── Members.vue
-│   │   ├── Projects.vue
-│   │   ├── Join.vue
-│   │   ├── Contact.vue
-│   │   └── NotFound.vue
-│   ├── App.vue
-│   └── main.js
-│
-├── server/                        # 后端源码
+├── server/                      # 后端源码
 │   ├── src/
-│   │   ├── config/                # 配置
-│   │   │   └── index.js
-│   │   ├── database/              # 数据库
-│   │   │   ├── init.js
-│   │   │   ├── migrate.js
-│   │   │   ├── pool.js
-│   │   │   └── seed.js
-│   │   ├── middleware/            # 中间件
-│   │   │   ├── auth.js
-│   │   │   ├── errorHandler.js
-│   │   │   └── requestLogger.js
-│   │   ├── routes/                # 路由
+│   │   ├── config/              # 配置
+│   │   ├── database/            # 数据库
+│   │   │   ├── init.js          # 数据库初始化
+│   │   │   ├── migrate.js       # 数据库迁移
+│   │   │   ├── pool.js          # 连接池管理
+│   │   │   └── seed.js          # 种子数据
+│   │   ├── middleware/          # 中间件
+│   │   │   ├── auth.js          # JWT认证
+│   │   │   ├── errorHandler.js  # 错误处理
+│   │   │   └── requestLogger.js # 请求日志
+│   │   ├── routes/              # API路由
 │   │   │   ├── applications.js
 │   │   │   ├── auth.js
 │   │   │   ├── members.js
 │   │   │   ├── pilots.js
 │   │   │   ├── projects.js
 │   │   │   └── stats.js
-│   │   └── index.js
-│   ├── tests/                     # 测试文件
-│   │   ├── api.test.js
-│   │   ├── auth.test.js
-│   │   └── errorHandler.test.js
+│   │   └── index.js             # 服务入口
+│   ├── tests/                   # 后端测试
 │   ├── .env.example
-│   ├── .env.development
 │   └── package.json
-│
-├── tests/                         # 前端测试
+├── src/                         # 前端源码
+│   ├── components/              # 组件
+│   │   ├── common/              # 通用组件
+│   │   │   ├── ErrorBoundary.vue
+│   │   │   ├── LoadingIndicator.vue
+│   │   │   ├── PageTitle.vue
+│   │   │   └── PageTransition.vue
+│   │   └── layout/              # 布局组件
+│   │       ├── SiteHeader.vue
+│   │       └── SiteFooter.vue
+│   ├── composables/             # 组合式函数
+│   │   ├── useAI.js
+│   │   └── index.js
+│   ├── config/                  # 配置
+│   │   ├── site.config.js       # 站点配置
+│   │   └── index.js
+│   ├── data/                    # 静态数据
+│   │   └── siteContent.js
+│   ├── router/                  # 路由配置
+│   │   └── index.js
+│   ├── services/                # 服务层
+│   │   ├── AIService.js         # AI服务核心
+│   │   ├── PriorityQueue.js     # 优先级队列
+│   │   ├── ResourceMonitor.js   # 资源监控
+│   │   ├── authService.js       # 认证服务
+│   │   ├── dataService.js       # 数据服务
+│   │   ├── http.js              # HTTP客户端
+│   │   └── index.js
+│   ├── styles/                  # 样式
+│   │   └── base.css
+│   ├── views/                   # 页面视图
+│   │   ├── admin/               # 管理后台
+│   │   │   ├── AdminLayout.vue
+│   │   │   ├── ApplicationsAdmin.vue
+│   │   │   ├── Dashboard.vue
+│   │   │   ├── MembersAdmin.vue
+│   │   │   ├── PilotsAdmin.vue
+│   │   │   ├── ProjectsAdmin.vue
+│   │   │   └── Settings.vue
+│   │   ├── About.vue
+│   │   ├── ApplicationStatus.vue
+│   │   ├── Contact.vue
+│   │   ├── Home.vue
+│   │   ├── Join.vue
+│   │   ├── Login.vue
+│   │   ├── Members.vue
+│   │   ├── NotFound.vue
+│   │   ├── Profile.vue
+│   │   ├── Projects.vue
+│   │   └── Register.vue
+│   ├── App.vue
+│   └── main.js
+├── tests/                       # 前端测试
 │   ├── components/
 │   ├── composables/
-│   └── services/
-│
-├── .env.example                   # 环境变量模板
-├── .env.development               # 开发环境配置
-├── .env.production                # 生产环境配置
+│   ├── config/
+│   ├── router/
+│   ├── services/
+│   └── views/
+├── .editorconfig
+├── .env.example
 ├── .gitignore
 ├── .prettierrc
+├── Dockerfile
+├── docker-compose.yml
 ├── eslint.config.js
+├── index.html
+├── jsconfig.json
+├── nginx.conf
 ├── package.json
+├── playwright.config.js
 ├── vite.config.js
-└── README.md
+└── vitest.config.js
 ```
 
 ---
@@ -232,7 +273,7 @@ star-citizen-promotion/
 
 | 软件 | 版本要求 | 说明 |
 |------|----------|------|
-| Node.js | ≥20.0.0 | JavaScript运行环境 |
+| Node.js | ^20.19.0 或 >=22.12.0 | JavaScript运行环境 |
 | npm | ≥9.0.0 | 包管理器 |
 | MySQL | ≥8.0 | 数据库服务 |
 
@@ -253,60 +294,61 @@ git clone https://github.com/MomoDaviluke/star-citizen-promotion.git
 cd star-citizen-promotion
 ```
 
-### 2. 安装前端依赖
+### 2. 安装依赖
 
 ```bash
+# 安装前端依赖
 npm install
+
+# 安装后端依赖
+cd server && npm install && cd ..
 ```
 
-### 3. 安装后端依赖
+### 3. 配置环境变量
 
 ```bash
-cd server
-npm install
-cd ..
-```
-
-### 4. 配置环境变量
-
-```bash
-# 复制环境变量模板
+# 复制前端环境变量模板
 cp .env.example .env.development
+
+# 复制后端环境变量模板
 cp server/.env.example server/.env.development
 ```
 
 编辑 `server/.env.development`，配置数据库连接：
 
 ```bash
+# 数据库配置
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_password    # 修改为你的MySQL密码
 DB_NAME=star_citizen_promotion
+
+# JWT配置
+JWT_SECRET=your-secure-jwt-secret-key
+JWT_EXPIRES_IN=7d
 ```
 
-### 5. 初始化数据库
+### 4. 初始化数据库
 
 ```bash
 cd server
 npm run db:init
 ```
 
-### 6. 启动服务
+### 5. 启动服务
 
-**方式一：分别启动（开发推荐）**
+**方式一：分别启动（推荐开发使用）**
 
 ```bash
 # 终端1 - 启动后端
-cd server
-npm run dev
+cd server && npm run dev
 
 # 终端2 - 启动前端
-cd ..
 npm run dev
 ```
 
-**方式二：使用脚本一键启动**
+**方式二：后台启动后端**
 
 ```bash
 # Windows PowerShell
@@ -314,15 +356,19 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd server; npm ru
 npm run dev
 ```
 
-### 7. 访问应用
+### 6. 访问应用
 
-- 前端：http://localhost:3000
-- 后端API：http://localhost:3001
-- 健康检查：http://localhost:3001/health
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| 前端 | http://localhost:3000 | Vue开发服务器 |
+| 后端API | http://localhost:3001 | Express RESTful API |
+| 健康检查 | http://localhost:3001/health | 服务状态检查 |
 
 ---
 
 ## 配置说明
+
+详细配置说明请参阅 [配置文档](docs/CONFIG.md)。
 
 ### 前端环境变量
 
@@ -338,12 +384,12 @@ VITE_BACKEND_URL=http://localhost:3001
 
 # AI服务
 VITE_AI_SERVICE_URL=http://localhost:3002
+VITE_AI_TIMEOUT=30000
+VITE_AI_MAX_RETRIES=3
+VITE_AI_MAX_CONCURRENT=3
 
 # WebSocket
 VITE_WS_URL=ws://localhost:3003
-
-# 是否使用API
-VITE_USE_API=true
 ```
 
 ### 后端环境变量
@@ -374,9 +420,6 @@ BCRYPT_SALT_ROUNDS=12
 # 速率限制
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=100
-
-# WebSocket配置
-WS_PORT=3003
 ```
 
 ### 端口配置
@@ -393,14 +436,17 @@ WS_PORT=3003
 
 ## API文档
 
+详细API文档请参阅 [API参考文档](docs/API.md)。
+
 ### 认证接口
 
 | 方法 | 端点 | 说明 | 认证 |
 |------|------|------|------|
 | POST | `/api/auth/register` | 用户注册 | ❌ |
 | POST | `/api/auth/login` | 用户登录 | ❌ |
-| POST | `/api/auth/refresh` | 刷新令牌 | ❌ |
 | GET | `/api/auth/me` | 获取当前用户 | ✅ |
+| PUT | `/api/auth/profile` | 更新资料 | ✅ |
+| PUT | `/api/auth/password` | 修改密码 | ✅ |
 
 ### 申请接口
 
@@ -464,9 +510,12 @@ WS_PORT=3003
 | `npm run lint` | 运行ESLint检查 |
 | `npm run lint:fix` | 自动修复ESLint问题 |
 | `npm run format` | 格式化代码 |
-| `npm run test` | 运行测试 |
+| `npm run test` | 运行单元测试 |
 | `npm run test:watch` | 监听模式测试 |
 | `npm run test:coverage` | 测试覆盖率报告 |
+| `npm run test:e2e` | 运行E2E测试 |
+| `npm run test:e2e:ui` | E2E测试UI模式 |
+| `npm run test:all` | 运行所有测试 |
 
 **后端脚本：**
 
@@ -474,7 +523,6 @@ WS_PORT=3003
 |------|------|
 | `npm run dev` | 启动开发服务器（热重载） |
 | `npm start` | 启动生产服务器 |
-| `npm run lint` | 运行ESLint检查 |
 | `npm run test` | 运行测试 |
 | `npm run db:init` | 初始化数据库 |
 | `npm run db:seed` | 填充种子数据 |
@@ -522,6 +570,7 @@ WS_PORT=3003
 | `styles` | 样式相关 |
 | `config` | 配置文件 |
 | `api` | API接口 |
+| `ai` | AI服务相关 |
 
 ---
 
@@ -538,73 +587,20 @@ npm run build
 
 ### Docker部署
 
-**前端 Dockerfile：**
+项目提供完整的Docker支持：
 
-```dockerfile
-FROM node:22-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+```bash
+# 使用Docker Compose启动
+docker-compose up -d
 ```
 
-**后端 Dockerfile：**
+**docker-compose.yml 服务说明：**
 
-```dockerfile
-FROM node:22-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3001
-CMD ["node", "src/index.js"]
-```
-
-**docker-compose.yml：**
-
-```yaml
-version: '3.8'
-services:
-  frontend:
-    build: .
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-
-  backend:
-    build: ./server
-    ports:
-      - "3001:3001"
-    environment:
-      - NODE_ENV=production
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=star_citizen_promotion
-    depends_on:
-      - db
-
-  db:
-    image: mysql:8.0
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=star_citizen_promotion
-    volumes:
-      - mysql_data:/var/lib/mysql
-
-volumes:
-  mysql_data:
-```
+| 服务 | 镜像 | 端口 | 说明 |
+|------|------|------|------|
+| frontend | nginx:alpine | 80 | 前端静态服务 |
+| backend | node:22-alpine | 3001 | 后端API服务 |
+| db | mysql:8.0 | 3306 | MySQL数据库 |
 
 ### 静态托管部署
 
@@ -622,7 +618,7 @@ volumes:
 ### 前端测试
 
 ```bash
-# 运行所有测试
+# 运行单元测试
 npm run test
 
 # 监听模式
@@ -630,14 +626,21 @@ npm run test:watch
 
 # 生成覆盖率报告
 npm run test:coverage
+
+# 运行E2E测试
+npm run test:e2e
+
+# E2E测试UI模式
+npm run test:e2e:ui
+
+# 运行所有测试
+npm run test:all
 ```
 
 ### 后端测试
 
 ```bash
 cd server
-
-# 运行所有测试
 npm run test
 ```
 
@@ -647,8 +650,58 @@ npm run test
 |------|----------|----------|
 | 组件 | `tests/components/*.test.js` | 组件渲染、交互 |
 | 服务 | `tests/services/*.test.js` | 业务逻辑 |
+| 组合式函数 | `tests/composables/*.test.js` | useAI等 |
+| 路由 | `tests/router/*.test.js` | 路由配置 |
+| 配置 | `tests/config/*.test.js` | 站点配置 |
+| E2E | `e2e/*.spec.js` | 端到端测试 |
 | API | `server/tests/api.test.js` | 接口测试 |
 | 认证 | `server/tests/auth.test.js` | 认证流程 |
+
+---
+
+## 常见问题
+
+### Q: 数据库连接失败？
+
+A: 检查以下项目：
+1. MySQL服务是否启动
+2. `.env.development` 中的数据库配置是否正确
+3. 数据库用户是否有足够权限
+4. 数据库是否已创建
+
+```bash
+# 测试数据库连接
+cd server
+node -e "require('./src/database/pool.js').testConnection()"
+```
+
+### Q: 前端无法访问后端API？
+
+A: 检查以下项目：
+1. 后端服务是否启动（访问 http://localhost:3001/health）
+2. Vite代理配置是否正确
+3. CORS配置是否正确
+
+### Q: JWT令牌无效？
+
+A: 检查以下项目：
+1. `JWT_SECRET` 配置是否一致
+2. 令牌是否过期
+3. 请求头是否包含 `Authorization: Bearer <token>`
+
+### Q: E2E测试失败？
+
+A: 检查以下项目：
+1. 是否已运行 `npm run build` 构建前端
+2. Playwright浏览器是否已安装 (`npx playwright install`)
+3. 端口4173是否被占用
+
+### Q: 安装依赖失败？
+
+A: 尝试以下解决方案：
+1. 清除npm缓存：`npm cache clean --force`
+2. 删除node_modules后重新安装
+3. 使用国内镜像：`npm config set registry https://registry.npmmirror.com`
 
 ---
 
@@ -673,51 +726,6 @@ npm run test
 - [ ] 所有测试通过
 - [ ] 提交信息符合规范
 - [ ] 更新相关文档
-
----
-
-## 维护说明
-
-### 常见问题
-
-**Q: 数据库连接失败？**
-
-A: 检查以下项目：
-1. MySQL服务是否启动
-2. `.env.development` 中的数据库配置是否正确
-3. 数据库用户是否有足够权限
-
-**Q: 前端无法访问后端API？**
-
-A: 检查以下项目：
-1. 后端服务是否启动（访问 http://localhost:3001/health）
-2. Vite代理配置是否正确
-3. CORS配置是否正确
-
-**Q: JWT令牌无效？**
-
-A: 检查以下项目：
-1. `JWT_SECRET` 配置是否一致
-2. 令牌是否过期
-3. 请求头是否包含 `Authorization: Bearer <token>`
-
-### 日志查看
-
-后端日志输出到控制台，包含：
-- 请求日志（Morgan）
-- 错误日志
-- 数据库连接状态
-
-### 数据库维护
-
-```bash
-# 重新初始化数据库
-cd server
-npm run db:init
-
-# 填充种子数据
-npm run db:seed
-```
 
 ---
 
