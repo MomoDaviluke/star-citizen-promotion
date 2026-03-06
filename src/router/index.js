@@ -49,6 +49,68 @@ const routes = [
     meta: { preload: true }
   },
   {
+    path: '/login',
+    name: '登录',
+    component: () => import('../views/Login.vue'),
+    meta: { guest: true }
+  },
+  {
+    path: '/register',
+    name: '注册',
+    component: () => import('../views/Register.vue'),
+    meta: { guest: true }
+  },
+  {
+    path: '/profile',
+    name: '个人中心',
+    component: () => import('../views/Profile.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/application/status',
+    name: '申请状态',
+    component: () => import('../views/ApplicationStatus.vue'),
+    meta: { guest: true }
+  },
+  {
+    path: '/admin',
+    name: '管理后台',
+    component: () => import('../views/admin/Dashboard.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        name: '仪表盘',
+        component: () => import('../views/admin/Dashboard.vue')
+      },
+      {
+        path: 'applications',
+        name: '申请管理',
+        component: () => import('../views/admin/ApplicationsAdmin.vue')
+      },
+      {
+        path: 'members',
+        name: '成员管理',
+        component: () => import('../views/admin/MembersAdmin.vue')
+      },
+      {
+        path: 'projects',
+        name: '项目管理',
+        component: () => import('../views/admin/ProjectsAdmin.vue')
+      },
+      {
+        path: 'pilots',
+        name: '飞行员管理',
+        component: () => import('../views/admin/PilotsAdmin.vue')
+      },
+      {
+        path: 'settings',
+        name: '站点设置',
+        component: () => import('../views/admin/Settings.vue')
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('../views/NotFound.vue')

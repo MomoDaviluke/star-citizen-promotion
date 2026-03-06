@@ -3,23 +3,17 @@
  * @description 后端 API 接口测试
  */
 
-import { describe, it, beforeAll, afterAll, expect, beforeEach } from '@jest/globals'
+import { describe, it, beforeAll, expect } from '@jest/globals'
 import request from 'supertest'
 import express from 'express'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 let app
-let server
 
-async function createTestApp() {
+function createTestApp() {
   const app = express()
-  
+
   app.use(express.json())
-  
+
   app.get('/health', (req, res) => {
     res.json({
       status: 'ok',
@@ -103,15 +97,15 @@ async function createTestApp() {
   })
 
   app.post('/api/applications', (req, res) => {
-    const { name, email, discord, experience, availability, reason } = req.body
-    
+    const { name, email } = req.body
+
     if (!name || !email) {
       return res.status(400).json({
         success: false,
         error: '缺少必填字段'
       })
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -119,7 +113,7 @@ async function createTestApp() {
         error: '无效的邮箱地址'
       })
     }
-    
+
     res.status(201).json({
       success: true,
       data: {
@@ -130,15 +124,15 @@ async function createTestApp() {
   })
 
   app.post('/api/auth/register', (req, res) => {
-    const { username, email, password } = req.body
-    
+    const { username, email } = req.body
+
     if (email === 'duplicate@example.com') {
       return res.status(409).json({
         success: false,
         error: '邮箱已被注册'
       })
     }
-    
+
     res.status(201).json({
       success: true,
       data: {
@@ -149,15 +143,15 @@ async function createTestApp() {
   })
 
   app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body
-    
+    const { email } = req.body
+
     if (email === 'nonexistent@example.com') {
       return res.status(401).json({
         success: false,
         error: '无效的凭证'
       })
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -169,14 +163,14 @@ async function createTestApp() {
 
   app.get('/api/auth/me', (req, res) => {
     const authHeader = req.headers.authorization
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
         error: '未授权访问'
       })
     }
-    
+
     res.json({
       success: true,
       data: { id: 1, username: 'testuser', email: 'test@example.com' }
@@ -194,8 +188,8 @@ async function createTestApp() {
 }
 
 describe('健康检查', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('GET /health 应返回服务状态', async () => {
@@ -209,8 +203,8 @@ describe('健康检查', () => {
 })
 
 describe('统计接口', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('GET /api/stats 应返回统计数据', async () => {
@@ -224,8 +218,8 @@ describe('统计接口', () => {
 })
 
 describe('飞行员接口', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('GET /api/pilots 应返回飞行员列表', async () => {
@@ -256,8 +250,8 @@ describe('飞行员接口', () => {
 })
 
 describe('成员接口', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('GET /api/members 应返回成员列表', async () => {
@@ -278,8 +272,8 @@ describe('成员接口', () => {
 })
 
 describe('项目接口', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('GET /api/projects 应返回项目列表', async () => {
@@ -300,8 +294,8 @@ describe('项目接口', () => {
 })
 
 describe('申请接口', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('POST /api/applications 应成功提交申请', async () => {
@@ -347,8 +341,8 @@ describe('申请接口', () => {
 })
 
 describe('认证接口', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('POST /api/auth/register 应成功注册用户', async () => {
@@ -410,8 +404,8 @@ describe('认证接口', () => {
 })
 
 describe('404 处理', () => {
-  beforeAll(async () => {
-    app = await createTestApp()
+  beforeAll(() => {
+    app = createTestApp()
   })
 
   it('未知路由应返回 404', async () => {

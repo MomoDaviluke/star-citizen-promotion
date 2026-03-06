@@ -261,6 +261,49 @@ export const dataService = {
    */
   async deletePilot(id) {
     return httpClient.delete(`/pilots/${id}`)
+  },
+
+  /**
+   * 获取申请列表（管理员）
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Object>} 申请列表和分页信息
+   */
+  async getApplications(params = {}) {
+    if (USE_API) {
+      try {
+        const response = await httpClient.get('/applications', params)
+        if (response.success) {
+          return response
+        }
+      } catch (error) {
+        console.warn('从 API 获取申请数据失败:', error)
+      }
+    }
+    return {
+      success: true,
+      data: [],
+      pagination: { total: 0, limit: 50, offset: 0, hasMore: false }
+    }
+  },
+
+  /**
+   * 更新申请状态（管理员）
+   * @param {string} id - 申请 ID
+   * @param {string} status - 新状态
+   * @param {string} [note] - 备注
+   * @returns {Promise<Object>} 更新结果
+   */
+  async updateApplicationStatus(id, status, note) {
+    return httpClient.put(`/applications/${id}/status`, { status, note })
+  },
+
+  /**
+   * 获取活动日志
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Object>} 日志列表
+   */
+  async getActivityLogs(params = {}) {
+    return httpClient.get('/activity-logs', params)
   }
 }
 

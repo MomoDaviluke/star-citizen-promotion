@@ -44,12 +44,24 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+
 # Environment files (keep examples only)
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
 !.env.example
-# Do NOT commit .env.development or .env.production - they contain secrets!
+
+# Database files
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+server/data/*.sqlite*
 
 # OS files
 .DS_Store
@@ -61,3 +73,21 @@ Thumbs.db
 # Debug
 *.cpuprofile
 *.heapsnapshot
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# IDE
+*.iml
+.project
+.classpath
+.settings/
+
+# Test coverage
+.nyc_output/
+lcov.info
+
+# Docker volumes (local)
+docker-volumes/
