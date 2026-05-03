@@ -5,7 +5,6 @@
  */
 
 import { createPool, query, queryOne, testConnection, closePool } from './pool.js'
-import { config } from '../config/index.js'
 
 export { closePool }
 

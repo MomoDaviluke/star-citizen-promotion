@@ -7,7 +7,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
-    plugins: [vue(), vueDevTools()],
+    plugins: [
+      vue(),
+      ...(mode !== 'production' ? [vueDevTools()] : [])
+    ],
 
     resolve: {
       alias: {

@@ -12,8 +12,10 @@ import { rateLimit } from 'express-rate-limit'
 
 import { config } from './config/index.js'
 import { initDatabase, closePool } from './database/init.js'
+import { query } from './database/pool.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
+import { requestId } from './middleware/requestId.js'
 
 import authRoutes from './routes/auth.js'
 import memberRoutes from './routes/members.js'
@@ -47,12 +49,30 @@ app.use(helmet({
 /**
  * CORS 配置
  */
-app.use(cors({
-  origin: config.frontendUrl,
+const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}))
+}
+
+if (config.nodeEnv === 'production') {
+  corsOptions.origin = (origin, callback) => {
+    if (!origin || config.cors.allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS: Origin ${origin} not allowed`))
+    }
+  }
+} else {
+  corsOptions.origin = config.frontendUrl
+}
+
+app.use(cors(corsOptions))
+
+/**
+ * 请求 ID 追踪
+ */
+app.use(requestId)
 
 /**
  * 请求体解析
@@ -83,11 +103,52 @@ app.use('/api/', apiLimiter)
 /**
  * 健康检查端点
  */
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
+async function performHealthCheck() {
+  const checks = {
+    database: false,
+    memory: false
+  }
+
+  try {
+    await query('SELECT 1')
+    checks.database = true
+  } catch {
+    checks.database = false
+  }
+
+  const memUsage = process.memoryUsage()
+  const memUsageMB = {
+    rss: Math.round(memUsage.rss / 1024 / 1024),
+    heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+    heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024)
+  }
+  checks.memory = memUsageMB.heapUsed < memUsageMB.heapTotal * 0.9
+
+  return checks
+}
+
+app.get('/health', async (req, res) => {
+  const checks = await performHealthCheck()
+  const allHealthy = Object.values(checks).every(Boolean)
+
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: Math.round(process.uptime()),
+    checks
+  })
+})
+
+app.get('/health/live', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+app.get('/health/ready', async (req, res) => {
+  const checks = await performHealthCheck()
+  const allHealthy = Object.values(checks).every(Boolean)
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'ok' : 'not ready',
+    checks
   })
 })
 

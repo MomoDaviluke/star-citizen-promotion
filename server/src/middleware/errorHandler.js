@@ -4,6 +4,9 @@
  * @module server/middleware/errorHandler
  */
 
+import logger from '../utils/logger.js'
+import { config } from '../config/index.js'
+
 /**
  * 自定义 API 错误类
  */
@@ -47,16 +50,21 @@ export class ApiError extends Error {
  * @param {Response} res - Express 响应对象
  * @param {NextFunction} next - Express next 函数
  */
-export function errorHandler(err, req, res, next) {
-  console.error('❌ 错误:', {
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    body: req.body,
-    query: req.query,
-    params: req.params
-  })
+export function errorHandler(err, req, res, _next) {
+  if (config.nodeEnv !== 'production') {
+    logger.error('请求错误', {
+      message: err.message,
+      stack: err.stack,
+      url: req.url,
+      method: req.method
+    })
+  } else {
+    logger.error('请求错误', {
+      message: err.message,
+      url: req.url,
+      method: req.method
+    })
+  }
 
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({
@@ -120,5 +128,3 @@ export function notFoundHandler(req, res) {
     timestamp: new Date().toISOString()
   })
 }
-
-export default errorHandler

@@ -192,6 +192,10 @@ jobs:
     steps:
       - name: 检查测试结果
         run: |
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "代码检查失败"
+            exit 1
+          fi
           if [ "${{ needs.test-frontend.result }}" != "success" ] || [ "${{ needs.test-backend.result }}" != "success" ]; then
             echo "测试失败，请检查测试报告"
             exit 1

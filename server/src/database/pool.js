@@ -9,21 +9,25 @@ import { config } from '../config/index.js'
 
 let pool = null
 
-/**
- * 创建数据库连接池
- * @returns {Promise<mysql.Pool>} MySQL 连接池实例
- */
 export async function createPool() {
   if (pool) {
     return pool
   }
 
-  pool = mysql.createPool(config.database)
+  const dbConfig = {
+    host: config.database.host,
+    port: config.database.port,
+    user: config.database.user,
+    password: config.database.password,
+    database: config.database.name,
+    waitForConnections: config.database.waitForConnections,
+    connectionLimit: config.database.connectionLimit,
+    queueLimit: config.database.queueLimit,
+    timezone: config.database.timezone,
+    charset: config.database.charset
+  }
 
-  console.log('📦 MySQL 连接池创建成功')
-  console.log(`   主机: ${config.database.host}:${config.database.port}`)
-  console.log(`   数据库: ${config.database.database}`)
-
+  pool = mysql.createPool(dbConfig)
   return pool
 }
 

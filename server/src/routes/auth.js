@@ -281,4 +281,50 @@ router.put(
   }
 )
 
+/**
+ * POST /api/auth/refresh
+ * 刷新访问令牌
+ */
+router.post('/refresh', async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw ApiError.unauthorized('缺少认证令牌')
+    }
+
+    const token = authHeader.substring(7)
+
+    let decoded
+    try {
+      decoded = jwt.verify(token, config.jwt.secret)
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        throw ApiError.unauthorized('令牌已过期，请重新登录')
+      }
+      throw ApiError.unauthorized('无效的认证令牌')
+    }
+
+    const user = await queryOne('SELECT id, role FROM users WHERE id = ?', [decoded.userId])
+    if (!user) {
+      throw ApiError.unauthorized('用户不存在')
+    }
+
+    const newToken = jwt.sign(
+      { userId: user.id },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    )
+
+    res.json({
+      success: true,
+      data: {
+        token: newToken
+      }
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 export default router

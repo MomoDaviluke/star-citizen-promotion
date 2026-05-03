@@ -33,7 +33,7 @@ export const config = {
     port: parseInt(process.env.DB_PORT, 10) || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'star_citizen_promotion',
+    name: process.env.DB_NAME || 'star_citizen_promotion',
     waitForConnections: true,
     connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT, 10) || 10,
     queueLimit: 0,
@@ -52,30 +52,61 @@ export const config = {
 
   websocket: {
     port: parseInt(process.env.WS_PORT, 10) || 3003
+  },
+
+  cors: {
+    allowedOrigins: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : [process.env.FRONTEND_URL || 'http://localhost:3000']
+  },
+
+  logging: {
+    level: process.env.LOG_LEVEL || 'info',
+    file: {
+      enabled: process.env.LOG_FILE_ENABLED === 'true',
+      error: process.env.LOG_FILE_ERROR || 'logs/error.log',
+      combined: process.env.LOG_FILE_COMBINED || 'logs/combined.log'
+    }
   }
 }
 
 /**
- * 验证必要的环境变量
- * @throws {Error} 如果缺少必要的环境变量
+ * 生产环境强制校验
+ * @description 生产环境启动前必须满足安全要求，否则抛出错误阻断启动
  */
-export function validateConfig() {
-  const requiredEnvVars = []
-
-  if (config.nodeEnv === 'production') {
-    if (config.jwt.secret === 'star-citizen-secret-key-change-in-production') {
-      console.warn('⚠️ 警告: 生产环境应设置自定义 JWT_SECRET')
-    }
-    if (!process.env.DB_PASSWORD) {
-      console.warn('⚠️ 警告: 生产环境应设置数据库密码')
-    }
+export function validateProductionConfig() {
+  if (config.nodeEnv !== 'production') {
+    return true
   }
 
-  if (requiredEnvVars.length > 0) {
-    throw new Error(`缺少必要的环境变量: ${requiredEnvVars.join(', ')}`)
+  const errors = []
+
+  if (!process.env.JWT_SECRET) {
+    errors.push('JWT_SECRET')
+  } else if (process.env.JWT_SECRET === 'star-citizen-secret-key-change-in-production') {
+    throw new Error(
+      'FATAL: JWT_SECRET must be changed from default value in production. ' +
+      'Please set a strong secret key (at least 32 characters).'
+    )
+  }
+
+  if (!process.env.DB_PASSWORD) {
+    errors.push('DB_PASSWORD')
+  }
+
+  if (!process.env.ALLOWED_ORIGINS) {
+    console.warn('⚠️ 警告: ALLOWED_ORIGINS not set. CORS will use FRONTEND_URL as fallback.')
+  }
+
+  if (errors.length > 0) {
+    throw new Error(
+      `FATAL: Missing required production environment variables: ${errors.join(', ')}`
+    )
   }
 
   return true
 }
+
+validateProductionConfig()
 
 export default config
