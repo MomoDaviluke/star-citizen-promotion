@@ -151,16 +151,16 @@ describe('errorHandler', () => {
     })
   })
 
-  it('应处理 SQLITE_CONSTRAINT 错误', () => {
-    const error = new Error('UNIQUE constraint failed')
-    error.code = 'SQLITE_CONSTRAINT'
+  it('应处理 ER_DUP_ENTRY 错误', () => {
+    const error = new Error('Duplicate entry')
+    error.code = 'ER_DUP_ENTRY'
 
     errorHandler(error, req, res, next)
 
     expect(res.status).toHaveBeenCalledWith(409)
     expect(res.json).toHaveBeenCalledWith({
       success: false,
-      error: '数据约束冲突',
+      error: '数据约束冲突，记录已存在',
       timestamp: expect.any(String)
     })
   })

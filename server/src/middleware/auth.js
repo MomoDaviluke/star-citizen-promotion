@@ -17,7 +17,7 @@ export function authenticate(req, res, next) {
   const authHeader = req.headers.authorization
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw ApiError.unauthorized('缺少认证令牌')
+    return next(ApiError.unauthorized('缺少认证令牌'))
   }
 
   const token = authHeader.substring(7)
@@ -30,9 +30,9 @@ export function authenticate(req, res, next) {
     next()
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      throw ApiError.unauthorized('认证令牌已过期')
+      return next(ApiError.unauthorized('认证令牌已过期'))
     }
-    throw ApiError.unauthorized('无效的认证令牌')
+    return next(ApiError.unauthorized('无效的认证令牌'))
   }
 }
 
@@ -67,7 +67,7 @@ export function optionalAuth(req, res, next) {
 export function requireRole(...allowedRoles) {
   return async (req, res, next) => {
     if (!req.user || !req.user.id) {
-      throw ApiError.unauthorized('请先登录')
+      return next(ApiError.unauthorized('请先登录'))
     }
 
     const user = await queryOne(
@@ -76,11 +76,11 @@ export function requireRole(...allowedRoles) {
     )
 
     if (!user) {
-      throw ApiError.unauthorized('用户不存在')
+      return next(ApiError.unauthorized('用户不存在'))
     }
 
     if (!allowedRoles.includes(user.role)) {
-      throw ApiError.forbidden('权限不足，无权访问此资源')
+      return next(ApiError.forbidden('权限不足，无权访问此资源'))
     }
 
     req.user.role = user.role
