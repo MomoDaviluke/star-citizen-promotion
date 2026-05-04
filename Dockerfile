@@ -24,11 +24,8 @@ FROM node:22-alpine AS production
 
 WORKDIR /app
 
-# 安装 serve 用于静态文件服务
-RUN npm install -g serve
-
-# 复制前端构建产物
-COPY --from=frontend-builder /app/dist ./dist
+# 安装 wget 用于健康检查
+RUN apk add --no-cache wget
 
 # 复制后端代码
 COPY --from=backend-builder /app/server ./server
@@ -40,8 +37,8 @@ RUN mkdir -p /app/server/data
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# 暴露端口
-EXPOSE 3001 3000
+# 暴露端口（后端 API）
+EXPOSE 3001
 
 # 启动脚本
 COPY docker-entrypoint.sh /docker-entrypoint.sh

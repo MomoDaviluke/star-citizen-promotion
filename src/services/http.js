@@ -74,11 +74,20 @@ function setStoredUser(user) {
  * @returns {Promise<string>} 新的访问令牌
  */
 async function refreshToken() {
+  const currentToken = getStoredToken()
+
+  const headers = {
+    'Content-Type': 'application/json'
+  }
+
+  // 后端 /api/auth/refresh 需要从 Authorization header 提取旧 token 进行验证
+  if (currentToken) {
+    headers['Authorization'] = `Bearer ${currentToken}`
+  }
+
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    headers
   })
 
   if (!response.ok) {

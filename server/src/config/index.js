@@ -29,7 +29,9 @@ export const config = {
     secret: process.env.JWT_SECRET || (
       nodeEnv === 'test'
         ? 'test-jwt-secret-key'
-        : undefined
+        : nodeEnv === 'development'
+          ? 'dev-only-jwt-secret-do-not-use-in-prod'
+          : undefined
     ),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   },
@@ -40,6 +42,8 @@ export const config = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     name: process.env.DB_NAME || 'star_citizen_promotion',
+    /** @deprecated 使用 name 代替，为向后兼容保留 */
+    get database() { return this.name },
     waitForConnections: true,
     connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT, 10) || 10,
     queueLimit: 0,

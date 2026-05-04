@@ -94,3 +94,6 @@ docker-volumes/
 
 # WorkBuddy local data
 .workbuddy/
+
+# CodeBuddy local data
+.codebuddy/

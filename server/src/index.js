@@ -8,6 +8,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import compression from 'compression'
 import { rateLimit } from 'express-rate-limit'
 
 import { config } from './config/index.js'
@@ -16,6 +17,8 @@ import { query } from './database/pool.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { requestId } from './middleware/requestId.js'
+import { auditLogger } from './middleware/auditLogger.js'
+import { startWebSocket, closeWebSocket } from './websocket.js'
 
 import authRoutes from './routes/auth.js'
 import memberRoutes from './routes/members.js'
@@ -36,7 +39,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", 'data:', 'blob:'],
-      connectSrc: ["'self'", config.frontendUrl],
+      connectSrc: ["'self'", config.frontendUrl, 'ws:', 'wss:'],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -68,6 +71,18 @@ if (config.nodeEnv === 'production') {
 }
 
 app.use(cors(corsOptions))
+
+/**
+ * 响应压缩中间件
+ */
+app.use(compression({
+  level: 6,
+  threshold: 1024, // 仅压缩大于 1KB 的响应
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false
+    return compression.filter(req, res)
+  }
+}))
 
 /**
  * 请求 ID 追踪
@@ -166,20 +181,71 @@ app.get('/health/ready', async (req, res) => {
 })
 
 /**
- * API 路由
+ * API 路由（v1 版本前缀 + 无前缀兼容）
  */
-app.use('/api/auth', authRoutes)
-app.use('/api/members', memberRoutes)
-app.use('/api/projects', projectRoutes)
-app.use('/api/applications', applicationRoutes)
-app.use('/api/stats', statsRoutes)
-app.use('/api/pilots', pilotRoutes)
+const apiV1Prefix = '/api/v1'
+
+// 审计日志中间件（仅对写操作生效）
+app.use('/api/', auditLogger)
+
+// 挂载路由 — 同时支持 /api/v1/ 和 /api/ 两种前缀
+const routeMounts = [
+  { path: '/auth', router: authRoutes },
+  { path: '/members', router: memberRoutes },
+  { path: '/projects', router: projectRoutes },
+  { path: '/applications', router: applicationRoutes },
+  { path: '/stats', router: statsRoutes },
+  { path: '/pilots', router: pilotRoutes }
+]
+
+for (const { path, router } of routeMounts) {
+  app.use(`/api${path}`, router)       // 兼容旧客户端
+  app.use(`${apiV1Prefix}${path}`, router) // v1 版本
+}
 
 /**
  * 错误处理
  */
 app.use(notFoundHandler)
 app.use(errorHandler)
+
+/**
+ * 优雅关闭
+ */
+function gracefulShutdown(server) {
+  let isShuttingDown = false
+
+  return async (signal) => {
+    if (isShuttingDown) return
+    isShuttingDown = true
+
+    console.log(`\n收到 ${signal} 信号，正在优雅关闭...`)
+
+    // 停止接受新连接
+    server.close(() => {
+      console.log('HTTP 服务器已停止接受新连接')
+    })
+
+    // 关闭 WebSocket
+    closeWebSocket()
+
+    // 关闭数据库连接池
+    try {
+      await closePool()
+    } catch (err) {
+      console.error('关闭数据库连接池失败:', err.message)
+    }
+
+    // 强制退出超时：30 秒
+    setTimeout(() => {
+      console.error('⚠️ 优雅关闭超时，强制退出')
+      process.exit(1)
+    }, 30000)
+
+    console.log('✅ 服务器已优雅关闭')
+    process.exit(0)
+  }
+}
 
 /**
  * 初始化数据库并启动服务器
@@ -192,25 +258,16 @@ async function startServer() {
     const server = app.listen(config.port, () => {
       console.log(`🚀 服务器运行在 http://localhost:${config.port}`)
       console.log(`📡 环境: ${config.nodeEnv}`)
+      console.log(`📋 API 版本: v1 (${apiV1Prefix}/*) + 兼容 (/api/*)`)
     })
 
-    process.on('SIGTERM', async () => {
-      console.log('收到 SIGTERM 信号，正在关闭服务器...')
-      server.close(async () => {
-        await closePool()
-        console.log('服务器已关闭')
-        process.exit(0)
-      })
-    })
+    // 启动 WebSocket 服务（挂载在同一 HTTP 服务器上）
+    startWebSocket(server)
 
-    process.on('SIGINT', async () => {
-      console.log('收到 SIGINT 信号，正在关闭服务器...')
-      server.close(async () => {
-        await closePool()
-        console.log('服务器已关闭')
-        process.exit(0)
-      })
-    })
+    // 注册优雅关闭信号处理
+    const shutdown = gracefulShutdown(server)
+    process.on('SIGTERM', () => shutdown('SIGTERM'))
+    process.on('SIGINT', () => shutdown('SIGINT'))
 
     return server
   } catch (error) {

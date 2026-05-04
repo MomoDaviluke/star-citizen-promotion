@@ -26,6 +26,16 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] }
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      testIgnore: process.env.CI ? ['**/*.spec.js'] : []  // CI 中仅跑 chromium，本地可全跑
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+      testIgnore: process.env.CI ? ['**/*.spec.js'] : []  // CI 中仅跑 chromium，本地可全跑
     }
   ],
   webServer: {

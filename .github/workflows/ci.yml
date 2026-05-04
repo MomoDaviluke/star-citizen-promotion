@@ -23,10 +23,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: 安装依赖
+      - name: 安装前端依赖
         run: npm ci
 
-      - name: 运行 ESLint
+      - name: 运行前端 ESLint
+        run: npm run lint
+
+      - name: 安装后端依赖
+        working-directory: ./server
+        run: npm ci
+
+      - name: 运行后端 ESLint
+        working-directory: ./server
         run: npm run lint
 
   test-frontend:
@@ -49,7 +57,7 @@ jobs:
         run: npm run test -- --coverage
 
       - name: 上传覆盖率报告
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./coverage/lcov.info
           flags: frontend
@@ -94,12 +102,12 @@ jobs:
           DB_USER: root
           DB_PASSWORD: test_password
           DB_NAME: test_db
-          JWT_SECRET: test-secret-key
+          JWT_SECRET: test-secret-key-with-at-least-32-characters
           NODE_ENV: test
         run: npm test
 
       - name: 上传覆盖率报告
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./server/coverage/lcov.info
           flags: backend
@@ -174,13 +182,15 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 运行安全审计
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+      - name: 前端安全审计
+        run: npm audit --audit-level=high
+
+      - name: 后端安全审计
+        working-directory: ./server
+        run: npm audit --audit-level=high
 
       - name: 运行 Snyk 扫描
         uses: snyk/actions/node@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
