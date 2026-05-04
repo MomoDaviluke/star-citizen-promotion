@@ -100,16 +100,18 @@ export function errorHandler(err, req, res, _next) {
     })
   }
 
-  if (err.code === 'SQLITE_CONSTRAINT') {
+  if (err.code === 'ER_DUP_ENTRY') {
     return res.status(409).json({
       success: false,
-      error: '数据约束冲突',
+      error: '数据约束冲突，记录已存在',
       timestamp: new Date().toISOString()
     })
   }
 
   const statusCode = err.statusCode || err.status || 500
-  const message = err.message || '服务器内部错误'
+  const message = config.nodeEnv === 'production'
+    ? '服务器内部错误'
+    : (err.message || '服务器内部错误')
 
   res.status(statusCode).json({
     success: false,

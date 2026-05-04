@@ -259,6 +259,10 @@ router.put(
 
       const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.user.id])
 
+      if (!user) {
+        throw ApiError.notFound('用户不存在')
+      }
+
       const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash)
       if (!isPasswordValid) {
         throw ApiError.unauthorized('当前密码错误')

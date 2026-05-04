@@ -87,3 +87,9 @@ export function requireRole(...allowedRoles) {
     next()
   }
 }
+
+/**
+ * 管理员鉴权中间件
+ * @description requireRole('admin') 的快捷方式
+ */
+export const requireAdmin = requireRole('admin')

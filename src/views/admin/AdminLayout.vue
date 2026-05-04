@@ -47,7 +47,7 @@
       </header>
 
       <div class="admin-content">
-        <slot />
+        <router-view />
       </div>
     </main>
   </div>

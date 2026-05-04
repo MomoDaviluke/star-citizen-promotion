@@ -91,3 +91,6 @@ lcov.info
 
 # Docker volumes (local)
 docker-volumes/
+
+# WorkBuddy local data
+.workbuddy/

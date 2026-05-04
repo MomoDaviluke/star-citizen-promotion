@@ -101,6 +101,19 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter)
 
 /**
+ * 认证端点严格速率限制（防止暴力破解）
+ */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: '登录尝试过于频繁，请 15 分钟后再试' },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/register', authLimiter)
+
+/**
  * 健康检查端点
  */
 async function performHealthCheck() {

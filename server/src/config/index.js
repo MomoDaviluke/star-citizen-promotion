@@ -14,17 +14,23 @@ const __dirname = dirname(__filename)
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 dotenv.config({ path: join(__dirname, '../../', envFile) })
 
+const nodeEnv = process.env.NODE_ENV || 'development'
+
 /**
  * 环境配置
  * @type {Object}
  */
 export const config = {
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   port: parseInt(process.env.PORT, 10) || 3001,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'star-citizen-secret-key-change-in-production',
+    secret: process.env.JWT_SECRET || (
+      nodeEnv === 'test'
+        ? 'test-jwt-secret-key'
+        : undefined
+    ),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   },
 
@@ -75,33 +81,37 @@ export const config = {
  * @description 生产环境启动前必须满足安全要求，否则抛出错误阻断启动
  */
 export function validateProductionConfig() {
-  if (config.nodeEnv !== 'production') {
-    return true
-  }
-
   const errors = []
 
-  if (!process.env.JWT_SECRET) {
-    errors.push('JWT_SECRET')
-  } else if (process.env.JWT_SECRET === 'star-citizen-secret-key-change-in-production') {
-    throw new Error(
-      'FATAL: JWT_SECRET must be changed from default value in production. ' +
-      'Please set a strong secret key (at least 32 characters).'
-    )
+  // JWT_SECRET 在非 test 环境中必须显式设置
+  if (config.nodeEnv !== 'test' && !process.env.JWT_SECRET) {
+    if (config.nodeEnv === 'production') {
+      throw new Error(
+        'FATAL: JWT_SECRET must be set in production. ' +
+        'Please set a strong secret key (at least 32 characters).'
+      )
+    }
+    errors.push('JWT_SECRET (not set, using fallback is insecure)')
   }
 
-  if (!process.env.DB_PASSWORD) {
-    errors.push('DB_PASSWORD')
-  }
+  if (config.nodeEnv === 'production') {
+    if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+      throw new Error(
+        'FATAL: JWT_SECRET must be at least 32 characters in production.'
+      )
+    }
 
-  if (!process.env.ALLOWED_ORIGINS) {
-    console.warn('⚠️ 警告: ALLOWED_ORIGINS not set. CORS will use FRONTEND_URL as fallback.')
+    if (!process.env.DB_PASSWORD) {
+      errors.push('DB_PASSWORD')
+    }
+
+    if (!process.env.ALLOWED_ORIGINS) {
+      console.warn('⚠️ 警告: ALLOWED_ORIGINS not set. CORS will use FRONTEND_URL as fallback.')
+    }
   }
 
   if (errors.length > 0) {
-    throw new Error(
-      `FATAL: Missing required production environment variables: ${errors.join(', ')}`
-    )
+    console.warn(`⚠️ 配置警告: ${errors.join(', ')}`)
   }
 
   return true

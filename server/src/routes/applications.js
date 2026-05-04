@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { query, queryOne, update } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth.js'
+import { paginate } from '../middleware/pagination.js'
 
 const router = Router()
 
@@ -17,12 +18,10 @@ const router = Router()
  * GET /api/applications
  * 获取申请列表（需要管理员权限）
  */
-router.get('/', authenticate, requireAdmin, async (req, res, next) => {
+router.get('/', authenticate, requireAdmin, paginate(50, 200), async (req, res, next) => {
   try {
-    const { status, limit = 50, offset = 0 } = req.query
-
-    const limitNum = parseInt(limit, 10)
-    const offsetNum = parseInt(offset, 10)
+    const { status } = req.query
+    const { limit, offset } = req.pagination
 
     let sql = `
       SELECT a.*, u.username as reviewer_name
@@ -36,7 +35,8 @@ router.get('/', authenticate, requireAdmin, async (req, res, next) => {
       params.push(status)
     }
 
-    sql += ` ORDER BY a.created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`
+    sql += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?'
+    params.push(limit, offset)
 
     const applications = await query(sql, params)
 
@@ -51,9 +51,9 @@ router.get('/', authenticate, requireAdmin, async (req, res, next) => {
       data: applications,
       pagination: {
         total,
-        limit: limitNum,
-        offset: offsetNum,
-        hasMore: offsetNum + applications.length < total
+        limit,
+        offset,
+        hasMore: offset + applications.length < total
       }
     })
   } catch (error) {
@@ -84,7 +84,11 @@ router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')
       throw ApiError.notFound('申请不存在')
     }
 
+    // 管理员可查看所有申请；普通用户只能查看自己的申请；未认证用户不可查看
     if (req.user?.role !== 'admin' && application.email !== req.user?.email) {
+      if (!req.user) {
+        throw ApiError.unauthorized('请先登录后查看申请')
+      }
       throw ApiError.forbidden('无权查看此申请')
     }
 

@@ -5,6 +5,24 @@
  */
 
 import { createRouter, createWebHistory } from 'vue-router'
+import httpClient from '../services/http.js'
+
+/**
+ * 检查用户是否已认证
+ * @returns {boolean} 是否已登录
+ */
+function isAuthenticated() {
+  return !!httpClient.getStoredToken()
+}
+
+/**
+ * 检查用户是否为管理员
+ * @returns {boolean} 是否为管理员
+ */
+function isAdmin() {
+  const user = httpClient.getStoredUser()
+  return user?.role === 'admin'
+}
 
 /**
  * 应用路由配置数组
@@ -75,7 +93,7 @@ const routes = [
   {
     path: '/admin',
     name: '管理后台',
-    component: () => import('../views/admin/Dashboard.vue'),
+    component: () => import('../views/admin/AdminLayout.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
@@ -165,6 +183,36 @@ const loadedComponents = new Set()
 const pendingPreloads = new Map()
 
 /**
+ * 页面加载状态
+ */
+let _pageLoadingState = false
+
+/**
+ * 设置页面加载状态回调
+ * @param {Function} callback - 加载状态变化回调
+ */
+let loadingCallback = null
+
+/**
+ * 注册加载状态回调
+ * @param {Function} cb - 回调函数
+ */
+export function onLoadingStateChange(cb) {
+  loadingCallback = cb
+}
+
+/**
+ * 设置页面加载状态
+ * @param {boolean} loading - 是否加载中
+ */
+function setPageLoading(loading) {
+  _pageLoadingState = loading
+  if (loadingCallback) {
+    loadingCallback(loading)
+  }
+}
+
+/**
  * 预加载单个路由组件
  * @description 异步加载指定路由的组件，支持去重和错误处理
  * @param {Object} route - 路由配置对象
@@ -223,9 +271,28 @@ function preloadAllRoutes() {
 
 /**
  * 全局前置导航守卫
- * @description 在导航前预加载目标路由组件
+ * @description 统一处理认证/授权检查、组件预加载和加载状态
  */
 router.beforeEach((to, from, next) => {
+  // 1. 认证/授权检查
+  if (to.meta.requiresAuth && !isAuthenticated()) {
+    return next({ name: '登录', query: { redirect: to.fullPath } })
+  }
+
+  if (to.meta.requiresAdmin && !isAdmin()) {
+    return next({ name: '首页' })
+  }
+
+  if (to.meta.guest && isAuthenticated()) {
+    return next({ name: '首页' })
+  }
+
+  // 2. 页面加载状态
+  if (to.path !== from.path) {
+    setPageLoading(true)
+  }
+
+  // 3. 组件预加载
   const targetRoute = routes.find(r => r.path === to.path)
 
   if (targetRoute && !loadedComponents.has(targetRoute.name)) {
@@ -240,9 +307,11 @@ router.beforeEach((to, from, next) => {
 
 /**
  * 全局后置导航守卫
- * @description 导航完成后预加载相邻路由组件，提升用户体验
+ * @description 导航完成后取消加载状态并预加载相邻路由
  */
 router.afterEach((to) => {
+  setPageLoading(false)
+
   const currentIndex = routes.findIndex(r => r.path === to.path)
 
   if (currentIndex !== -1) {
@@ -259,6 +328,14 @@ router.afterEach((to) => {
 })
 
 /**
+ * 路由错误处理
+ * @description 导航出错时强制停止加载
+ */
+router.onError(() => {
+  setPageLoading(false)
+})
+
+/**
  * 初始化路由预加载
  * @description 在页面加载完成后启动路由组件预加载
  */
@@ -270,5 +347,5 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export { preloadComponent, preloadAllRoutes, loadedComponents }
+export { preloadComponent, preloadAllRoutes, loadedComponents, isAuthenticated, isAdmin }
 export default router

@@ -71,6 +71,7 @@ import PageTransition from './components/common/PageTransition.vue'
 import LoadingIndicator from './components/common/LoadingIndicator.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 import { aiService, authService } from './services'
+import { onLoadingStateChange } from './router'
 
 /** 路由实例 */
 const router = useRouter()
@@ -148,34 +149,25 @@ function handleGlobalError(errorInfo) {
 provide('notification', { showNotification, removeNotification })
 
 /**
- * 路由前置守卫
- * @description 导航开始时设置加载状态并显示加载指示器
+ * 监听路由加载状态变化（由 router/index.js 统一管理）
+ * @description 替代之前在 App.vue 中重复注册的路由守卫
  */
-router.beforeEach((to, from, next) => {
-  isPageLoading.value = true
-  if (loadingIndicator.value && to.path !== from.path) {
-    loadingIndicator.value.startLoading()
-  }
-  next()
-})
-
-/**
- * 路由后置守卫
- * @description 导航完成后取消加载状态并隐藏加载指示器
- */
-router.afterEach(() => {
-  isPageLoading.value = false
+onLoadingStateChange((loading) => {
+  isPageLoading.value = loading
   if (loadingIndicator.value) {
-    loadingIndicator.value.stopLoading()
+    if (loading) {
+      loadingIndicator.value.startLoading()
+    } else {
+      loadingIndicator.value.stopLoading()
+    }
   }
 })
 
 /**
- * 路由错误处理
- * @description 导航出错时强制停止加载
+ * 路由错误处理（通知层面，状态管理已在 router 中处理）
+ * @description 导航出错时显示错误通知
  */
-router.onError((error) => {
-  isPageLoading.value = false
+router.onError(() => {
   if (loadingIndicator.value) {
     loadingIndicator.value.forceStop()
   }
@@ -226,7 +218,7 @@ onUnmounted(() => {
  * 显示加载指示器
  * @param {string} [text] - 加载提示文本
  */
-const showLoading = (text) => {
+const showLoading = () => {
   if (loadingIndicator.value) {
     loadingIndicator.value.startLoading()
   }

@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { query, queryOne, update } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { paginate } from '../middleware/pagination.js'
 
 const router = Router()
 
@@ -17,12 +18,10 @@ const router = Router()
  * GET /api/members
  * 获取所有成员列表
  */
-router.get('/', async (req, res, next) => {
+router.get('/', paginate(50, 200), async (req, res, next) => {
   try {
-    const { status, limit = 50, offset = 0 } = req.query
-
-    const limitNum = parseInt(limit, 10)
-    const offsetNum = parseInt(offset, 10)
+    const { status } = req.query
+    const { limit, offset } = req.pagination
 
     let sql = 'SELECT * FROM members'
     const params = []
@@ -32,7 +31,8 @@ router.get('/', async (req, res, next) => {
       params.push(status)
     }
 
-    sql += ` ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offsetNum}`
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    params.push(limit, offset)
 
     const members = await query(sql, params)
 
@@ -47,9 +47,9 @@ router.get('/', async (req, res, next) => {
       data: members,
       pagination: {
         total,
-        limit: limitNum,
-        offset: offsetNum,
-        hasMore: offsetNum + members.length < total
+        limit,
+        offset,
+        hasMore: offset + members.length < total
       }
     })
   } catch (error) {

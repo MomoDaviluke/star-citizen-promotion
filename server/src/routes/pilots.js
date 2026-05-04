@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { query, queryOne, update } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { paginate } from '../middleware/pagination.js'
 
 const router = Router()
 
@@ -17,12 +18,10 @@ const router = Router()
  * GET /api/pilots
  * 获取所有飞行员列表
  */
-router.get('/', async (req, res, next) => {
+router.get('/', paginate(50, 200), async (req, res, next) => {
   try {
-    const { status, limit = 50, offset = 0 } = req.query
-
-    const limitNum = parseInt(limit, 10)
-    const offsetNum = parseInt(offset, 10)
+    const { status } = req.query
+    const { limit, offset } = req.pagination
 
     let sql = 'SELECT * FROM pilots'
     const params = []
@@ -32,7 +31,8 @@ router.get('/', async (req, res, next) => {
       params.push(status)
     }
 
-    sql += ` ORDER BY missions DESC LIMIT ${limitNum} OFFSET ${offsetNum}`
+    sql += ' ORDER BY missions DESC LIMIT ? OFFSET ?'
+    params.push(limit, offset)
 
     const pilots = await query(sql, params)
 
@@ -47,9 +47,9 @@ router.get('/', async (req, res, next) => {
       data: pilots,
       pagination: {
         total,
-        limit: limitNum,
-        offset: offsetNum,
-        hasMore: offsetNum + pilots.length < total
+        limit,
+        offset,
+        hasMore: offset + pilots.length < total
       }
     })
   } catch (error) {
