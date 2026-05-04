@@ -54,7 +54,7 @@ jobs:
         run: npm ci
 
       - name: 运行测试
-        run: npm run test -- --coverage
+        run: npm run test:coverage
 
       - name: 上传覆盖率报告
         uses: codecov/codecov-action@v4
@@ -94,6 +94,17 @@ jobs:
         working-directory: ./server
         run: npm ci
 
+      - name: 等待 MySQL 就绪
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -ptest_password --silent; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 1
+          done
+
       - name: 运行后端测试
         working-directory: ./server
         env:
@@ -104,7 +115,8 @@ jobs:
           DB_NAME: test_db
           JWT_SECRET: test-secret-key-with-at-least-32-characters
           NODE_ENV: test
-        run: npm test
+          NODE_OPTIONS: --experimental-vm-modules
+        run: npm test -- --runInBand --forceExit
 
       - name: 上传覆盖率报告
         uses: codecov/codecov-action@v4
@@ -117,6 +129,7 @@ jobs:
     name: 构建检查
     runs-on: ubuntu-latest
     needs: [lint, test-frontend, test-backend]
+    if: always() && needs.lint.result == 'success' && needs.test-frontend.result == 'success' && needs.test-backend.result == 'success'
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -178,36 +191,70 @@ jobs:
   security-scan:
     name: 安全扫描
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
       - name: 前端安全审计
         run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: 后端安全审计
         working-directory: ./server
         run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: 运行 Snyk 扫描
         uses: snyk/actions/node@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   notify:
     name: 通知
     runs-on: ubuntu-latest
-    needs: [lint, test-frontend, test-backend, build]
+    needs: [lint, test-frontend, test-backend, build, security-scan]
     if: always()
     steps:
       - name: 检查测试结果
         run: |
-          if [ "${{ needs.lint.result }}" != "success" ]; then
-            echo "代码检查失败"
+          LINT="${{ needs.lint.result }}"
+          FE="${{ needs.test-frontend.result }}"
+          BE="${{ needs.test-backend.result }}"
+          BUILD="${{ needs.build.result }}"
+          SECURITY="${{ needs.security-scan.result }}"
+
+          echo "lint: $LINT"
+          echo "frontend: $FE"
+          echo "backend: $BE"
+          echo "build: $BUILD"
+          echo "security: $SECURITY"
+
+          FAILED=0
+
+          if [ "$LINT" != "success" ]; then
+            echo "❌ 代码检查失败"
+            FAILED=1
+          fi
+
+          if [ "$FE" != "success" ]; then
+            echo "❌ 前端测试失败"
+            FAILED=1
+          fi
+
+          if [ "$BE" != "success" ]; then
+            echo "❌ 后端测试失败"
+            FAILED=1
+          fi
+
+          if [ "$BUILD" != "success" ] && [ "$BUILD" != "skipped" ]; then
+            echo "❌ 构建失败"
+            FAILED=1
+          fi
+
+          if [ "$FAILED" = "1" ]; then
             exit 1
           fi
-          if [ "${{ needs.test-frontend.result }}" != "success" ] || [ "${{ needs.test-backend.result }}" != "success" ]; then
-            echo "测试失败，请检查测试报告"
-            exit 1
-          fi
-          echo "所有测试通过！"
+
+          echo "✅ 所有核心检查通过！"

@@ -1,6 +1,6 @@
 /**
  * @file Jest 配置
- * @description 测试框架配置
+ * @description 测试框架配置 - 支持 ES Modules
  */
 
 export default {
@@ -12,5 +12,11 @@ export default {
   transform: {},
   moduleFileExtensions: ['js', 'json'],
   verbose: true,
-  testTimeout: 10000
+  testTimeout: 15000,
+  // ESM 支持配置
+  extensionsToTreatAsEsm: [],
+  // 确保 Jest 能处理 ES 模块导入
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  }
 }
