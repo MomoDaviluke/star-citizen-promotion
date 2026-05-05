@@ -10,9 +10,14 @@
 [![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.21-000000?style=flat-square&logo=express)](https://expressjs.com/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Knex.js](https://img.shields.io/badge/Knex.js-latest-E16426?style=flat-square&logo=knex)](https://knexjs.org/)
 [![Vitest](https://img.shields.io/badge/Vitest-3.0-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.58-45ba4c?style=flat-square&logo=playwright)](https://playwright.dev/)
 [![Jest](https://img.shields.io/badge/Jest-29.7-C21325?style=flat-square&logo=jest)](https://jestjs.io/)
+[![Docker](https://img.shields.io/badge/Docker-latest-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-latest-E6522C?style=flat-square&logo=prometheus)](https://prometheus.io/)
+[![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=flat-square&logo=swagger)](https://swagger.io/)
+[![Sentry](https://img.shields.io/badge/Sentry-latest-362D59?style=flat-square&logo=sentry)](https://sentry.io/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
 
 [功能特性](#-功能特性) ·
@@ -38,11 +43,14 @@
 | 特性 | 说明 |
 |:-----|:-----|
 | 🏗️ **三层架构** | Controllers → Services → Repositories 严格分层，职责清晰 |
-| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试，核心模块覆盖率 >92% |
-| 🚀 **CI/CD** | GitHub Actions 自动化代码检查、测试、构建流水线 |
-| 🔐 **安全加固** | JWT 认证、bcrypt 加密、Helmet 安全头、速率限制、CORS 策略 |
+| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试，覆盖率阈值 80%+ |
+| 🚀 **CI/CD** | GitHub Actions 自动化代码检查、测试、安全扫描、构建流水线 |
+| 🔐 **安全加固** | JWT 认证、bcrypt 加密、Helmet 安全头、速率限制、CORS 策略、敏感数据脱敏 |
 | 📝 **企业日志** | Winston 结构化日志，支持多级别输出与文件归档 |
+| 📊 **可观测性** | Prometheus 指标监控、Sentry 错误追踪、Swagger API 文档 |
 | 🤖 **AI 服务** | 优先级任务队列、并发控制、超时重试、资源监控 |
+| 🗄️ **数据库迁移** | Knex.js 专业迁移工具，支持版本追踪与回滚 |
+| 🔍 **类型安全** | JSDoc + TypeScript 渐进式类型检查 |
 | 🐳 **容器化** | Docker 多阶段构建、docker-compose 编排、Nginx 反向代理 |
 | 📚 **完整文档** | 16+ 份文档覆盖架构设计、需求规格、API 接口、质量标准等 |
 
@@ -113,6 +121,7 @@
 | Playwright | 1.58 | 端到端测试框架 |
 | ESLint | 9.x | 代码质量检查 |
 | @vue/test-utils | 2.4 | Vue 组件测试工具 |
+| Sentry | latest | 前端错误监控 |
 
 ### 后端技术栈
 
@@ -121,6 +130,7 @@
 | Node.js | ≥20.0 | JavaScript 运行时 |
 | Express.js | 4.21 | Web 应用框架 |
 | MySQL2 | 3.12 | MySQL 数据库驱动（连接池） |
+| Knex.js | latest | SQL 查询构建器 & 迁移工具 |
 | jsonwebtoken | 9.0 | JWT 令牌签发与验证 |
 | bcryptjs | 2.4 | 密码哈希加密 |
 | Helmet | 8.0 | HTTP 安全头设置 |
@@ -130,6 +140,9 @@
 | ws | 8.18 | WebSocket 实时通信 |
 | Jest | 29.7 | 后端测试框架 |
 | Supertest | 7.0 | HTTP 接口测试 |
+| Prometheus | latest | 应用性能监控指标 |
+| Swagger | OpenAPI 3.0 | API 文档自动生成 |
+| Sentry | latest | 前端错误监控 |
 
 ---
 

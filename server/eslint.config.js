@@ -10,8 +10,11 @@ export default [
   {
     name: 'server/rules',
     rules: {
-      'no-console': 'off',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-console': 'warn',
+      'no-debugger': 'warn',
+      'prefer-const': 'warn',
+      'no-var': 'error',
       'no-process-exit': 'off'
     }
   },
@@ -22,7 +25,8 @@ export default [
       sourceType: 'module',
       globals: {
         ...globals.node,
-        ...globals.es2021
+        ...globals.es2021,
+        ...globals.jest
       }
     }
   }

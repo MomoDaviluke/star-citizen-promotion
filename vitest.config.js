@@ -13,10 +13,10 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'tests/', 'src/main.js'],
       thresholds: {
-        lines: 20,
-        functions: 30,
-        branches: 15,
-        statements: 20
+        lines: 80,
+        functions: 80,
+        branches: 70,
+        statements: 80
       }
     }
   },

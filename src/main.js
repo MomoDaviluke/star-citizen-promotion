@@ -8,10 +8,12 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './styles/base.css'
+import { initErrorReporting } from './services/errorReporting.js'
 
 const app = createApp(App)
 
 app.use(router)
+initErrorReporting(app, router)
 
 /**
  * 全局错误处理器

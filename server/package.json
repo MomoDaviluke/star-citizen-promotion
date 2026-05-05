@@ -12,7 +12,12 @@
     "lint:fix": "eslint src/ --fix",
     "db:init": "node src/database/migrate.js",
     "db:seed": "node src/database/seed.js",
-    "db:reset": "node src/database/migrate.js && node src/database/seed.js"
+    "db:reset": "node src/database/migrate.js && node src/database/seed.js",
+    "db:migrate": "knex migrate:latest",
+    "db:migrate:rollback": "knex migrate:rollback",
+    "db:migrate:status": "knex migrate:status",
+    "db:make:migration": "knex migrate:make",
+    "db:make:seed": "knex seed:make"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

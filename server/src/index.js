@@ -10,14 +10,18 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import compression from 'compression'
 import { rateLimit } from 'express-rate-limit'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { config } from './config/index.js'
+import { setupSwagger } from './config/swagger.js'
 import { initDatabase, closePool } from './database/init.js'
 import { query } from './database/pool.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { requestId } from './middleware/requestId.js'
 import { auditLogger, startAuditCleanupJob } from './middleware/auditLogger.js'
+import { metricsMiddleware, metricsEndpoint } from './middleware/metrics.js'
 import { startWebSocket, closeWebSocket } from './websocket.js'
 
 import authRoutes from './routes/auth.js'
@@ -27,6 +31,7 @@ import applicationRoutes from './routes/applications.js'
 import statsRoutes from './routes/stats.js'
 import pilotRoutes from './routes/pilots.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 
 /**
@@ -102,6 +107,11 @@ if (config.nodeEnv !== 'test') {
   app.use(morgan('combined'))
   app.use(requestLogger)
 }
+
+/**
+ * Prometheus 指标收集
+ */
+app.use(metricsMiddleware)
 
 /**
  * API 速率限制
@@ -180,6 +190,13 @@ app.get('/health/ready', async (req, res) => {
   })
 })
 
+app.get('/metrics', metricsEndpoint)
+
+// Swagger API 文档（仅开发环境）
+if (config.nodeEnv !== 'production') {
+  setupSwagger(app)
+}
+
 /**
  * API 路由（v1 版本前缀 + 无前缀兼容）
  */
@@ -201,6 +218,21 @@ const routeMounts = [
 for (const { path, router } of routeMounts) {
   app.use(`/api${path}`, router)       // 兼容旧客户端
   app.use(`${apiV1Prefix}${path}`, router) // v1 版本
+}
+
+// 生产环境提供前端静态文件
+if (config.nodeEnv === 'production') {
+  const staticPath = process.env.STATIC_FILES_PATH || path.join(__dirname, '../../dist')
+  app.use(express.static(staticPath))
+
+  // SPA 路由回退
+  app.get('*', (req, res, next) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+      res.sendFile(path.join(staticPath, 'index.html'))
+    } else {
+      next()
+    }
+  })
 }
 
 /**

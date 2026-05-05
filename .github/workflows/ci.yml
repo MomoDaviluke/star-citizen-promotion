@@ -128,8 +128,8 @@ jobs:
   build:
     name: 构建检查
     runs-on: ubuntu-latest
-    needs: [lint, test-frontend, test-backend]
-    if: always() && needs.lint.result == 'success' && needs.test-frontend.result == 'success' && needs.test-backend.result == 'success'
+    needs: [lint, test-frontend, test-backend, security-scan]
+    if: always() && needs.lint.result == 'success' && needs.test-frontend.result == 'success' && needs.test-backend.result == 'success' && needs.security-scan.result == 'success'
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -191,23 +191,19 @@ jobs:
   security-scan:
     name: 安全扫描
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
       - name: 前端安全审计
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: 后端安全审计
         working-directory: ./server
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: 运行 Snyk 扫描
         uses: snyk/actions/node@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 

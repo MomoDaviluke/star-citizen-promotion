@@ -15,8 +15,8 @@ export default [
       'vue/multi-word-component-names': 'off',
       'vue/no-unused-vars': 'warn',
       'no-unused-vars': 'warn',
-      'no-console': 'off',
-      'no-debugger': 'off'
+      'no-console': 'warn',
+      'no-debugger': 'warn'
     }
   },
   {

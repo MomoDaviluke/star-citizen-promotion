@@ -29,9 +29,7 @@ export const config = {
     secret: process.env.JWT_SECRET || (
       nodeEnv === 'test'
         ? 'test-jwt-secret-key'
-        : nodeEnv === 'development'
-          ? 'dev-only-jwt-secret-do-not-use-in-prod'
-          : undefined
+        : undefined
     ),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   },
@@ -95,20 +93,19 @@ export function validateProductionConfig() {
         'Please set a strong secret key (at least 32 characters).'
       )
     }
-    errors.push('JWT_SECRET (not set, using fallback is insecure)')
+    console.warn('⚠️ 警告: JWT_SECRET not set. Application is insecure.')
+    errors.push('JWT_SECRET (not set, application is insecure)')
+  }
+
+  if (config.nodeEnv !== 'test' && !config.database.password) {
+    if (config.nodeEnv === 'production') {
+      throw new Error('FATAL: DB_PASSWORD must be set in production.')
+    }
+    console.warn('⚠️ 警告: DB_PASSWORD not set. Database connection may be insecure.')
+    errors.push('DB_PASSWORD')
   }
 
   if (config.nodeEnv === 'production') {
-    if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-      throw new Error(
-        'FATAL: JWT_SECRET must be at least 32 characters in production.'
-      )
-    }
-
-    if (!process.env.DB_PASSWORD) {
-      errors.push('DB_PASSWORD')
-    }
-
     if (!process.env.ALLOWED_ORIGINS) {
       console.warn('⚠️ 警告: ALLOWED_ORIGINS not set. CORS will use FRONTEND_URL as fallback.')
     }

@@ -30,12 +30,16 @@ RUN apk add --no-cache wget
 # 复制后端代码
 COPY --from=backend-builder /app/server ./server
 
+# 复制前端构建产物
+COPY --from=frontend-builder /app/dist ./dist
+
 # 创建数据目录
 RUN mkdir -p /app/server/data
 
 # 设置环境变量
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV STATIC_FILES_PATH=/app/dist
 
 # 暴露端口（后端 API）
 EXPOSE 3001
