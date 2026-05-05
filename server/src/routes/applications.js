@@ -6,11 +6,17 @@
 
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
-import { v4 as uuidv4 } from 'uuid'
-import { query, queryOne, update } from '../database/pool.js'
+import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth.js'
 import { paginate } from '../middleware/pagination.js'
+import {
+  getApplications,
+  getApplicationById,
+  submitApplication,
+  updateApplicationStatus,
+  deleteApplication
+} from '../services/applicationService.js'
 
 const router = Router()
 
@@ -23,38 +29,12 @@ router.get('/', authenticate, requireAdmin, paginate(50, 200), async (req, res, 
     const { status } = req.query
     const { limit, offset } = req.pagination
 
-    let sql = `
-      SELECT a.*, u.username as reviewer_name
-      FROM applications a
-      LEFT JOIN users u ON a.reviewed_by = u.id
-    `
-    const params = []
-
-    if (status) {
-      sql += ' WHERE a.status = ?'
-      params.push(status)
-    }
-
-    sql += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?'
-    params.push(limit, offset)
-
-    const applications = await query(sql, params)
-
-    const countSql = status
-      ? 'SELECT COUNT(*) as total FROM applications WHERE status = ?'
-      : 'SELECT COUNT(*) as total FROM applications'
-    const countParams = status ? [status] : []
-    const { total } = await queryOne(countSql, countParams)
+    const result = await getApplications({ status, limit, offset })
 
     res.json({
       success: true,
-      data: applications,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + applications.length < total
-      }
+      data: result.applications,
+      pagination: result.pagination
     })
   } catch (error) {
     next(error)
@@ -72,13 +52,7 @@ router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const application = await queryOne(
-      `SELECT a.*, u.username as reviewer_name
-       FROM applications a
-       LEFT JOIN users u ON a.reviewed_by = u.id
-       WHERE a.id = ?`,
-      [req.params.id]
-    )
+    const application = await getApplicationById(req.params.id)
 
     if (!application) {
       throw ApiError.notFound('申请不存在')
@@ -122,27 +96,7 @@ router.post(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { name, email, discord, experience, availability, reason } = req.body
-
-      const recentApplication = await queryOne(
-        `SELECT id, created_at FROM applications
-         WHERE email = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
-        [email]
-      )
-
-      if (recentApplication) {
-        throw ApiError.conflict('您已提交过申请，请等待审核')
-      }
-
-      const id = uuidv4()
-
-      await query(
-        `INSERT INTO applications (id, name, email, discord, experience, availability, reason, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, name, email, discord || null, experience || null, availability || null, reason || null, 'pending']
-      )
-
-      const newApplication = await queryOne('SELECT * FROM applications WHERE id = ?', [id])
+      const newApplication = await submitApplication(req.body)
 
       res.status(201).json({
         success: true,
@@ -179,28 +133,12 @@ router.put(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const { status } = req.body
-
-      const existingApplication = await queryOne('SELECT * FROM applications WHERE id = ?', [id])
-
-      if (!existingApplication) {
-        throw ApiError.notFound('申请不存在')
-      }
-
-      await update(
-        `UPDATE applications
-         SET status = ?, reviewed_by = ?, reviewed_at = NOW()
-         WHERE id = ?`,
-        [status, req.user.id, id]
-      )
-
-      const updatedApplication = await queryOne(
-        `SELECT a.*, u.username as reviewer_name
-         FROM applications a
-         LEFT JOIN users u ON a.reviewed_by = u.id
-         WHERE a.id = ?`,
-        [id]
+      const { status, note } = req.body
+      const updatedApplication = await updateApplicationStatus(
+        req.params.id,
+        status,
+        req.user.id,
+        note
       )
 
       res.json({
@@ -230,14 +168,7 @@ router.delete(
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingApplication = await queryOne('SELECT * FROM applications WHERE id = ?', [id])
-
-      if (!existingApplication) {
-        throw ApiError.notFound('申请不存在')
-      }
-
-      await query('DELETE FROM applications WHERE id = ?', [id])
+      await deleteApplication(req.params.id)
 
       res.json({
         success: true,

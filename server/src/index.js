@@ -17,7 +17,7 @@ import { query } from './database/pool.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { requestId } from './middleware/requestId.js'
-import { auditLogger } from './middleware/auditLogger.js'
+import { auditLogger, startAuditCleanupJob } from './middleware/auditLogger.js'
 import { startWebSocket, closeWebSocket } from './websocket.js'
 
 import authRoutes from './routes/auth.js'
@@ -263,6 +263,9 @@ async function startServer() {
 
     // 启动 WebSocket 服务（挂载在同一 HTTP 服务器上）
     startWebSocket(server)
+
+    // 启动审计日志自动清理任务
+    startAuditCleanupJob()
 
     // 注册优雅关闭信号处理
     const shutdown = gracefulShutdown(server)

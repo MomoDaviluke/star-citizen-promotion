@@ -67,6 +67,53 @@ function getEntityId(path, params) {
  * 审计日志中间件
  * @description 对写操作（POST/PUT/PATCH/DELETE）自动记录审计日志
  */
+/**
+ * 审计日志保留天数
+ */
+const AUDIT_LOG_RETENTION_DAYS = 90
+
+/**
+ * 清理过期审计日志
+ * @description 删除超过保留期限的审计日志记录
+ */
+export async function cleanupAuditLogs() {
+  try {
+    const result = await query(
+      'DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)',
+      [AUDIT_LOG_RETENTION_DAYS]
+    )
+    if (result.affectedRows > 0) {
+      logger.info('审计日志清理完成', {
+        retentionDays: AUDIT_LOG_RETENTION_DAYS,
+        deletedRows: result.affectedRows
+      })
+    }
+    return result.affectedRows
+  } catch (err) {
+    logger.error('审计日志清理失败', { error: err.message })
+    return 0
+  }
+}
+
+/**
+ * 启动定期清理任务
+ * @description 每天凌晨 3 点执行一次清理
+ */
+export function startAuditCleanupJob() {
+  const now = new Date()
+  const next3am = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 3, 0, 0)
+  const msUntil3am = next3am - now
+
+  // 首次等到下一个 3 点执行
+  setTimeout(() => {
+    cleanupAuditLogs()
+    // 之后每 24 小时执行一次
+    setInterval(cleanupAuditLogs, 24 * 60 * 60 * 1000)
+  }, msUntil3am)
+
+  logger.info('审计日志定时清理任务已启动', { firstRun: next3am.toISOString() })
+}
+
 export function auditLogger(req, res, next) {
   // 仅审计写操作
   if (!AUDITED_METHODS.includes(req.method)) {

@@ -6,13 +6,17 @@
 
 import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import { v4 as uuidv4 } from 'uuid'
-import { config } from '../config/index.js'
-import { query, queryOne, update } from '../database/pool.js'
+import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate } from '../middleware/auth.js'
+import {
+  registerUser,
+  loginUser,
+  getUserById,
+  updateUserProfile,
+  changePassword,
+  refreshUserToken
+} from '../services/authService.js'
 
 const router = Router()
 
@@ -57,38 +61,12 @@ router.post('/register', registerValidation, async (req, res, next) => {
       throw ApiError.badRequest('输入验证失败', errors.array())
     }
 
-    const { username, email, password } = req.body
-
-    const existingUser = await queryOne(
-      'SELECT id FROM users WHERE email = ? OR username = ?',
-      [email, username]
-    )
-    if (existingUser) {
-      throw ApiError.conflict('用户名或邮箱已被注册')
-    }
-
-    const passwordHash = await bcrypt.hash(password, config.bcrypt.saltRounds)
-    const userId = uuidv4()
-
-    await query(
-      'INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      [userId, username, email, passwordHash, 'member']
-    )
-
-    const token = jwt.sign({ userId }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
+    const result = await registerUser(req.body)
 
     res.status(201).json({
       success: true,
       message: '注册成功',
-      data: {
-        user: {
-          id: userId,
-          username,
-          email,
-          role: 'member'
-        },
-        token
-      }
+      data: result
     })
   } catch (error) {
     next(error)
@@ -107,32 +85,12 @@ router.post('/login', loginValidation, async (req, res, next) => {
     }
 
     const { email, password } = req.body
-
-    const user = await queryOne('SELECT * FROM users WHERE email = ?', [email])
-    if (!user) {
-      throw ApiError.unauthorized('邮箱或密码错误')
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash)
-    if (!isPasswordValid) {
-      throw ApiError.unauthorized('邮箱或密码错误')
-    }
-
-    const token = jwt.sign({ userId: user.id }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
+    const result = await loginUser(email, password)
 
     res.json({
       success: true,
       message: '登录成功',
-      data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar
-        },
-        token
-      }
+      data: result
     })
   } catch (error) {
     next(error)
@@ -145,10 +103,7 @@ router.post('/login', loginValidation, async (req, res, next) => {
  */
 router.get('/me', authenticate, async (req, res, next) => {
   try {
-    const user = await queryOne(
-      'SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?',
-      [req.user.id]
-    )
+    const user = await getUserById(req.user.id)
 
     if (!user) {
       throw ApiError.notFound('用户不存在')
@@ -185,42 +140,7 @@ router.put(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { username, avatar } = req.body
-      const updates = []
-      const values = []
-
-      if (username) {
-        const existingUser = await queryOne(
-          'SELECT id FROM users WHERE username = ? AND id != ?',
-          [username, req.user.id]
-        )
-        if (existingUser) {
-          throw ApiError.conflict('用户名已被使用')
-        }
-        updates.push('username = ?')
-        values.push(username)
-      }
-
-      if (avatar !== undefined) {
-        updates.push('avatar = ?')
-        values.push(avatar)
-      }
-
-      if (updates.length === 0) {
-        throw ApiError.badRequest('没有要更新的内容')
-      }
-
-      values.push(req.user.id)
-
-      await update(
-        `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        values
-      )
-
-      const updatedUser = await queryOne(
-        'SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?',
-        [req.user.id]
-      )
+      const updatedUser = await updateUserProfile(req.user.id, req.body)
 
       res.json({
         success: true,
@@ -256,24 +176,7 @@ router.put(
       }
 
       const { currentPassword, newPassword } = req.body
-
-      const user = await queryOne('SELECT password_hash FROM users WHERE id = ?', [req.user.id])
-
-      if (!user) {
-        throw ApiError.notFound('用户不存在')
-      }
-
-      const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash)
-      if (!isPasswordValid) {
-        throw ApiError.unauthorized('当前密码错误')
-      }
-
-      const newPasswordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds)
-
-      await update(
-        'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [newPasswordHash, req.user.id]
-      )
+      await changePassword(req.user.id, currentPassword, newPassword)
 
       res.json({
         success: true,
@@ -298,33 +201,11 @@ router.post('/refresh', async (req, res, next) => {
     }
 
     const token = authHeader.substring(7)
-
-    let decoded
-    try {
-      decoded = jwt.verify(token, config.jwt.secret)
-    } catch (err) {
-      if (err.name === 'TokenExpiredError') {
-        throw ApiError.unauthorized('令牌已过期，请重新登录')
-      }
-      throw ApiError.unauthorized('无效的认证令牌')
-    }
-
-    const user = await queryOne('SELECT id, role FROM users WHERE id = ?', [decoded.userId])
-    if (!user) {
-      throw ApiError.unauthorized('用户不存在')
-    }
-
-    const newToken = jwt.sign(
-      { userId: user.id },
-      config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
-    )
+    const result = await refreshUserToken(token)
 
     res.json({
       success: true,
-      data: {
-        token: newToken
-      }
+      data: result
     })
   } catch (error) {
     next(error)

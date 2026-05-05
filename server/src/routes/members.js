@@ -6,11 +6,17 @@
 
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
-import { v4 as uuidv4 } from 'uuid'
-import { query, queryOne, update } from '../database/pool.js'
+import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
 import { paginate } from '../middleware/pagination.js'
+import {
+  getMembers,
+  getMemberById,
+  createMember,
+  updateMember,
+  deleteMember
+} from '../services/memberService.js'
 
 const router = Router()
 
@@ -23,34 +29,12 @@ router.get('/', paginate(50, 200), async (req, res, next) => {
     const { status } = req.query
     const { limit, offset } = req.pagination
 
-    let sql = 'SELECT * FROM members'
-    const params = []
-
-    if (status) {
-      sql += ' WHERE status = ?'
-      params.push(status)
-    }
-
-    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    params.push(limit, offset)
-
-    const members = await query(sql, params)
-
-    const countSql = status
-      ? 'SELECT COUNT(*) as total FROM members WHERE status = ?'
-      : 'SELECT COUNT(*) as total FROM members'
-    const countParams = status ? [status] : []
-    const { total } = await queryOne(countSql, countParams)
+    const result = await getMembers({ status, limit, offset })
 
     res.json({
       success: true,
-      data: members,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + members.length < total
-      }
+      data: result.members,
+      pagination: result.pagination
     })
   } catch (error) {
     next(error)
@@ -68,7 +52,7 @@ router.get('/:id', [param('id').notEmpty().withMessage('成员 ID 不能为空')
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const member = await queryOne('SELECT * FROM members WHERE id = ?', [req.params.id])
+    const member = await getMemberById(req.params.id)
 
     if (!member) {
       throw ApiError.notFound('成员不存在')
@@ -105,15 +89,7 @@ router.post(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { name, role, intro, avatar, joinDate } = req.body
-      const id = uuidv4()
-
-      await query(
-        'INSERT INTO members (id, name, role, intro, avatar, join_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, name, role, intro || null, avatar || null, joinDate || null, 'active']
-      )
-
-      const newMember = await queryOne('SELECT * FROM members WHERE id = ?', [id])
+      const newMember = await createMember(req.body)
 
       res.status(201).json({
         success: true,
@@ -149,50 +125,7 @@ router.put(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingMember = await queryOne('SELECT * FROM members WHERE id = ?', [id])
-
-      if (!existingMember) {
-        throw ApiError.notFound('成员不存在')
-      }
-
-      const { name, role, intro, avatar, status } = req.body
-      const updates = []
-      const values = []
-
-      if (name !== undefined) {
-        updates.push('name = ?')
-        values.push(name)
-      }
-      if (role !== undefined) {
-        updates.push('role = ?')
-        values.push(role)
-      }
-      if (intro !== undefined) {
-        updates.push('intro = ?')
-        values.push(intro)
-      }
-      if (avatar !== undefined) {
-        updates.push('avatar = ?')
-        values.push(avatar)
-      }
-      if (status !== undefined) {
-        updates.push('status = ?')
-        values.push(status)
-      }
-
-      if (updates.length === 0) {
-        throw ApiError.badRequest('没有要更新的内容')
-      }
-
-      values.push(id)
-
-      await update(
-        `UPDATE members SET ${updates.join(', ')} WHERE id = ?`,
-        values
-      )
-
-      const updatedMember = await queryOne('SELECT * FROM members WHERE id = ?', [id])
+      const updatedMember = await updateMember(req.params.id, req.body)
 
       res.json({
         success: true,
@@ -221,14 +154,7 @@ router.delete(
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingMember = await queryOne('SELECT * FROM members WHERE id = ?', [id])
-
-      if (!existingMember) {
-        throw ApiError.notFound('成员不存在')
-      }
-
-      await query('DELETE FROM members WHERE id = ?', [id])
+      await deleteMember(req.params.id)
 
       res.json({
         success: true,

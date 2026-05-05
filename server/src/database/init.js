@@ -143,6 +143,12 @@ async function createTables() {
       INDEX idx_created (created_at),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    PARTITION BY RANGE (YEAR(created_at)) (
+      PARTITION p2024 VALUES LESS THAN (2025),
+      PARTITION p2025 VALUES LESS THAN (2026),
+      PARTITION p2026 VALUES LESS THAN (2027),
+      PARTITION pfuture VALUES LESS THAN MAXVALUE
+    )
   `
 
   await query(createUsersTable)

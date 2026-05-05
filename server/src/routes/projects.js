@@ -6,11 +6,17 @@
 
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
-import { v4 as uuidv4 } from 'uuid'
-import { query, queryOne, update } from '../database/pool.js'
+import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
 import { paginate } from '../middleware/pagination.js'
+import {
+  getProjects,
+  getProjectById,
+  createProject,
+  updateProject,
+  deleteProject
+} from '../services/projectService.js'
 
 const router = Router()
 
@@ -23,34 +29,12 @@ router.get('/', paginate(50, 200), async (req, res, next) => {
     const { status } = req.query
     const { limit, offset } = req.pagination
 
-    let sql = 'SELECT * FROM projects'
-    const params = []
-
-    if (status) {
-      sql += ' WHERE status = ?'
-      params.push(status)
-    }
-
-    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    params.push(limit, offset)
-
-    const projects = await query(sql, params)
-
-    const countSql = status
-      ? 'SELECT COUNT(*) as total FROM projects WHERE status = ?'
-      : 'SELECT COUNT(*) as total FROM projects'
-    const countParams = status ? [status] : []
-    const { total } = await queryOne(countSql, countParams)
+    const result = await getProjects({ status, limit, offset })
 
     res.json({
       success: true,
-      data: projects,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + projects.length < total
-      }
+      data: result.projects,
+      pagination: result.pagination
     })
   } catch (error) {
     next(error)
@@ -68,7 +52,7 @@ router.get('/:id', [param('id').notEmpty().withMessage('项目 ID 不能为空')
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const project = await queryOne('SELECT * FROM projects WHERE id = ?', [req.params.id])
+    const project = await getProjectById(req.params.id)
 
     if (!project) {
       throw ApiError.notFound('项目不存在')
@@ -151,54 +135,7 @@ router.put(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingProject = await queryOne('SELECT * FROM projects WHERE id = ?', [id])
-
-      if (!existingProject) {
-        throw ApiError.notFound('项目不存在')
-      }
-
-      const { name, period, description, status, progress, participants } = req.body
-      const updates = []
-      const values = []
-
-      if (name !== undefined) {
-        updates.push('name = ?')
-        values.push(name)
-      }
-      if (period !== undefined) {
-        updates.push('period = ?')
-        values.push(period)
-      }
-      if (description !== undefined) {
-        updates.push('description = ?')
-        values.push(description)
-      }
-      if (status !== undefined) {
-        updates.push('status = ?')
-        values.push(status)
-      }
-      if (progress !== undefined) {
-        updates.push('progress = ?')
-        values.push(progress)
-      }
-      if (participants !== undefined) {
-        updates.push('participants = ?')
-        values.push(participants)
-      }
-
-      if (updates.length === 0) {
-        throw ApiError.badRequest('没有要更新的内容')
-      }
-
-      values.push(id)
-
-      await update(
-        `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`,
-        values
-      )
-
-      const updatedProject = await queryOne('SELECT * FROM projects WHERE id = ?', [id])
+      const updatedProject = await updateProject(req.params.id, req.body)
 
       res.json({
         success: true,

@@ -6,11 +6,17 @@
 
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
-import { v4 as uuidv4 } from 'uuid'
-import { query, queryOne, update } from '../database/pool.js'
+import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
 import { paginate } from '../middleware/pagination.js'
+import {
+  getPilots,
+  getPilotById,
+  createPilot,
+  updatePilot,
+  deletePilot
+} from '../services/pilotService.js'
 
 const router = Router()
 
@@ -23,34 +29,12 @@ router.get('/', paginate(50, 200), async (req, res, next) => {
     const { status } = req.query
     const { limit, offset } = req.pagination
 
-    let sql = 'SELECT * FROM pilots'
-    const params = []
-
-    if (status) {
-      sql += ' WHERE status = ?'
-      params.push(status)
-    }
-
-    sql += ' ORDER BY missions DESC LIMIT ? OFFSET ?'
-    params.push(limit, offset)
-
-    const pilots = await query(sql, params)
-
-    const countSql = status
-      ? 'SELECT COUNT(*) as total FROM pilots WHERE status = ?'
-      : 'SELECT COUNT(*) as total FROM pilots'
-    const countParams = status ? [status] : []
-    const { total } = await queryOne(countSql, countParams)
+    const result = await getPilots({ status, limit, offset })
 
     res.json({
       success: true,
-      data: pilots,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + pilots.length < total
-      }
+      data: result.pilots,
+      pagination: result.pagination
     })
   } catch (error) {
     next(error)
@@ -68,7 +52,7 @@ router.get('/:id', [param('id').notEmpty().withMessage('飞行员 ID 不能为�
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const pilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [req.params.id])
+    const pilot = await getPilotById(req.params.id)
 
     if (!pilot) {
       throw ApiError.notFound('飞行员不存在')
@@ -107,16 +91,7 @@ router.post(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { name, callsign, ship, description, image, missions, kills } = req.body
-      const id = uuidv4()
-
-      await query(
-        `INSERT INTO pilots (id, name, callsign, ship, description, image, missions, kills, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, name, callsign, ship, description || null, image || null, missions || 0, kills || 0, 'active']
-      )
-
-      const newPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
+      const newPilot = await createPilot(req.body)
 
       res.status(201).json({
         success: true,
@@ -155,62 +130,7 @@ router.put(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
-
-      if (!existingPilot) {
-        throw ApiError.notFound('飞行员不存在')
-      }
-
-      const { name, callsign, ship, description, image, missions, kills, status } = req.body
-      const updates = []
-      const values = []
-
-      if (name !== undefined) {
-        updates.push('name = ?')
-        values.push(name)
-      }
-      if (callsign !== undefined) {
-        updates.push('callsign = ?')
-        values.push(callsign)
-      }
-      if (ship !== undefined) {
-        updates.push('ship = ?')
-        values.push(ship)
-      }
-      if (description !== undefined) {
-        updates.push('description = ?')
-        values.push(description)
-      }
-      if (image !== undefined) {
-        updates.push('image = ?')
-        values.push(image)
-      }
-      if (missions !== undefined) {
-        updates.push('missions = ?')
-        values.push(missions)
-      }
-      if (kills !== undefined) {
-        updates.push('kills = ?')
-        values.push(kills)
-      }
-      if (status !== undefined) {
-        updates.push('status = ?')
-        values.push(status)
-      }
-
-      if (updates.length === 0) {
-        throw ApiError.badRequest('没有要更新的内容')
-      }
-
-      values.push(id)
-
-      await update(
-        `UPDATE pilots SET ${updates.join(', ')} WHERE id = ?`,
-        values
-      )
-
-      const updatedPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
+      const updatedPilot = await updatePilot(req.params.id, req.body)
 
       res.json({
         success: true,
@@ -239,14 +159,7 @@ router.delete(
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingPilot = await queryOne('SELECT * FROM pilots WHERE id = ?', [id])
-
-      if (!existingPilot) {
-        throw ApiError.notFound('飞行员不存在')
-      }
-
-      await query('DELETE FROM pilots WHERE id = ?', [id])
+      await deletePilot(req.params.id)
 
       res.json({
         success: true,
