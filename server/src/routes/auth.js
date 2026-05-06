@@ -6,7 +6,6 @@
 
 import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
-import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate } from '../middleware/auth.js'
 import {

@@ -6,7 +6,6 @@
 
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
-import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth.js'
 import { paginate } from '../middleware/pagination.js'

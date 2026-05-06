@@ -6,7 +6,6 @@
 
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
-import { validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin } from '../middleware/auth.js'
 import { paginate } from '../middleware/pagination.js'
@@ -90,15 +89,7 @@ router.post(
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { name, period, description, status, progress, participants } = req.body
-      const id = uuidv4()
-
-      await query(
-        'INSERT INTO projects (id, name, period, description, status, progress, participants) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, name, period || null, description || null, status || 'planning', progress || 0, participants || 0]
-      )
-
-      const newProject = await queryOne('SELECT * FROM projects WHERE id = ?', [id])
+      const newProject = await createProject(req.body)
 
       res.status(201).json({
         success: true,
@@ -164,14 +155,7 @@ router.delete(
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      const { id } = req.params
-      const existingProject = await queryOne('SELECT * FROM projects WHERE id = ?', [id])
-
-      if (!existingProject) {
-        throw ApiError.notFound('项目不存在')
-      }
-
-      await query('DELETE FROM projects WHERE id = ?', [id])
+      await deleteProject(req.params.id)
 
       res.json({
         success: true,

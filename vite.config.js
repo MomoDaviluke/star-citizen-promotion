@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
         drop: mode === 'production' ? ['console', 'debugger'] : []
       },
       rollupOptions: {
+        external: ['@sentry/vue'],
         output: {
           manualChunks: {
             vue: ['vue', 'vue-router']
