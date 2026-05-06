@@ -204,8 +204,13 @@ jobs:
 
       - name: 运行 Snyk 扫描
         uses: snyk/actions/node@master
+        if: env.SNYK_TOKEN != ''
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk 未配置提示
+        if: env.SNYK_TOKEN == ''
+        run: echo "⚠️ SNYK_TOKEN 未配置，跳过 Snyk 扫描"
 
   notify:
     name: 通知
