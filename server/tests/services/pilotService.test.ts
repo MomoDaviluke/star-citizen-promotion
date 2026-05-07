@@ -4,20 +4,20 @@
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 
-jest.unstable_mockModule('../../src/database/pool.js', () => ({
+jest.unstable_mockModule('../../src/database/pool.ts', () => ({
   query: jest.fn(),
   queryOne: jest.fn(),
   transaction: jest.fn((cb) => cb({ execute: jest.fn() }))
 }))
 
-const { query, queryOne, transaction } = await import('../../src/database/pool.js')
+const { query, queryOne, transaction } = await import('../../src/database/pool.ts')
 const {
   getPilots,
   getPilotById,
   createPilot,
   updatePilot,
   deletePilot
-} = await import('../../src/services/pilotService.js')
+} = await import('../../src/services/pilotService.ts')
 
 describe('pilotService', () => {
   beforeEach(() => {

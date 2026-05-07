@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
-import { ApiError, errorHandler, notFoundHandler } from '../src/middleware/errorHandler.js'
+import { ApiError, errorHandler, notFoundHandler } from '../src/middleware/errorHandler.ts'
 
 describe('ApiError', () => {
   describe('构造函数', () => {

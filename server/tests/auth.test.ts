@@ -14,11 +14,11 @@ jest.unstable_mockModule('jsonwebtoken', () => ({
   }
 }))
 
-jest.unstable_mockModule('../src/database/pool.js', () => ({
+jest.unstable_mockModule('../src/database/pool.ts', () => ({
   queryOne: mockQueryOne
 }))
 
-jest.unstable_mockModule('../src/config/index.js', () => ({
+jest.unstable_mockModule('../src/config/index.ts', () => ({
   config: {
     jwt: {
       secret: 'test-secret-key'
@@ -26,8 +26,8 @@ jest.unstable_mockModule('../src/config/index.js', () => ({
   }
 }))
 
-const { authenticate, optionalAuth, requireRole, requireAdmin } = await import('../src/middleware/auth.js')
-const { ApiError } = await import('../src/middleware/errorHandler.js')
+const { authenticate, optionalAuth, requireRole, requireAdmin } = await import('../src/middleware/auth.ts')
+const { ApiError } = await import('../src/middleware/errorHandler.ts')
 
 describe('authenticate', () => {
   let req, res, next

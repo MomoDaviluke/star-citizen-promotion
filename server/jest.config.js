@@ -1,12 +1,12 @@
 /**
  * @file Jest 配置
- * @description 测试框架配置 - 支持 ES Modules
+ * @description 测试框架配置 - 支持 ES Modules 和 TypeScript (通过 ts-jest)
  */
 
 export default {
   testEnvironment: 'node',
-  testMatch: ['**/tests/**/*.test.js'],
-  collectCoverageFrom: ['src/**/*.js', '!src/index.js'],
+  testMatch: ['**/tests/**/*.test.ts'],
+  collectCoverageFrom: ['src/**/*.ts', '!src/index.ts'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
   coverageThreshold: {
@@ -17,13 +17,26 @@ export default {
       statements: 80
     }
   },
-  transform: {},
-  moduleFileExtensions: ['js', 'json'],
+  preset: 'ts-jest/presets/default-esm',
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      useESM: true,
+      diagnostics: false,
+      tsconfig: {
+        strict: false,
+        noImplicitAny: false,
+        noUnusedLocals: false,
+        noUnusedParameters: false,
+        noImplicitReturns: false,
+        module: 'esnext',
+        moduleResolution: 'bundler'
+      }
+    }]
+  },
+  moduleFileExtensions: ['ts', 'js', 'json'],
   verbose: true,
   testTimeout: 15000,
-  // ESM 支持配置
-  extensionsToTreatAsEsm: [],
-  // 确保 Jest 能处理 ES 模块导入
+  extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   }

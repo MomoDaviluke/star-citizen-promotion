@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 // Mock 数据库层
-jest.unstable_mockModule('../../src/database/pool.js', () => ({
+jest.unstable_mockModule('../../src/database/pool.ts', () => ({
   query: jest.fn(),
   queryOne: jest.fn(),
   transaction: jest.fn((cb) => cb({
@@ -17,15 +17,15 @@ jest.unstable_mockModule('../../src/database/pool.js', () => ({
 }))
 
 // Mock config
-jest.unstable_mockModule('../../src/config/index.js', () => ({
+jest.unstable_mockModule('../../src/config/index.ts', () => ({
   config: {
     bcrypt: { saltRounds: 10 },
     jwt: { secret: 'test-secret', expiresIn: '7d' }
   }
 }))
 
-const { queryOne, transaction } = await import('../../src/database/pool.js')
-const { config } = await import('../../src/config/index.js')
+const { queryOne, transaction } = await import('../../src/database/pool.ts')
+const { config } = await import('../../src/config/index.ts')
 const {
   registerUser,
   loginUser,
@@ -33,7 +33,7 @@ const {
   updateUserProfile,
   changePassword,
   refreshUserToken
-} = await import('../../src/services/authService.js')
+} = await import('../../src/services/authService.ts')
 
 describe('authService', () => {
   beforeEach(() => {
