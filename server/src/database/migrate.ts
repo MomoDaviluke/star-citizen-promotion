@@ -7,10 +7,7 @@
 import mysql from 'mysql2/promise'
 import { config } from '../config/index.js'
 
-/**
- * 创建数据库（如果不存在）
- */
-async function createDatabase() {
+async function createDatabase(): Promise<void> {
   const connection = await mysql.createConnection({
     host: config.database.host,
     port: config.database.port,
@@ -19,18 +16,14 @@ async function createDatabase() {
   })
 
   await connection.query(
-    `CREATE DATABASE IF NOT EXISTS \`${config.database.database}\` 
+    `CREATE DATABASE IF NOT EXISTS \`${config.database.name}\`
      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
   )
 
-  console.log(`✅ 数据库 '${config.database.database}' 已创建或已存在`)
-
+  console.log(`✅ 数据库 '${config.database.name}' 已创建或已存在`)
   await connection.end()
 }
 
-/**
- * 创建用户表
- */
 const createUsersTable = `
   CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
@@ -46,9 +39,6 @@ const createUsersTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 创建成员表
- */
 const createMembersTable = `
   CREATE TABLE IF NOT EXISTS members (
     id VARCHAR(36) PRIMARY KEY,
@@ -64,9 +54,6 @@ const createMembersTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 创建项目表
- */
 const createProjectsTable = `
   CREATE TABLE IF NOT EXISTS projects (
     id VARCHAR(36) PRIMARY KEY,
@@ -82,9 +69,6 @@ const createProjectsTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 创建飞行员表
- */
 const createPilotsTable = `
   CREATE TABLE IF NOT EXISTS pilots (
     id VARCHAR(36) PRIMARY KEY,
@@ -103,9 +87,6 @@ const createPilotsTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 创建申请表
- */
 const createApplicationsTable = `
   CREATE TABLE IF NOT EXISTS applications (
     id VARCHAR(36) PRIMARY KEY,
@@ -127,9 +108,6 @@ const createApplicationsTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 创建统计表
- */
 const createStatsTable = `
   CREATE TABLE IF NOT EXISTS stats (
     id VARCHAR(36) PRIMARY KEY,
@@ -143,9 +121,6 @@ const createStatsTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 创建活动日志表
- */
 const createActivityLogsTable = `
   CREATE TABLE IF NOT EXISTS activity_logs (
     id VARCHAR(36) PRIMARY KEY,
@@ -164,10 +139,7 @@ const createActivityLogsTable = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `
 
-/**
- * 执行数据库迁移
- */
-async function runMigration() {
+async function runMigration(): Promise<void> {
   console.log('🚀 开始数据库迁移...\n')
 
   try {
@@ -178,7 +150,7 @@ async function runMigration() {
       port: config.database.port,
       user: config.database.user,
       password: config.database.password,
-      database: config.database.database,
+      database: config.database.name,
       multipleStatements: true
     })
 
@@ -209,7 +181,7 @@ async function runMigration() {
 
     console.log('\n✅ 数据库迁移完成!')
   } catch (error) {
-    console.error('\n❌ 数据库迁移失败:', error.message)
+    console.error('\n❌ 数据库迁移失败:', (error as Error).message)
     process.exit(1)
   }
 }

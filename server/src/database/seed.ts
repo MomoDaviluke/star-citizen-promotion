@@ -7,10 +7,44 @@
 import mysql from 'mysql2/promise'
 import { config } from '../config/index.js'
 
-/**
- * 执行种子数据填充
- */
-async function runSeed() {
+interface MemberSeed {
+  id: string
+  name: string
+  role: string
+  intro: string
+  status: string
+}
+
+interface PilotSeed {
+  id: string
+  name: string
+  callsign: string
+  ship: string
+  description: string
+  image: string
+  missions: number
+  kills: number
+  status: string
+}
+
+interface ProjectSeed {
+  id: string
+  name: string
+  period: string
+  description: string
+  status: string
+  progress: number
+  participants: number
+}
+
+interface StatSeed {
+  id: string
+  label: string
+  value: string
+  sortOrder: number
+}
+
+async function runSeed(): Promise<void> {
   console.log('🌱 开始填充种子数据...\n')
 
   const connection = await mysql.createConnection({
@@ -18,11 +52,11 @@ async function runSeed() {
     port: config.database.port,
     user: config.database.user,
     password: config.database.password,
-    database: config.database.database
+    database: config.database.name
   })
 
   try {
-    const [userCount] = await connection.query('SELECT COUNT(*) as count FROM users')
+    const [userCount] = await connection.query('SELECT COUNT(*) as count FROM users') as [{ count: number }[], unknown]
     if (userCount[0].count > 0) {
       console.log('⚠️ 数据库已有数据，跳过种子数据填充')
       await connection.end()
@@ -30,7 +64,7 @@ async function runSeed() {
     }
 
     console.log('📝 插入成员数据...')
-    const members = [
+    const members: MemberSeed[] = [
       { id: 'm1', name: 'Echo', role: '舰队指挥', intro: '负责大型行动协调与战术安排。', status: 'active' },
       { id: 'm2', name: 'Nova', role: '后勤总管', intro: '管理补给路线、物资统筹与协作。', status: 'active' },
       { id: 'm3', name: 'Raven', role: '训练官', intro: '组织新人训练、飞行演练与战术复盘。', status: 'active' }
@@ -45,7 +79,7 @@ async function runSeed() {
     console.log(`   ✓ 插入 ${members.length} 条成员数据`)
 
     console.log('📝 插入飞行员数据...')
-    const pilots = [
+    const pilots: PilotSeed[] = [
       {
         id: 'p1',
         name: '维穆 · 王牌飞行员',
@@ -90,7 +124,7 @@ async function runSeed() {
     console.log(`   ✓ 插入 ${pilots.length} 条飞行员数据`)
 
     console.log('📝 插入项目数据...')
-    const projects = [
+    const projects: ProjectSeed[] = [
       {
         id: 'pr1',
         name: '新人成长营',
@@ -129,7 +163,7 @@ async function runSeed() {
     console.log(`   ✓ 插入 ${projects.length} 条项目数据`)
 
     console.log('📝 插入统计数据...')
-    const stats = [
+    const stats: StatSeed[] = [
       { id: 's1', label: '团队成员', value: '20+', sortOrder: 1 },
       { id: 's2', label: '每周活动', value: '3 场', sortOrder: 2 },
       { id: 's3', label: '合作组织', value: '12+', sortOrder: 3 }
@@ -145,7 +179,7 @@ async function runSeed() {
 
     console.log('\n✅ 种子数据填充完成!')
   } catch (error) {
-    console.error('\n❌ 种子数据填充失败:', error.message)
+    console.error('\n❌ 种子数据填充失败:', (error as Error).message)
     process.exit(1)
   } finally {
     await connection.end()

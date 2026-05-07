@@ -4,11 +4,11 @@
  * @module server/routes/projects
  */
 
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
-import { authenticate, requireAdmin } from '../middleware/auth.js'
-import { paginate } from '../middleware/pagination.js'
+import { authenticate, requireAdmin, AuthenticatedRequest } from '../middleware/auth.js'
+import { paginate, PaginatedRequest } from '../middleware/pagination.js'
 import {
   getProjects,
   getProjectById,
@@ -19,14 +19,10 @@ import {
 
 const router = Router()
 
-/**
- * GET /api/projects
- * 获取所有项目列表
- */
-router.get('/', paginate(50, 200), async (req, res, next) => {
+router.get('/', paginate(50, 200), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status } = req.query
-    const { limit, offset } = req.pagination
+    const { status } = req.query as { status?: string }
+    const { limit, offset } = (req as PaginatedRequest).pagination
 
     const result = await getProjects({ status, limit, offset })
 
@@ -40,18 +36,14 @@ router.get('/', paginate(50, 200), async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/projects/:id
- * 获取单个项目详情
- */
-router.get('/:id', [param('id').notEmpty().withMessage('项目 ID 不能为空')], async (req, res, next) => {
+router.get('/:id', [param('id').notEmpty().withMessage('项目 ID 不能为空')], async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const project = await getProjectById(req.params.id)
+    const project = await getProjectById(req.params.id as string)
 
     if (!project) {
       throw ApiError.notFound('项目不存在')
@@ -66,10 +58,6 @@ router.get('/:id', [param('id').notEmpty().withMessage('项目 ID 不能为空')
   }
 })
 
-/**
- * POST /api/projects
- * 创建新项目（需要管理员权限）
- */
 router.post(
   '/',
   authenticate,
@@ -82,7 +70,7 @@ router.post(
     body('progress').optional().isInt({ min: 0, max: 100 }).withMessage('进度值需在 0-100 之间'),
     body('participants').optional().isInt({ min: 0 }).withMessage('参与人数不能为负数')
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -102,10 +90,6 @@ router.post(
   }
 )
 
-/**
- * PUT /api/projects/:id
- * 更新项目信息（需要管理员权限）
- */
 router.put(
   '/:id',
   authenticate,
@@ -119,14 +103,14 @@ router.put(
     body('progress').optional().isInt({ min: 0, max: 100 }).withMessage('进度值需在 0-100 之间'),
     body('participants').optional().isInt({ min: 0 }).withMessage('参与人数不能为负数')
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const updatedProject = await updateProject(req.params.id, req.body)
+      const updatedProject = await updateProject(req.params.id as string, req.body)
 
       res.json({
         success: true,
@@ -139,23 +123,19 @@ router.put(
   }
 )
 
-/**
- * DELETE /api/projects/:id
- * 删除项目（需要管理员权限）
- */
 router.delete(
   '/:id',
   authenticate,
   requireAdmin,
   [param('id').notEmpty().withMessage('项目 ID 不能为空')],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      await deleteProject(req.params.id)
+      await deleteProject(req.params.id as string)
 
       res.json({
         success: true,

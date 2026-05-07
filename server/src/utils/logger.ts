@@ -23,7 +23,7 @@ const logFormat = printf(({ level, message, timestamp: ts, stack, ...metadata })
 const jsonFormat = combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), errors({ stack: true }), json())
 const consoleFormat = combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), colorize({ all: true }), errors({ stack: true }), logFormat)
 
-const transports = [
+const transports: winston.transport[] = [
   new winston.transports.Console({
     format: config.nodeEnv === 'production' ? jsonFormat : consoleFormat
   })

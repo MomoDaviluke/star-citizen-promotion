@@ -4,11 +4,11 @@
  * @module server/routes/applications
  */
 
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
-import { authenticate, requireAdmin, optionalAuth } from '../middleware/auth.js'
-import { paginate } from '../middleware/pagination.js'
+import { authenticate, requireAdmin, optionalAuth, AuthenticatedRequest } from '../middleware/auth.js'
+import { paginate, PaginatedRequest } from '../middleware/pagination.js'
 import {
   getApplications,
   getApplicationById,
@@ -19,14 +19,10 @@ import {
 
 const router = Router()
 
-/**
- * GET /api/applications
- * 获取申请列表（需要管理员权限）
- */
-router.get('/', authenticate, requireAdmin, paginate(50, 200), async (req, res, next) => {
+router.get('/', authenticate, requireAdmin, paginate(50, 200), async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { status } = req.query
-    const { limit, offset } = req.pagination
+    const { status } = req.query as { status?: string }
+    const { limit, offset } = (req as PaginatedRequest).pagination
 
     const result = await getApplications({ status, limit, offset })
 
@@ -40,24 +36,19 @@ router.get('/', authenticate, requireAdmin, paginate(50, 200), async (req, res, 
   }
 })
 
-/**
- * GET /api/applications/:id
- * 获取单个申请详情
- */
-router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')], optionalAuth, async (req, res, next) => {
+router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')], optionalAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const application = await getApplicationById(req.params.id)
+    const application = await getApplicationById(req.params.id as string)
 
     if (!application) {
       throw ApiError.notFound('申请不存在')
     }
 
-    // 管理员可查看所有申请；普通用户只能查看自己的申请；未认证用户不可查看
     if (req.user?.role !== 'admin' && application.email !== req.user?.email) {
       if (!req.user) {
         throw ApiError.unauthorized('请先登录后查看申请')
@@ -74,10 +65,6 @@ router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')
   }
 })
 
-/**
- * POST /api/applications
- * 提交入队申请（公开）
- */
 router.post(
   '/',
   [
@@ -88,7 +75,7 @@ router.post(
     body('availability').optional().trim().isLength({ max: 200 }),
     body('reason').optional().trim().isLength({ max: 500 }).withMessage('加入原因不能超过 500 个字符')
   ],
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -103,7 +90,7 @@ router.post(
         data: {
           id: newApplication.id,
           status: newApplication.status,
-          createdAt: newApplication.created_at
+          createdAt: newApplication.createdAt
         }
       })
     } catch (error) {
@@ -112,10 +99,6 @@ router.post(
   }
 )
 
-/**
- * PUT /api/applications/:id/status
- * 更新申请状态（需要管理员权限）
- */
 router.put(
   '/:id/status',
   authenticate,
@@ -125,18 +108,18 @@ router.put(
     body('status').isIn(['pending', 'approved', 'rejected']).withMessage('状态值无效'),
     body('note').optional().trim()
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { status, note } = req.body
+      const { status, note } = req.body as { status: string; note?: string }
       const updatedApplication = await updateApplicationStatus(
-        req.params.id,
+        req.params.id as string,
         status,
-        req.user.id,
+        req.user!.id,
         note
       )
 
@@ -151,23 +134,19 @@ router.put(
   }
 )
 
-/**
- * DELETE /api/applications/:id
- * 删除申请（需要管理员权限）
- */
 router.delete(
   '/:id',
   authenticate,
   requireAdmin,
   [param('id').notEmpty().withMessage('申请 ID 不能为空')],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      await deleteApplication(req.params.id)
+      await deleteApplication(req.params.id as string)
 
       res.json({
         success: true,

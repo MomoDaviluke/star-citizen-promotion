@@ -4,10 +4,10 @@
  * @module server/routes/auth
  */
 
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { body, validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
-import { authenticate } from '../middleware/auth.js'
+import { authenticate, AuthenticatedRequest } from '../middleware/auth.js'
 import {
   registerUser,
   loginUser,
@@ -19,9 +19,6 @@ import {
 
 const router = Router()
 
-/**
- * 用户注册验证规则
- */
 const registerValidation = [
   body('username')
     .trim()
@@ -41,19 +38,12 @@ const registerValidation = [
     .withMessage('密码需包含大小写字母和数字')
 ]
 
-/**
- * 用户登录验证规则
- */
 const loginValidation = [
   body('email').trim().isEmail().withMessage('请输入有效的邮箱地址').normalizeEmail(),
   body('password').notEmpty().withMessage('请输入密码')
 ]
 
-/**
- * POST /api/auth/register
- * 用户注册
- */
-router.post('/register', registerValidation, async (req, res, next) => {
+router.post('/register', registerValidation, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -72,18 +62,14 @@ router.post('/register', registerValidation, async (req, res, next) => {
   }
 })
 
-/**
- * POST /api/auth/login
- * 用户登录
- */
-router.post('/login', loginValidation, async (req, res, next) => {
+router.post('/login', loginValidation, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       throw ApiError.badRequest('输入验证失败', errors.array())
     }
 
-    const { email, password } = req.body
+    const { email, password } = req.body as { email: string; password: string }
     const result = await loginUser(email, password)
 
     res.json({
@@ -96,13 +82,9 @@ router.post('/login', loginValidation, async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/auth/me
- * 获取当前用户信息
- */
-router.get('/me', authenticate, async (req, res, next) => {
+router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const user = await getUserById(req.user.id)
+    const user = await getUserById(req.user!.id)
 
     if (!user) {
       throw ApiError.notFound('用户不存在')
@@ -117,10 +99,6 @@ router.get('/me', authenticate, async (req, res, next) => {
   }
 })
 
-/**
- * PUT /api/auth/profile
- * 更新用户资料
- */
 router.put(
   '/profile',
   authenticate,
@@ -132,14 +110,14 @@ router.put(
       .withMessage('用户名长度需在 3-20 个字符之间'),
     body('avatar').optional().trim().isURL().withMessage('头像必须是有效的 URL')
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const updatedUser = await updateUserProfile(req.user.id, req.body)
+      const updatedUser = await updateUserProfile(req.user!.id, req.body)
 
       res.json({
         success: true,
@@ -152,10 +130,6 @@ router.put(
   }
 )
 
-/**
- * PUT /api/auth/password
- * 修改密码
- */
 router.put(
   '/password',
   authenticate,
@@ -167,15 +141,15 @@ router.put(
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
       .withMessage('新密码需包含大小写字母和数字')
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const { currentPassword, newPassword } = req.body
-      await changePassword(req.user.id, currentPassword, newPassword)
+      const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string }
+      await changePassword(req.user!.id, currentPassword, newPassword)
 
       res.json({
         success: true,
@@ -187,11 +161,7 @@ router.put(
   }
 )
 
-/**
- * POST /api/auth/refresh
- * 刷新访问令牌
- */
-router.post('/refresh', async (req, res, next) => {
+router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization
 
@@ -204,6 +174,7 @@ router.post('/refresh', async (req, res, next) => {
 
     res.json({
       success: true,
+      message: '令牌刷新成功',
       data: result
     })
   } catch (error) {

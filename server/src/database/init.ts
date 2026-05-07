@@ -5,31 +5,11 @@
  */
 
 import { createPool, query, queryOne, testConnection, closePool } from './pool.js'
+import { RowDataPacket } from 'mysql2/promise'
 
 export { closePool }
 
-/**
- * 初始化数据库
- * @description 创建连接池、测试连接、初始化表结构、填充种子数据
- */
-export async function initDatabase() {
-  await createPool()
-
-  const isConnected = await testConnection()
-  if (!isConnected) {
-    throw new Error('数据库连接失败')
-  }
-
-  await createTables()
-  await seedInitialData()
-
-  console.log('📊 数据库初始化完成')
-}
-
-/**
- * 创建数据库表结构
- */
-async function createTables() {
+async function createTables(): Promise<void> {
   const createUsersTable = `
     CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(36) PRIMARY KEY,
@@ -143,12 +123,6 @@ async function createTables() {
       INDEX idx_created (created_at),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    PARTITION BY RANGE (YEAR(created_at)) (
-      PARTITION p2024 VALUES LESS THAN (2025),
-      PARTITION p2025 VALUES LESS THAN (2026),
-      PARTITION p2026 VALUES LESS THAN (2027),
-      PARTITION pfuture VALUES LESS THAN MAXVALUE
-    )
   `
 
   await query(createUsersTable)
@@ -162,17 +136,51 @@ async function createTables() {
   console.log('📋 数据库表结构创建完成')
 }
 
-/**
- * 填充初始数据
- */
-async function seedInitialData() {
-  const memberCount = await queryOne('SELECT COUNT(*) as count FROM members')
-  if (memberCount.count > 0) {
+interface MemberSeed {
+  id: string
+  name: string
+  role: string
+  intro: string
+  status: string
+}
+
+interface PilotSeed {
+  id: string
+  name: string
+  callsign: string
+  ship: string
+  description: string
+  image: string
+  missions: number
+  kills: number
+  status: string
+}
+
+interface ProjectSeed {
+  id: string
+  name: string
+  period: string
+  description: string
+  status: string
+  progress: number
+  participants: number
+}
+
+interface StatSeed {
+  id: string
+  label: string
+  value: string
+  sortOrder: number
+}
+
+async function seedInitialData(): Promise<void> {
+  const memberCount = await queryOne<RowDataPacket & { count: number }>('SELECT COUNT(*) as count FROM members')
+  if (memberCount && memberCount.count > 0) {
     console.log('🌱 数据已存在，跳过种子数据填充')
     return
   }
 
-  const members = [
+  const members: MemberSeed[] = [
     { id: 'm1', name: 'Echo', role: '舰队指挥', intro: '负责大型行动协调与战术安排。', status: 'active' },
     { id: 'm2', name: 'Nova', role: '后勤总管', intro: '管理补给路线、物资统筹与协作。', status: 'active' },
     { id: 'm3', name: 'Raven', role: '训练官', intro: '组织新人训练、飞行演练与战术复盘。', status: 'active' }
@@ -185,7 +193,7 @@ async function seedInitialData() {
     )
   }
 
-  const pilots = [
+  const pilots: PilotSeed[] = [
     {
       id: 'p1',
       name: '维穆 · 王牌飞行员',
@@ -228,7 +236,7 @@ async function seedInitialData() {
     )
   }
 
-  const projects = [
+  const projects: ProjectSeed[] = [
     {
       id: 'pr1',
       name: '新人成长营',
@@ -265,7 +273,7 @@ async function seedInitialData() {
     )
   }
 
-  const stats = [
+  const stats: StatSeed[] = [
     { id: 's1', label: '团队成员', value: '20+', sortOrder: 1 },
     { id: 's2', label: '每周活动', value: '3 场', sortOrder: 2 },
     { id: 's3', label: '合作组织', value: '12+', sortOrder: 3 }
@@ -279,6 +287,20 @@ async function seedInitialData() {
   }
 
   console.log('🌱 初始数据填充完成')
+}
+
+export async function initDatabase(): Promise<void> {
+  await createPool()
+
+  const isConnected = await testConnection()
+  if (!isConnected) {
+    throw new Error('数据库连接失败')
+  }
+
+  await createTables()
+  await seedInitialData()
+
+  console.log('📊 数据库初始化完成')
 }
 
 export default initDatabase

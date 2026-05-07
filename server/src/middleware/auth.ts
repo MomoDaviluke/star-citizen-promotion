@@ -4,35 +4,48 @@
  * @module server/middleware/auth
  */
 
+import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { config } from '../config/index.js'
 import { ApiError } from './errorHandler.js'
 import { queryOne } from '../database/pool.js'
 
+export interface AuthenticatedUser {
+  id: string
+  role?: string
+  email?: string
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser
+}
+
 /**
  * 验证 JWT 令牌
  * @description 从 Authorization header 提取并验证 Bearer token，将用户信息注入 req.user
  */
-export function authenticate(req, res, next) {
+export function authenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(ApiError.unauthorized('缺少认证令牌'))
+    next(ApiError.unauthorized('缺少认证令牌'))
+    return
   }
 
   const token = authHeader.substring(7)
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret)
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
     req.user = {
       id: decoded.userId
     }
     next()
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return next(ApiError.unauthorized('认证令牌已过期'))
+    if ((err as Error).name === 'TokenExpiredError') {
+      next(ApiError.unauthorized('认证令牌已过期'))
+      return
     }
-    return next(ApiError.unauthorized('无效的认证令牌'))
+    next(ApiError.unauthorized('无效的认证令牌'))
   }
 }
 
@@ -40,17 +53,18 @@ export function authenticate(req, res, next) {
  * 可选认证中间件
  * @description 即使未携带令牌也不报错，用于公开接口的增强验证
  */
-export function optionalAuth(req, res, next) {
+export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next()
+    next()
+    return
   }
 
   const token = authHeader.substring(7)
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret)
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
     req.user = { id: decoded.userId }
   } catch {
     // Token 无效或过期，继续处理但不带用户信息
@@ -61,26 +75,29 @@ export function optionalAuth(req, res, next) {
 
 /**
  * 角色鉴权中间件工厂
- * @param {string[]} allowedRoles - 允许的角色列表
- * @returns {Function} Express 中间件函数
+ * @param allowedRoles - 允许的角色列表
+ * @returns Express 中间件函数
  */
-export function requireRole(...allowedRoles) {
-  return async (req, res, next) => {
+export function requireRole(...allowedRoles: string[]) {
+  return async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
     if (!req.user || !req.user.id) {
-      return next(ApiError.unauthorized('请先登录'))
+      next(ApiError.unauthorized('请先登录'))
+      return
     }
 
-    const user = await queryOne(
+    const user = await queryOne<{ role: string }>(
       'SELECT role FROM users WHERE id = ?',
       [req.user.id]
     )
 
     if (!user) {
-      return next(ApiError.unauthorized('用户不存在'))
+      next(ApiError.unauthorized('用户不存在'))
+      return
     }
 
     if (!allowedRoles.includes(user.role)) {
-      return next(ApiError.forbidden('权限不足，无权访问此资源'))
+      next(ApiError.forbidden('权限不足，无权访问此资源'))
+      return
     }
 
     req.user.role = user.role

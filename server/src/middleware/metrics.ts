@@ -4,6 +4,7 @@
  * @module server/middleware/metrics
  */
 
+import { Request, Response, NextFunction } from 'express'
 import client from 'prom-client'
 
 const register = new client.Registry()
@@ -32,39 +33,28 @@ register.registerMetric(httpRequestDuration)
 register.registerMetric(httpRequestTotal)
 register.registerMetric(activeConnections)
 
-/**
- * Prometheus 指标中间件
- * @param {Request} req - Express 请求对象
- * @param {Response} res - Express 响应对象
- * @param {NextFunction} next - Express next 函数
- */
-export function metricsMiddleware(req, res, next) {
+export function metricsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const start = Date.now()
   activeConnections.inc()
 
   res.on('finish', () => {
     const duration = (Date.now() - start) / 1000
-    const route = req.route?.path || req.path
+    const route = (req as Request & { route?: { path?: string } }).route?.path || req.path
 
     httpRequestDuration.observe(
-      { method: req.method, route, status_code: res.statusCode },
+      { method: req.method, route, status_code: res.statusCode.toString() },
       duration
     )
-    httpRequestTotal.inc({ method: req.method, route, status_code: res.statusCode })
+    httpRequestTotal.inc({ method: req.method, route, status_code: res.statusCode.toString() })
     activeConnections.dec()
   })
 
   next()
 }
 
-/**
- * Prometheus 指标端点处理器
- * @param {Request} req - Express 请求对象
- * @param {Response} res - Express 响应对象
- */
-export function metricsEndpoint(req, res) {
+export function metricsEndpoint(_req: Request, res: Response): void {
   res.set('Content-Type', register.contentType)
-  res.end(register.metrics())
+  register.metrics().then((metrics: string) => res.end(metrics))
 }
 
 export default register

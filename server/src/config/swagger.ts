@@ -4,10 +4,11 @@
  * @module server/config/swagger
  */
 
+import { Application, Request, Response } from 'express'
 import swaggerJsdoc from 'swagger-jsdoc'
 import swaggerUi from 'swagger-ui-express'
 
-const options = {
+const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
@@ -29,22 +30,18 @@ const options = {
       }
     }
   },
-  apis: ['./src/routes/*.js', './src/middleware/*.js']
+  apis: ['./src/routes/*.ts', './src/middleware/*.ts']
 }
 
-const specs = swaggerJsdoc(options)
+const specs = swaggerJsdoc(options) as Record<string, unknown>
 
-/**
- * 设置 Swagger 文档路由
- * @param {import('express').Application} app - Express 应用实例
- */
-export function setupSwagger(app) {
+export function setupSwagger(app: Application): void {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
     explorer: true,
     customCss: '.swagger-ui .topbar { display: none }'
   }))
 
-  app.get('/api-docs.json', (req, res) => {
+  app.get('/api-docs.json', (_req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json')
     res.send(specs)
   })

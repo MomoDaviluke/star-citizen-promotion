@@ -5,18 +5,56 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
+import { Response, NextFunction } from 'express'
 import { query } from '../database/pool.js'
 import logger from '../utils/logger.js'
+import { AuthenticatedRequest } from './auth.js'
+import { ResultSetHeader } from 'mysql2/promise'
 
-/**
- * 需要审计记录的 HTTP 方法
- */
 const AUDITED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
 
-/**
- * 实体类型映射：从路由路径提取实体名称
- */
-const ENTITY_MAP = {
+const SENSITIVE_FIELDS = [
+  'password',
+  'currentpassword',
+  'newpassword',
+  'passwordhash',
+  'password_hash',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'secret',
+  'apikey',
+  'api_key',
+  'credential',
+  'ssn',
+  'creditcard',
+  'credit_card'
+]
+
+function sanitizeBody(obj: unknown): unknown {
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeBody)
+  }
+
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    const lowerKey = key.toLowerCase().replace(/[_-]/g, '')
+    if (SENSITIVE_FIELDS.some((sf) => lowerKey.includes(sf.replace(/[_-]/g, '')))) {
+      sanitized[key] = '[REDACTED]'
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeBody(value)
+    } else {
+      sanitized[key] = value
+    }
+  }
+  return sanitized
+}
+
+const ENTITY_MAP: Record<string, string> = {
   '/api/members': 'member',
   '/api/pilots': 'pilot',
   '/api/projects': 'project',
@@ -25,60 +63,36 @@ const ENTITY_MAP = {
   '/api/stats': 'stat'
 }
 
-/**
- * 操作类型映射
- */
-function getAction(method, path) {
+function getAction(method: string, path: string): string {
   if (method === 'POST') return 'create'
   if (method === 'DELETE') return 'delete'
   if (method === 'PUT' || method === 'PATCH') {
-    // 包含 /password 路径视为密码修改
     if (path.includes('/password')) return 'password_change'
-    // 包含 /profile 路径视为资料更新
     if (path.includes('/profile')) return 'profile_update'
     return 'update'
   }
   return 'unknown'
 }
 
-/**
- * 从请求路径提取实体类型
- */
-function getEntityType(path) {
+function getEntityType(path: string): string | null {
   for (const [prefix, type] of Object.entries(ENTITY_MAP)) {
     if (path.startsWith(prefix)) return type
   }
   return null
 }
 
-/**
- * 从请求路径提取实体 ID
- */
-function getEntityId(path, params) {
-  // 优先从 params 获取
+function getEntityId(path: string, params?: Record<string, string>): string | null {
   if (params?.id) return params.id
-  // 尝试从路径提取 UUID
   const uuidMatch = path.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
   if (uuidMatch) return uuidMatch[0]
   return null
 }
 
-/**
- * 审计日志中间件
- * @description 对写操作（POST/PUT/PATCH/DELETE）自动记录审计日志
- */
-/**
- * 审计日志保留天数
- */
 const AUDIT_LOG_RETENTION_DAYS = 90
 
-/**
- * 清理过期审计日志
- * @description 删除超过保留期限的审计日志记录
- */
-export async function cleanupAuditLogs() {
+export async function cleanupAuditLogs(): Promise<number> {
   try {
-    const result = await query(
+    const result = await query<ResultSetHeader>(
       'DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)',
       [AUDIT_LOG_RETENTION_DAYS]
     )
@@ -90,46 +104,41 @@ export async function cleanupAuditLogs() {
     }
     return result.affectedRows
   } catch (err) {
-    logger.error('审计日志清理失败', { error: err.message })
+    logger.error('审计日志清理失败', { error: (err as Error).message })
     return 0
   }
 }
 
-/**
- * 启动定期清理任务
- * @description 每天凌晨 3 点执行一次清理
- */
-export function startAuditCleanupJob() {
+export function startAuditCleanupJob(): void {
   const now = new Date()
   const next3am = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 3, 0, 0)
-  const msUntil3am = next3am - now
+  const msUntil3am = next3am.getTime() - now.getTime()
 
-  // 首次等到下一个 3 点执行
   setTimeout(() => {
     cleanupAuditLogs()
-    // 之后每 24 小时执行一次
     setInterval(cleanupAuditLogs, 24 * 60 * 60 * 1000)
   }, msUntil3am)
 
   logger.info('审计日志定时清理任务已启动', { firstRun: next3am.toISOString() })
 }
 
-export function auditLogger(req, res, next) {
-  // 仅审计写操作
+export function auditLogger(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   if (!AUDITED_METHODS.includes(req.method)) {
-    return next()
+    next()
+    return
   }
 
   const entityType = getEntityType(req.url)
-  if (!entityType) return next()
+  if (!entityType) {
+    next()
+    return
+  }
 
-  // 捕获原始 res.json 以便在响应后记录
   const originalJson = res.json.bind(res)
   const capturedEntityType = entityType
-  res.json = function (data) {
-    // 异步写入审计日志，不阻塞响应
+  res.json = function (data: unknown) {
     writeAuditLog(req, res.statusCode, data, capturedEntityType).catch((err) => {
-      logger.error('审计日志写入失败', { error: err.message })
+      logger.error('审计日志写入失败', { error: (err as Error).message })
     })
 
     return originalJson(data)
@@ -138,24 +147,32 @@ export function auditLogger(req, res, next) {
   next()
 }
 
-/**
- * 写入审计日志
- */
-async function writeAuditLog(req, statusCode, responseData, entityType) {
+interface AuditDetails {
+  method: string
+  path: string
+  statusCode: number
+  success: boolean
+  body?: unknown
+}
+
+async function writeAuditLog(
+  req: AuthenticatedRequest,
+  statusCode: number,
+  responseData: unknown,
+  entityType: string
+): Promise<void> {
   try {
     const action = getAction(req.method, req.url)
-    const entityId = getEntityId(req.url, req.params)
-    const details = {
+    const entityId = getEntityId(req.url, req.params as Record<string, string>)
+    const details: AuditDetails = {
       method: req.method,
       path: req.url,
       statusCode,
-      success: responseData?.success ?? (statusCode < 400)
+      success: (responseData as { success?: boolean })?.success ?? (statusCode < 400)
     }
 
-    // 对于非敏感操作，记录请求体（排除密码字段）
     if (req.body && !req.url.includes('/password') && !req.url.includes('/login')) {
-      const { password: _pw, currentPassword: _cpw, newPassword: _npw, password_hash: _ph, ...safeBody } = req.body
-      details.body = safeBody
+      details.body = sanitizeBody(req.body)
     }
 
     await query(
@@ -168,12 +185,12 @@ async function writeAuditLog(req, statusCode, responseData, entityType) {
         entityType,
         entityId,
         JSON.stringify(details),
-        req.ip || req.connection?.remoteAddress || null,
+        req.ip || null,
         req.get('User-Agent') || null
       ]
     )
   } catch (err) {
-    logger.error('审计日志写入失败', { error: err.message })
+    logger.error('审计日志写入失败', { error: (err as Error).message })
   }
 }
 

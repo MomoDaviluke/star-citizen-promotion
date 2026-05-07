@@ -4,11 +4,11 @@
  * @module server/routes/pilots
  */
 
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
-import { authenticate, requireAdmin } from '../middleware/auth.js'
-import { paginate } from '../middleware/pagination.js'
+import { authenticate, requireAdmin, AuthenticatedRequest } from '../middleware/auth.js'
+import { paginate, PaginatedRequest } from '../middleware/pagination.js'
 import {
   getPilots,
   getPilotById,
@@ -19,14 +19,10 @@ import {
 
 const router = Router()
 
-/**
- * GET /api/pilots
- * 获取所有飞行员列表
- */
-router.get('/', paginate(50, 200), async (req, res, next) => {
+router.get('/', paginate(50, 200), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status } = req.query
-    const { limit, offset } = req.pagination
+    const { status } = req.query as { status?: string }
+    const { limit, offset } = (req as PaginatedRequest).pagination
 
     const result = await getPilots({ status, limit, offset })
 
@@ -40,18 +36,14 @@ router.get('/', paginate(50, 200), async (req, res, next) => {
   }
 })
 
-/**
- * GET /api/pilots/:id
- * 获取单个飞行员详情
- */
-router.get('/:id', [param('id').notEmpty().withMessage('飞行员 ID 不能为空')], async (req, res, next) => {
+router.get('/:id', [param('id').notEmpty().withMessage('飞行员 ID 不能为空')], async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       throw ApiError.badRequest('参数验证失败', errors.array())
     }
 
-    const pilot = await getPilotById(req.params.id)
+    const pilot = await getPilotById(req.params.id as string)
 
     if (!pilot) {
       throw ApiError.notFound('飞行员不存在')
@@ -66,10 +58,6 @@ router.get('/:id', [param('id').notEmpty().withMessage('飞行员 ID 不能为�
   }
 })
 
-/**
- * POST /api/pilots
- * 创建新飞行员（需要管理员权限）
- */
 router.post(
   '/',
   authenticate,
@@ -83,7 +71,7 @@ router.post(
     body('missions').optional().isInt({ min: 0 }).withMessage('任务数不能为负数'),
     body('kills').optional().isInt({ min: 0 }).withMessage('击杀数不能为负数')
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
@@ -103,10 +91,6 @@ router.post(
   }
 )
 
-/**
- * PUT /api/pilots/:id
- * 更新飞行员信息（需要管理员权限）
- */
 router.put(
   '/:id',
   authenticate,
@@ -122,14 +106,14 @@ router.put(
     body('kills').optional().isInt({ min: 0 }).withMessage('击杀数不能为负数'),
     body('status').optional().isIn(['active', 'inactive', 'kia']).withMessage('状态值无效')
   ],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('输入验证失败', errors.array())
       }
 
-      const updatedPilot = await updatePilot(req.params.id, req.body)
+      const updatedPilot = await updatePilot(req.params.id as string, req.body)
 
       res.json({
         success: true,
@@ -142,23 +126,19 @@ router.put(
   }
 )
 
-/**
- * DELETE /api/pilots/:id
- * 删除飞行员（需要管理员权限）
- */
 router.delete(
   '/:id',
   authenticate,
   requireAdmin,
   [param('id').notEmpty().withMessage('飞行员 ID 不能为空')],
-  async (req, res, next) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('参数验证失败', errors.array())
       }
 
-      await deletePilot(req.params.id)
+      await deletePilot(req.params.id as string)
 
       res.json({
         success: true,

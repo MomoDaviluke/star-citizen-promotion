@@ -7,22 +7,35 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
+import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { config } from '../config/index.js'
 import { queryOne, transaction } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
+export interface User {
+  id: string
+  username: string
+  email: string
+  role: string
+  avatar?: string | null
+  createdAt?: string
+}
+
+export interface AuthResult {
+  user: User
+  token: string
+}
+
 /**
  * 用户注册
- * @param {Object} userData - 用户数据
- * @param {string} userData.username - 用户名
- * @param {string} userData.email - 邮箱
- * @param {string} userData.password - 密码
- * @returns {Promise<Object>} 新用户信息和令牌
  */
-export async function registerUser({ username, email, password }) {
-  return transaction(async (conn) => {
-    // 检查用户名或邮箱是否已存在
-    const [existingUsers] = await conn.execute(
+export async function registerUser({ username, email, password }: {
+  username: string
+  email: string
+  password: string
+}): Promise<AuthResult> {
+  return transaction<AuthResult>(async (conn: PoolConnection) => {
+    const [existingUsers] = await conn.execute<RowDataPacket[]>(
       'SELECT id FROM users WHERE email = ? OR username = ?',
       [email, username]
     )
@@ -39,7 +52,7 @@ export async function registerUser({ username, email, password }) {
       [userId, username, email, passwordHash, 'member']
     )
 
-    const token = jwt.sign({ userId }, config.jwt.secret, { expiresIn: config.jwt.expiresIn })
+    const token = jwt.sign({ userId }, config.jwt.secret, { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] })
 
     return {
       user: {
@@ -55,12 +68,16 @@ export async function registerUser({ username, email, password }) {
 
 /**
  * 用户登录
- * @param {string} email - 邮箱
- * @param {string} password - 密码
- * @returns {Promise<Object>} 用户信息和令牌
  */
-export async function loginUser(email, password) {
-  const user = await queryOne('SELECT * FROM users WHERE email = ?', [email])
+export async function loginUser(email: string, password: string): Promise<AuthResult> {
+  const user = await queryOne<{
+    id: string
+    username: string
+    email: string
+    role: string
+    avatar: string | null
+    password_hash: string
+  }>('SELECT * FROM users WHERE email = ?', [email])
 
   if (!user) {
     throw ApiError.unauthorized('邮箱或密码错误')
@@ -74,7 +91,7 @@ export async function loginUser(email, password) {
   const token = jwt.sign(
     { userId: user.id },
     config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn }
+    { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
   )
 
   return {
@@ -91,11 +108,11 @@ export async function loginUser(email, password) {
 
 /**
  * 通过 ID 获取用户信息
- * @param {string} userId - 用户 ID
- * @returns {Promise<Object|null>} 用户信息
  */
-export async function getUserById(userId) {
-  return queryOne(
+export async function getUserById(userId: string): Promise<Omit<User, 'role'> | null> {
+  return queryOne<
+    { id: string; username: string; email: string; role: string; avatar: string | null; created_at: string }
+  >(
     'SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?',
     [userId]
   )
@@ -103,17 +120,17 @@ export async function getUserById(userId) {
 
 /**
  * 更新用户资料
- * @param {string} userId - 用户 ID
- * @param {Object} updates - 更新数据
- * @returns {Promise<Object>} 更新后的用户信息
  */
-export async function updateUserProfile(userId, { username, avatar }) {
-  return transaction(async (conn) => {
-    const updates = []
-    const values = []
+export async function updateUserProfile(userId: string, { username, avatar }: {
+  username?: string
+  avatar?: string
+}): Promise<User> {
+  return transaction<User>(async (conn: PoolConnection) => {
+    const updates: string[] = []
+    const values: unknown[] = []
 
     if (username) {
-      const [existing] = await conn.execute(
+      const [existing] = await conn.execute<RowDataPacket[]>(
         'SELECT id FROM users WHERE username = ? AND id != ?',
         [username, userId]
       )
@@ -137,27 +154,24 @@ export async function updateUserProfile(userId, { username, avatar }) {
 
     await conn.execute(
       `UPDATE users SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      values
+      values as never
     )
 
-    const [rows] = await conn.execute(
+    const [rows] = await conn.execute<RowDataPacket[]>(
       'SELECT id, username, email, role, avatar, created_at FROM users WHERE id = ?',
       [userId]
     )
 
-    return rows[0]
+    return rows[0] as User
   })
 }
 
 /**
  * 修改密码
- * @param {string} userId - 用户 ID
- * @param {string} currentPassword - 当前密码
- * @param {string} newPassword - 新密码
  */
-export async function changePassword(userId, currentPassword, newPassword) {
-  return transaction(async (conn) => {
-    const [rows] = await conn.execute(
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  return transaction<void>(async (conn: PoolConnection) => {
+    const [rows] = await conn.execute<RowDataPacket[]>(
       'SELECT password_hash FROM users WHERE id = ?',
       [userId]
     )
@@ -166,7 +180,7 @@ export async function changePassword(userId, currentPassword, newPassword) {
       throw ApiError.notFound('用户不存在')
     }
 
-    const isPasswordValid = await bcrypt.compare(currentPassword, rows[0].password_hash)
+    const isPasswordValid = await bcrypt.compare(currentPassword, (rows[0] as { password_hash: string }).password_hash)
     if (!isPasswordValid) {
       throw ApiError.unauthorized('当前密码错误')
     }
@@ -182,21 +196,22 @@ export async function changePassword(userId, currentPassword, newPassword) {
 
 /**
  * 刷新访问令牌
- * @param {string} token - 当前令牌
- * @returns {Promise<Object>} 新令牌
  */
-export async function refreshUserToken(token) {
-  let decoded
+export async function refreshUserToken(token: string): Promise<{ token: string }> {
+  let decoded: { userId: string }
   try {
-    decoded = jwt.verify(token, config.jwt.secret)
+    decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
+    if ((err as Error).name === 'TokenExpiredError') {
       throw ApiError.unauthorized('令牌已过期，请重新登录')
     }
     throw ApiError.unauthorized('无效的认证令牌')
   }
 
-  const user = await queryOne('SELECT id, role FROM users WHERE id = ?', [decoded.userId])
+  const user = await queryOne<{ id: string; role: string }>(
+    'SELECT id, role FROM users WHERE id = ?',
+    [decoded.userId]
+  )
   if (!user) {
     throw ApiError.unauthorized('用户不存在')
   }
@@ -204,7 +219,7 @@ export async function refreshUserToken(token) {
   const newToken = jwt.sign(
     { userId: user.id },
     config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn }
+    { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
   )
 
   return { token: newToken }

@@ -4,12 +4,9 @@
  * @module server/middleware/requestLogger
  */
 
+import { Request, Response, NextFunction } from 'express'
 import logger from '../utils/logger.js'
 
-/**
- * 敏感字段列表
- * @type {string[]}
- */
 const SENSITIVE_FIELDS = [
   'password',
   'passwordHash',
@@ -27,32 +24,24 @@ const SENSITIVE_FIELDS = [
   'cookie'
 ]
 
-/**
- * 检查字段名是否敏感
- * @param {string} key - 字段名
- * @returns {boolean}
- */
-function isSensitiveField(key) {
+function isSensitiveField(key: string): boolean {
   const lowerKey = key.toLowerCase()
   return SENSITIVE_FIELDS.some((field) => lowerKey.includes(field.toLowerCase()))
 }
 
-/**
- * 递归脱敏对象中的敏感字段
- * @param {Object} body - 请求体对象
- * @returns {Object} 脱敏后的对象
- */
-function sanitizeBody(body) {
+function sanitizeBody(body: unknown): unknown {
   if (!body || typeof body !== 'object') {
     return body
   }
 
-  const sanitized = {}
-  for (const [key, value] of Object.entries(body)) {
+  if (Array.isArray(body)) {
+    return body.map((item) => (typeof item === 'object' && item !== null ? sanitizeBody(item) : item))
+  }
+
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
     if (isSensitiveField(key)) {
       sanitized[key] = '***REDACTED***'
-    } else if (Array.isArray(value)) {
-      sanitized[key] = value.map((item) => (typeof item === 'object' && item !== null ? sanitizeBody(item) : item))
     } else if (typeof value === 'object' && value !== null) {
       sanitized[key] = sanitizeBody(value)
     } else {
@@ -62,31 +51,24 @@ function sanitizeBody(body) {
   return sanitized
 }
 
-/**
- * 请求日志中间件
- * @param {Request} req - Express 请求对象
- * @param {Response} res - Express 响应对象
- * @param {NextFunction} next - Express next 函数
- */
-export function requestLogger(req, res, next) {
+export function requestLogger(req: Request, res: Response, next: NextFunction): void {
   const startTime = Date.now()
 
   const originalEnd = res.end
-  res.end = function (...args) {
+  res.end = function (this: Response, ...args: Parameters<Response['end']>): Response {
     const responseTime = Date.now() - startTime
 
-    const logData = {
+    const logData: Record<string, unknown> = {
       method: req.method,
       url: req.url,
       statusCode: res.statusCode,
       responseTime: `${responseTime}ms`,
-      ip: req.ip || req.connection?.remoteAddress,
+      ip: req.ip || (req.connection as { remoteAddress?: string })?.remoteAddress,
       userAgent: req.get('User-Agent') || '-',
       contentLength: res.get('Content-Length') || 0,
-      requestId: req.id || '-'
+      requestId: (req as Request & { id?: string }).id || '-'
     }
 
-    // 仅在开发环境记录请求体，且脱敏处理
     if (process.env.NODE_ENV === 'development' && req.body) {
       logData.body = sanitizeBody(req.body)
     }
@@ -97,8 +79,8 @@ export function requestLogger(req, res, next) {
       logger.info('请求', logData)
     }
 
-    originalEnd.apply(res, args)
-  }
+    return originalEnd.apply(this, args)
+  } as Response['end']
 
   next()
 }
