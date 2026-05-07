@@ -1,107 +1,146 @@
-# 🛰️ 技术栈全景图
-
-> Star Citizen 战队宣传网站 —— 企业级全栈技术架构详解
-
 <div align="center">
 
-[![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Express.js](https://img.shields.io/badge/Express.js-4.21-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+<!-- 动态标题横幅 -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:667eea,100:764ba2&height=280&section=header&text=Star%20Citizen%20战队&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=企业级全栈技术架构&descAlignY=55&descSize=20" width="100%" />
+
+<!-- 技术徽章矩阵 -->
+<br>
+
+[![Vue 3](https://img.shields.io/badge/Vue%203-4FC08D?style=flat-square&logo=vue.js&logoColor=white&labelColor=2c3e50)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white&labelColor=2c3e50)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white&labelColor=2c3e50)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white&labelColor=2c3e50)](https://expressjs.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white&labelColor=2c3e50)](https://www.mysql.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white&labelColor=2c3e50)](https://nodejs.org/)
+
+<br>
+
+[![CI/CD](https://img.shields.io/badge/CI/CD-Passing-success?style=flat-square&logo=github-actions&logoColor=white)](.github/workflows/)
+[![Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen?style=flat-square&logo=codecov&logoColor=white)](docs/TESTING.md)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square&logo=open-source-initiative&logoColor=white)](LICENSE)
 
 </div>
 
 ---
 
-## 📋 目录
+## 📑 目录
 
-- [架构概览](#-架构概览)
-- [前端技术栈](#-前端技术栈)
-- [后端技术栈](#-后端技术栈)
-- [数据层技术](#-数据层技术)
-- [测试体系](#-测试体系)
-- [DevOps & 部署](#-devops--部署)
-- [安全体系](#-安全体系)
-- [监控与日志](#-监控与日志)
-- [开发工具链](#-开发工具链)
+- [🎯 项目概览](#-项目概览)
+- [🏗️ 系统架构](#️-系统架构)
+- [🎨 前端技术栈](#-前端技术栈)
+- [⚙️ 后端技术栈](#️-后端技术栈)
+- [🗄️ 数据层架构](#️-数据层架构)
+- [🧪 测试体系](#-测试体系)
+- [🚀 DevOps 与部署](#-devops-与部署)
+- [🔐 安全体系](#-安全体系)
+- [📊 监控与日志](#-监控与日志)
+- [🛠️ 开发工具链](#️-开发工具链)
+- [📦 依赖全景](#-依赖全景)
+- [🎯 选型决策](#-选型决策)
 
 ---
 
-## 🏗️ 架构概览
+## 🎯 项目概览
+
+<div align="center">
+
+| 维度 | 技术方案 | 版本 |
+|:---:|:---:|:---:|
+| **前端框架** | Vue.js | 3.5.29 |
+| **构建工具** | Vite | 7.3.1 |
+| **后端框架** | Express.js | 4.21.2 |
+| **数据库** | MySQL | 8.0+ |
+| **运行时** | Node.js | ≥20.0 |
+| **语言** | TypeScript | 6.0 |
+
+</div>
+
+### 核心特性
+
+```yaml
+架构模式: 前后端分离 (SPA + RESTful API)
+认证机制: JWT + RBAC 角色权限控制
+实时通信: WebSocket 双向消息推送
+数据安全: 参数化查询 + 密码哈希 + 输入验证
+部署方式: Docker Compose / Nginx 反向代理
+```
+
+---
+
+## 🏗️ 系统架构
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                              客户端层                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │   Chrome     │  │   Firefox    │  │    Safari    │  │    Edge      │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘ │
-└─────────┼─────────────────┼─────────────────┼─────────────────┼─────────┘
-          │                 │                 │                 │
-          └─────────────────┴────────┬────────┴─────────────────┘
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Nginx 反向代理层                                │
-│              (负载均衡 / SSL 终止 / Gzip 压缩 / 静态资源缓存)                 │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                    ┌────────────────┴────────────────┐
-                    ▼                                 ▼
-┌──────────────────────────────┐    ┌──────────────────────────────┐
-│      🎨 前端应用 (Vue 3)      │    │      ⚙️ 后端服务 (Express)    │
-│                              │    │                              │
-│  ┌────────────────────────┐  │    │  ┌────────────────────────┐  │
-│  │    Vue Router 5.0      │  │    │  │   JWT 认证中间件        │  │
-│  │    组件化页面路由        │  │    │  │   Helmet 安全加固       │  │
-│  └────────────────────────┘  │    │  └────────────────────────┘  │
-│  ┌────────────────────────┐  │    │  ┌────────────────────────┐  │
-│  │    Vite 7.3 构建工具    │  │    │  │   Winston 结构化日志    │  │
-│  │    极速 HMR / 代码分割   │  │    │  │   Morgan HTTP 访问日志  │  │
-│  └────────────────────────┘  │    │  └────────────────────────┘  │
-│  ┌────────────────────────┐  │    │  ┌────────────────────────┐  │
-│  │    Vitest + Playwright  │  │    │  │   Rate Limit 速率限制   │  │
-│  │    单元测试 + E2E 测试   │  │    │  │   Validator 参数校验    │  │
-│  └────────────────────────┘  │    │  └────────────────────────┘  │
-└──────────────┬───────────────┘    └──────────────┬───────────────┘
-               │                                    │
-               │         ┌──────────────────────────┘
-               │         │
-               │         ▼
-               │  ┌──────────────────────────────┐
-               │  │      📡 WebSocket 服务        │
-               │  │      (ws 实时双向通信)         │
-               │  └──────────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                              数据持久化层                                  │
-│                                                                         │
-│   ┌──────────────────────┐        ┌──────────────────────┐              │
-│   │    MySQL 8.0 主库     │◄──────►│   MySQL 连接池管理     │              │
-│   │    关系型数据存储      │        │   mysql2/promise     │              │
-│   └──────────────────────┘        └──────────────────────┘              │
-│                                                                         │
-│   ┌──────────────────────┐        ┌──────────────────────┐              │
-│   │   Knex.js 迁移工具    │        │   数据库种子数据       │              │
-│   │   版本化结构变更       │        │   初始化测试数据       │              │
-│   └──────────────────────┘        └──────────────────────┘              │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              🌐 客户端层                                       │
+│                                                                              │
+│   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐    │
+│   │   Chrome    │   │   Firefox   │   │   Safari    │   │    Edge     │    │
+│   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘    │
+└──────────┼─────────────────┼─────────────────┼─────────────────┼────────────┘
+           │                 │                 │                 │
+           └─────────────────┴────────┬────────┴─────────────────┘
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          🛡️ Nginx 反向代理层                                   │
+│                                                                              │
+│     SSL 终止  │  Gzip 压缩  │  负载均衡  │  静态缓存  │  SPA 路由回退            │
+└──────────────────────────────────────┬───────────────────────────────────────┘
+                                       │
+              ┌────────────────────────┼────────────────────────┐
+              │                        │                        │
+              ▼                        │                        ▼
+┌─────────────────────────────┐       │       ┌─────────────────────────────┐
+│      🎨 前端应用 (Vue 3)     │       │       │      ⚙️ 后端服务 (Express)   │
+│                             │       │       │                             │
+│  ┌───────────────────────┐  │       │       │  ┌───────────────────────┐  │
+│  │   Vue Router 5.0      │  │       │       │  │   JWT 认证中间件       │  │
+│  │   组件化路由导航        │  │       │       │  │   Helmet 安全加固      │  │
+│  └───────────────────────┘  │       │       │  └───────────────────────┘  │
+│  ┌───────────────────────┐  │       │       │  ┌───────────────────────┐  │
+│  │   Vite 7.3 构建工具    │  │       │       │  │   Winston 结构化日志   │  │
+│  │   极速 HMR / 代码分割   │  │       │       │  │   Morgan HTTP 日志     │  │
+│  └───────────────────────┘  │       │       │  └───────────────────────┘  │
+│  ┌───────────────────────┐  │       │       │  ┌───────────────────────┐  │
+│  │   Vitest + Playwright  │  │       │       │  │   Rate Limit 速率限制  │  │
+│  │   单元测试 + E2E 测试   │  │       │       │  │   Validator 参数校验   │  │
+│  └───────────────────────┘  │       │       │  └───────────────────────┘  │
+└──────────────┬──────────────┘       │       └──────────────┬──────────────┘
+               │                      │                      │
+               │                      ▼                      │
+               │           ┌────────────────────┐           │
+               │           │   📡 WebSocket 服务  │           │
+               │           │   ws 实时双向通信    │           │
+               │           └────────────────────┘           │
+               │                                            │
+               └────────────────────┬───────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              💾 数据持久化层                                   │
+│                                                                              │
+│    ┌────────────────────┐          ┌────────────────────┐                    │
+│    │   MySQL 8.0 主库    │◄────────►│  mysql2/promise    │                    │
+│    │   关系型数据存储     │          │  连接池管理         │                    │
+│    └────────────────────┘          └────────────────────┘                    │
+│                                                                              │
+│    ┌────────────────────┐          ┌────────────────────┐                    │
+│    │   Knex.js 迁移工具  │          │   数据库种子数据     │                    │
+│    │   版本化结构变更     │          │   初始化测试数据     │                    │
+│    └────────────────────┘          └────────────────────┘                    │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🎨 前端技术栈
 
-### 核心框架层
+### 核心框架
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://vuejs.org/logo.svg" width="48" height="48" alt="Vue">
-
+<td width="70" align="center">
+<img src="https://vuejs.org/logo.svg" width="42" height="42" alt="Vue">
 </td>
 <td>
 
@@ -111,10 +150,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://router.vuejs.org/logo.svg" width="48" height="48" alt="Vue Router">
-
+<td width="70" align="center">
+<img src="https://router.vuejs.org/logo.svg" width="42" height="42" alt="Vue Router">
 </td>
 <td>
 
@@ -129,10 +166,8 @@
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://vitejs.dev/logo.svg" width="48" height="48" alt="Vite">
-
+<td width="70" align="center">
+<img src="https://vitejs.dev/logo.svg" width="42" height="42" alt="Vite">
 </td>
 <td>
 
@@ -142,10 +177,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://esbuild.github.io/favicon.svg" width="48" height="48" alt="esbuild">
-
+<td width="70" align="center">
+<img src="https://esbuild.github.io/favicon.svg" width="42" height="42" alt="esbuild">
 </td>
 <td>
 
@@ -156,14 +189,12 @@
 </tr>
 </table>
 
-### 代码质量保障
+### 代码质量
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://eslint.org/favicon.ico" width="48" height="48" alt="ESLint">
-
+<td width="70" align="center">
+<img src="https://eslint.org/favicon.ico" width="42" height="42" alt="ESLint">
 </td>
 <td>
 
@@ -173,10 +204,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://prettier.io/icon.png" width="48" height="48" alt="Prettier">
-
+<td width="70" align="center">
+<img src="https://prettier.io/icon.png" width="42" height="42" alt="Prettier">
 </td>
 <td>
 
@@ -186,10 +215,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.typescriptlang.org/favicon.ico" width="48" height="48" alt="TypeScript">
-
+<td width="70" align="center">
+<img src="https://www.typescriptlang.org/favicon.ico" width="42" height="42" alt="TypeScript">
 </td>
 <td>
 
@@ -204,10 +231,8 @@
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://vitest.dev/logo.svg" width="48" height="48" alt="Vitest">
-
+<td width="70" align="center">
+<img src="https://vitest.dev/logo.svg" width="42" height="42" alt="Vitest">
 </td>
 <td>
 
@@ -217,10 +242,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://playwright.dev/img/playwright-logo.svg" width="48" height="48" alt="Playwright">
-
+<td width="70" align="center">
+<img src="https://playwright.dev/img/playwright-logo.svg" width="42" height="42" alt="Playwright">
 </td>
 <td>
 
@@ -230,10 +253,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://test-utils.vuejs.org/logo.svg" width="48" height="48" alt="Vue Test Utils">
-
+<td width="70" align="center">
+<img src="https://test-utils.vuejs.org/logo.svg" width="42" height="42" alt="Vue Test Utils">
 </td>
 <td>
 
@@ -252,10 +273,8 @@
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://nodejs.org/static/images/favicons/favicon.png" width="48" height="48" alt="Node.js">
-
+<td width="70" align="center">
+<img src="https://nodejs.org/static/images/favicons/favicon.png" width="42" height="42" alt="Node.js">
 </td>
 <td>
 
@@ -265,10 +284,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://expressjs.com/images/favicon.png" width="48" height="48" alt="Express">
-
+<td width="70" align="center">
+<img src="https://expressjs.com/images/favicon.png" width="42" height="42" alt="Express">
 </td>
 <td>
 
@@ -278,10 +295,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.typescriptlang.org/favicon.ico" width="48" height="48" alt="TypeScript">
-
+<td width="70" align="center">
+<img src="https://www.typescriptlang.org/favicon.ico" width="42" height="42" alt="TypeScript">
 </td>
 <td>
 
@@ -296,10 +311,8 @@
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://jwt.io/img/favicon/favicon-32x32.png" width="48" height="48" alt="JWT">
-
+<td width="70" align="center">
+<img src="https://jwt.io/img/favicon/favicon-32x32.png" width="42" height="42" alt="JWT">
 </td>
 <td>
 
@@ -309,10 +322,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.npmjs.com/npm-avatar/3.0.0/bcryptjs.png" width="48" height="48" alt="bcrypt">
-
+<td width="70" align="center">
+<img src="https://www.npmjs.com/npm-avatar/3.0.0/bcryptjs.png" width="42" height="42" alt="bcrypt">
 </td>
 <td>
 
@@ -322,10 +333,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://helmetjs.github.io/favicon.png" width="48" height="48" alt="Helmet">
-
+<td width="70" align="center">
+<img src="https://helmetjs.github.io/favicon.png" width="42" height="42" alt="Helmet">
 </td>
 <td>
 
@@ -335,10 +344,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://github.com/expressjs/cors/raw/master/logo.png" width="48" height="48" alt="CORS">
-
+<td width="70" align="center">
+<img src="https://github.com/expressjs/cors/raw/master/logo.png" width="42" height="42" alt="CORS">
 </td>
 <td>
 
@@ -348,10 +355,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://express-validator.github.io/img/logo.svg" width="48" height="48" alt="express-validator">
-
+<td width="70" align="center">
+<img src="https://express-validator.github.io/img/logo.svg" width="42" height="42" alt="express-validator">
 </td>
 <td>
 
@@ -366,10 +371,8 @@
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://www.mysql.com/common/logos/logo-mysql-170x115.png" width="48" height="48" alt="MySQL">
-
+<td width="70" align="center">
+<img src="https://www.mysql.com/common/logos/logo-mysql-170x115.png" width="42" height="42" alt="MySQL">
 </td>
 <td>
 
@@ -379,10 +382,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://knexjs.org/knex-logo.png" width="48" height="48" alt="Knex">
-
+<td width="70" align="center">
+<img src="https://knexjs.org/knex-logo.png" width="42" height="42" alt="Knex">
 </td>
 <td>
 
@@ -397,10 +398,8 @@
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://www.npmjs.com/npm-avatar/3.0.0/dotenv.png" width="48" height="48" alt="dotenv">
-
+<td width="70" align="center">
+<img src="https://www.npmjs.com/npm-avatar/3.0.0/dotenv.png" width="42" height="42" alt="dotenv">
 </td>
 <td>
 
@@ -410,10 +409,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.npmjs.com/npm-avatar/3.0.0/uuid.png" width="48" height="48" alt="uuid">
-
+<td width="70" align="center">
+<img src="https://www.npmjs.com/npm-avatar/3.0.0/uuid.png" width="42" height="42" alt="uuid">
 </td>
 <td>
 
@@ -423,10 +420,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.npmjs.com/npm-avatar/3.0.0/compression.png" width="48" height="48" alt="compression">
-
+<td width="70" align="center">
+<img src="https://www.npmjs.com/npm-avatar/3.0.0/compression.png" width="42" height="42" alt="compression">
 </td>
 <td>
 
@@ -437,14 +432,12 @@
 </tr>
 </table>
 
-### 实时通信
+### 实时通信与文档
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://github.com/websockets/ws/raw/master/logo.png" width="48" height="48" alt="WebSocket">
-
+<td width="70" align="center">
+<img src="https://github.com/websockets/ws/raw/master/logo.png" width="42" height="42" alt="WebSocket">
 </td>
 <td>
 
@@ -453,16 +446,9 @@
 
 </td>
 </tr>
-</table>
-
-### API 文档
-
-<table>
 <tr>
-<td width="60">
-
-<img src="https://swagger.io/swagger/media/assets/swagger-logo.svg" width="48" height="48" alt="Swagger">
-
+<td width="70" align="center">
+<img src="https://swagger.io/swagger/media/assets/swagger-logo.svg" width="42" height="42" alt="Swagger">
 </td>
 <td>
 
@@ -475,9 +461,9 @@
 
 ---
 
-## 🗄️ 数据层技术
+## 🗄️ 数据层架构
 
-### 数据库架构
+### 数据库实体关系
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -512,7 +498,7 @@
 ### 数据库特性
 
 | 特性 | 实现 | 说明 |
-|:-----|:-----|:-----|
+|:---:|:---:|:---|
 | **连接池管理** | mysql2/promise | 自动管理连接生命周期，支持并发查询 |
 | **事务支持** | `transaction()` 封装 | ACID 事务保证数据一致性 |
 | **参数化查询** | `?` 占位符 | 防止 SQL 注入攻击 |
@@ -527,7 +513,7 @@
 
 ```
                     ┌─────────┐
-                    │  E2E    │  Playwright (浏览器自动化)
+                    │   E2E   │  Playwright (浏览器自动化)
                     │  10 用例 │  首页 / 加入流程 / 管理后台
                     ├─────────┤
                     │ 集成测试 │  Jest + Supertest (API 测试)
@@ -538,14 +524,12 @@
                     └─────────┘
 ```
 
-### 前端测试
+### 测试工具
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://vitest.dev/logo.svg" width="48" height="48" alt="Vitest">
-
+<td width="70" align="center">
+<img src="https://vitest.dev/logo.svg" width="42" height="42" alt="Vitest">
 </td>
 <td>
 
@@ -555,10 +539,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://playwright.dev/img/playwright-logo.svg" width="48" height="48" alt="Playwright">
-
+<td width="70" align="center">
+<img src="https://playwright.dev/img/playwright-logo.svg" width="42" height="42" alt="Playwright">
 </td>
 <td>
 
@@ -567,16 +549,9 @@
 
 </td>
 </tr>
-</table>
-
-### 后端测试
-
-<table>
 <tr>
-<td width="60">
-
-<img src="https://jestjs.io/img/favicon/favicon.ico" width="48" height="48" alt="Jest">
-
+<td width="70" align="center">
+<img src="https://jestjs.io/img/favicon/favicon.ico" width="42" height="42" alt="Jest">
 </td>
 <td>
 
@@ -586,10 +561,8 @@
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.npmjs.com/npm-avatar/3.0.0/supertest.png" width="48" height="48" alt="Supertest">
-
+<td width="70" align="center">
+<img src="https://www.npmjs.com/npm-avatar/3.0.0/supertest.png" width="42" height="42" alt="Supertest">
 </td>
 <td>
 
@@ -603,7 +576,7 @@
 ### 核心模块覆盖率
 
 | 模块 | 覆盖率 | 测试框架 |
-|:-----|:-------|:---------|
+|:---:|:---:|:---:|
 | `PriorityQueue.js` | **100%** | Vitest |
 | `authService.js` (后端) | **95%** | Jest |
 | `dataService.js` | **95%** | Vitest |
@@ -613,7 +586,7 @@
 
 ---
 
-## 🚀 DevOps & 部署
+## 🚀 DevOps 与部署
 
 ### CI/CD 流水线
 
@@ -628,19 +601,17 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 ### 部署方案
 
 | 方案 | 技术 | 说明 |
-|:-----|:-----|:-----|
+|:---:|:---:|:---|
 | **Docker Compose** | Docker + docker-compose | 多阶段构建，一键启动全栈环境 |
 | **手动部署** | Node.js + Nginx | 前端静态资源 + 后端服务分离部署 |
 | **Nginx 反向代理** | Nginx | 负载均衡、SSL、Gzip、SPA 路由回退 |
 
-### CI/CD 工具
+### DevOps 工具
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://github.githubassets.com/favicons/favicon.svg" width="48" height="48" alt="GitHub Actions">
-
+<td width="70" align="center">
+<img src="https://github.githubassets.com/favicons/favicon.svg" width="42" height="42" alt="GitHub Actions">
 </td>
 <td>
 
@@ -650,10 +621,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://about.codecov.io/wp-content/themes/codecov/assets/brand/icons/codecov-icon.svg" width="48" height="48" alt="Codecov">
-
+<td width="70" align="center">
+<img src="https://about.codecov.io/wp-content/themes/codecov/assets/brand/icons/codecov-icon.svg" width="42" height="42" alt="Codecov">
 </td>
 <td>
 
@@ -663,10 +632,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.docker.com/wp-content/uploads/2023/08/logo-guide-logos-1.svg" width="48" height="48" alt="Docker">
-
+<td width="70" align="center">
+<img src="https://www.docker.com/wp-content/uploads/2023/08/logo-guide-logos-1.svg" width="42" height="42" alt="Docker">
 </td>
 <td>
 
@@ -724,10 +691,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://github.com/winstonjs/winston/raw/master/assets/winston-logo.svg" width="48" height="48" alt="Winston">
-
+<td width="70" align="center">
+<img src="https://github.com/winstonjs/winston/raw/master/assets/winston-logo.svg" width="42" height="42" alt="Winston">
 </td>
 <td>
 
@@ -737,10 +702,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://www.npmjs.com/npm-avatar/3.0.0/morgan.png" width="48" height="48" alt="Morgan">
-
+<td width="70" align="center">
+<img src="https://www.npmjs.com/npm-avatar/3.0.0/morgan.png" width="42" height="42" alt="Morgan">
 </td>
 <td>
 
@@ -755,10 +718,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://prometheus.io/assets/favicons/favicon.ico" width="48" height="48" alt="Prometheus">
-
+<td width="70" align="center">
+<img src="https://prometheus.io/assets/favicons/favicon.ico" width="42" height="42" alt="Prometheus">
 </td>
 <td>
 
@@ -801,10 +762,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 
 <table>
 <tr>
-<td width="60">
-
-<img src="https://tsx.is/favicon.svg" width="48" height="48" alt="tsx">
-
+<td width="70" align="center">
+<img src="https://tsx.is/favicon.svg" width="42" height="42" alt="tsx">
 </td>
 <td>
 
@@ -814,10 +773,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://typestrong.org/ts-node/favicon.ico" width="48" height="48" alt="ts-node">
-
+<td width="70" align="center">
+<img src="https://typestrong.org/ts-node/favicon.ico" width="42" height="42" alt="ts-node">
 </td>
 <td>
 
@@ -827,10 +784,8 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 </td>
 </tr>
 <tr>
-<td>
-
-<img src="https://typescript-eslint.io/img/favicon.ico" width="48" height="48" alt="typescript-eslint">
-
+<td width="70" align="center">
+<img src="https://typescript-eslint.io/img/favicon.ico" width="42" height="42" alt="typescript-eslint">
 </td>
 <td>
 
@@ -844,7 +799,7 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 ### 类型定义 (@types)
 
 | 包名 | 版本 | 说明 |
-|:-----|:-----|:-----|
+|:---:|:---:|:---|
 | @types/node | ^25.6.0 | Node.js 内置模块类型 |
 | @types/express | ^5.0.6 | Express.js 类型 |
 | @types/bcryptjs | ^2.4.6 | bcryptjs 类型 |
@@ -858,30 +813,99 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 
 ---
 
-## 📦 依赖统计
+## 📦 依赖全景
 
 ### 前端依赖
 
-```
+```yaml
 总依赖: 15 个
-├── 生产依赖: 2 个 (vue, vue-router)
-└── 开发依赖: 13 个 (vite, vitest, playwright, eslint, prettier, typescript...)
+├── 生产依赖: 2 个
+│   ├── vue: ^3.5.29
+│   └── vue-router: ^5.0.3
+└── 开发依赖: 13 个
+    ├── vite: ^7.3.1
+    ├── vitest: ^3.0.8
+    ├── @vitest/coverage-v8: ^3.2.4
+    ├── playwright: ^1.58.2
+    ├── eslint: ^9.22.0
+    ├── eslint-plugin-vue: ^10.0.0
+    ├── prettier: ^3.5.1
+    ├── typescript: ^6.0.3
+    ├── @vue/test-utils: ^2.4.6
+    └── happy-dom: ^20.9.0
 ```
 
 ### 后端依赖
 
-```
+```yaml
 总依赖: 32 个
-├── 生产依赖: 16 个 (express, mysql2, jsonwebtoken, bcryptjs, helmet, winston...)
-└── 开发依赖: 16 个 (jest, ts-jest, typescript, tsx, eslint, supertest...)
+├── 生产依赖: 16 个
+│   ├── express: ^4.21.2
+│   ├── mysql2: ^3.12.0
+│   ├── jsonwebtoken: ^9.0.2
+│   ├── bcryptjs: ^2.4.3
+│   ├── helmet: ^8.0.0
+│   ├── cors: ^2.8.5
+│   ├── express-rate-limit: ^7.5.0
+│   ├── express-validator: ^7.2.1
+│   ├── winston: ^3.19.0
+│   ├── morgan: ^1.10.0
+│   ├── ws: ^8.18.0
+│   ├── swagger-jsdoc: ^6.2.8
+│   ├── swagger-ui-express: ^5.0.1
+│   ├── dotenv: ^17.3.1
+│   ├── uuid: ^11.0.3
+│   └── compression: ^1.8.1
+└── 开发依赖: 16 个
+    ├── typescript: ^6.0.3
+    ├── tsx: ^4.21.0
+    ├── ts-node: ^10.9.2
+    ├── jest: ^29.7.0
+    ├── ts-jest: ^29.4.9
+    ├── supertest: ^7.0.0
+    ├── eslint: ^9.22.0
+    ├── typescript-eslint: ^8.59.2
+    └── @types/*: 10 个类型定义包
 ```
 
 ---
 
-## 🔄 版本兼容性
+## 🎯 选型决策
+
+### 为什么选择 Vue 3？
+
+- **渐进式框架**：学习曲线平缓，可逐步采用高级特性
+- **Composition API**：优秀的逻辑复用能力，代码组织更清晰
+- **性能优异**：包体积小，渲染性能在主流框架中领先
+- **生态成熟**：Vue Router、Pinia、Vite 等官方工具链完善
+
+### 为什么选择 Express.js？
+
+- **生态最成熟**：Node.js 社区最广泛使用的 Web 框架
+- **中间件机制**：灵活的中间件栈，扩展性极强
+- **RESTful 友好**：天然适合构建 RESTful API
+- **TypeScript 支持**：类型定义完善，与 TS 集成顺畅
+
+### 为什么选择 MySQL？
+
+- **成熟稳定**： decades 的生产环境验证
+- **事务支持**：完善的 ACID 事务机制
+- **Node.js 生态**：mysql2 驱动性能优秀，功能完善
+- **运维友好**：广泛的管理工具和云服务支持
+
+### 为什么选择 TypeScript？
+
+- **类型安全**：编译时捕获类型错误，减少运行时异常
+- **IDE 体验**：智能提示、自动补全、重构支持
+- **可维护性**：类型即文档，便于团队协作和代码审查
+- **企业标准**：现代前端/后端项目的标准选择
+
+---
+
+## 🌐 环境兼容性
 
 | 环境 | 版本要求 | 说明 |
-|:-----|:---------|:-----|
+|:---:|:---:|:---|
 | **Node.js** | ^20.19.0 \|\| >=22.12.0 | 前端要求 |
 | **Node.js** | >=20.0.0 | 后端最低要求 |
 | **npm** | >=10.0.0 | 包管理器 |
@@ -890,42 +914,19 @@ Actions   前后端      单元测试    Supertest   audit    构建    E2E 测�
 
 ---
 
-## 🎯 技术选型理由
-
-### 为什么选择 Vue 3？
-- **渐进式框架**：学习曲线平缓，可逐步采用高级特性
-- **Composition API**：优秀的逻辑复用能力，代码组织更清晰
-- **性能优异**：包体积小，渲染性能在主流框架中领先
-- **生态成熟**：Vue Router、Pinia、Vite 等官方工具链完善
-
-### 为什么选择 Express.js？
-- **生态最成熟**：Node.js 社区最广泛使用的 Web 框架
-- **中间件机制**：灵活的中间件栈，扩展性极强
-- **RESTful 友好**：天然适合构建 RESTful API
-- **TypeScript 支持**：类型定义完善，与 TS 集成顺畅
-
-### 为什么选择 MySQL？
-- **成熟稳定**： decades 的生产环境验证
-- **事务支持**：完善的 ACID 事务机制
-- **Node.js 生态**：mysql2 驱动性能优秀，功能完善
-- **运维友好**：广泛的管理工具和云服务支持
-
-### 为什么选择 TypeScript？
-- **类型安全**：编译时捕获类型错误，减少运行时异常
-- **IDE 体验**：智能提示、自动补全、重构支持
-- **可维护性**：类型即文档，便于团队协作和代码审查
-- **企业标准**：现代前端/后端项目的标准选择
-
----
-
 <div align="center">
 
-**🌌 Star Citizen 战队宣传网站 —— 技术驱动，品质至上**
+<!-- 底部横幅 -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:764ba2,100:667eea&height=120&section=footer&text=Star%20Citizen%20战队&fontSize=30&fontColor=ffffff&animation=fadeIn" width="100%" />
+
+<br>
+
+**🌌 技术驱动，品质至上**
 
 *[查看完整项目文档](README.md) · [API 接口文档](docs/API.md) · [开发指南](docs/DEVELOPMENT.md)*
 
-</div>
-
----
+<br>
 
 *本文档最后更新于 2026-05-07*
+
+</div>
