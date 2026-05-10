@@ -43,6 +43,7 @@
             <button type="submit" class="btn btn-primary" :disabled="isSaving">
               {{ isSaving ? '保存中...' : '保存设置' }}
             </button>
+            <span v-if="statusMessage" class="status-msg">{{ statusMessage }}</span>
           </div>
         </form>
       </section>
@@ -118,6 +119,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { siteConfig } from '@/config/site.config.js'
+import { dataService } from '@/services'
 
 const settings = reactive({
   siteName: '',
@@ -132,6 +134,7 @@ const features = reactive({
 })
 
 const isSaving = ref(false)
+const statusMessage = ref('')
 
 function loadSettings() {
   settings.siteName = siteConfig.siteInfo.name
@@ -145,28 +148,43 @@ function loadSettings() {
 
 async function saveSiteSettings() {
   isSaving.value = true
+  statusMessage.value = ''
   try {
-    console.log('保存设置:', settings)
-    await new Promise(resolve => setTimeout(resolve, 500))
-    alert('设置已保存')
+    await dataService.updateSiteSettings({
+      siteName: settings.siteName,
+      siteDescription: settings.siteDescription,
+      contactEmail: settings.contactEmail,
+      enableAI: String(features.enableAI),
+      enableAuth: String(features.enableAuth),
+      enableNotifications: String(features.enableNotifications)
+    })
+    statusMessage.value = '设置已保存'
   } catch (error) {
-    console.error('保存设置失败:', error)
+    statusMessage.value = '保存失败: ' + (error.message || '未知错误')
   } finally {
     isSaving.value = false
   }
 }
 
-function resetDatabase() {
+async function resetDatabase() {
   if (confirm('确定要重置数据库吗？此操作不可恢复！')) {
-    console.log('重置数据库')
-    alert('数据库重置请求已提交')
+    try {
+      await dataService.resetDatabase()
+      statusMessage.value = '数据库已重置'
+    } catch (error) {
+      statusMessage.value = '重置失败: ' + (error.message || '未知错误')
+    }
   }
 }
 
-function clearCache() {
+async function clearCache() {
   if (confirm('确定要清除缓存吗？')) {
-    console.log('清除缓存')
-    alert('缓存已清除')
+    try {
+      await dataService.clearCache()
+      statusMessage.value = '缓存已清除'
+    } catch (error) {
+      statusMessage.value = '清除失败: ' + (error.message || '未知错误')
+    }
   }
 }
 
@@ -363,5 +381,11 @@ onMounted(() => {
 
 .btn-danger:hover {
   background: rgba(255, 107, 107, 0.25);
+}
+
+.status-msg {
+  margin-left: 1rem;
+  font-size: 0.85rem;
+  color: var(--accent-2);
 }
 </style>

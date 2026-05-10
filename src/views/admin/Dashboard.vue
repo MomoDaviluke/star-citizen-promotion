@@ -103,10 +103,24 @@
 </template>
 
 <script setup>
+/**
+ * 管理后台仪表盘组件逻辑
+ * @description 展示管理后台的核心数据概览，包括统计卡片、待审核申请和活动日志
+ * @summary 通过聚合多个 API 请求提供管理员一站式的数据监控面板
+ */
+
 import { ref, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 
+/**
+ * 统计卡片数据
+ * @description 展示活跃成员、进行中项目、待审核申请、王牌飞行员四个核心指标
+ * @property {string} icon - 图标表情符号
+ * @property {string} label - 指标名称
+ * @property {string|number} value - 指标数值
+ * @property {number} trend - 趋势变化值
+ */
 const stats = ref([
   { icon: '👥', label: '活跃成员', value: '0', trend: 0 },
   { icon: '📋', label: '进行中项目', value: '0', trend: 0 },
@@ -114,16 +128,27 @@ const stats = ref([
   { icon: '✈', label: '王牌飞行员', value: '0', trend: 0 }
 ])
 
+/** 最近提交的申请列表 */
 const recentApplications = ref([])
+/** 活动日志列表 */
 const activityLogs = ref([])
 
+/**
+ * 加载仪表盘数据
+ * @description 并行请求统计数据和待审核申请，更新仪表盘展示
+ * @async
+ * @summary 使用 Promise.all 优化并发请求性能
+ */
 async function loadDashboardData() {
   try {
-    const [statsRes, appsRes] = await Promise.all([
+    // 并行获取统计数据、待审核申请和活动日志
+    const [statsRes, appsRes, logsRes] = await Promise.all([
       dataService.getStats(),
-      dataService.getApplications({ limit: 5, status: 'pending' })
+      dataService.getApplications({ limit: 5, status: 'pending' }),
+      dataService.getActivityLogs({ limit: 10 })
     ])
 
+    // 更新统计卡片数据
     if (statsRes.success) {
       const summary = statsRes.summary || {}
       stats.value = [
@@ -134,20 +159,42 @@ async function loadDashboardData() {
       ]
     }
 
+    // 更新最近申请列表
     if (appsRes.success) {
       recentApplications.value = appsRes.data || []
+    }
+
+    // 更新活动日志
+    if (logsRes.success && logsRes.data) {
+      activityLogs.value = logsRes.data.map(log => ({
+        action: log.action,
+        entity: log.entity_type || '',
+        time: formatDate(log.created_at)
+      }))
     }
   } catch (error) {
     console.error('加载仪表盘数据失败:', error)
   }
 }
 
+/**
+ * 格式化日期
+ * @description 将 ISO 日期字符串格式化为短日期格式（如：1月15日）
+ * @param {string} dateStr - ISO 格式日期字符串
+ * @returns {string} 格式化后的短日期
+ */
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
+/**
+ * 状态标签转换
+ * @description 将英文状态码转换为中文标签
+ * @param {string} status - 英文状态码
+ * @returns {string} 中文状态标签
+ */
 function statusLabel(status) {
   const labels = {
     pending: '待审核',
@@ -157,6 +204,7 @@ function statusLabel(status) {
   return labels[status] || status
 }
 
+/** 组件挂载时加载仪表盘数据 */
 onMounted(() => {
   loadDashboardData()
 })

@@ -60,31 +60,57 @@
 </template>
 
 <script setup>
+/**
+ * 登录视图组件逻辑
+ * @description 处理用户登录表单验证、提交和状态管理
+ */
+
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '@/services'
 
+/** Vue Router 实例，用于页面导航 */
 const router = useRouter()
+/** 当前路由对象，用于获取查询参数 */
 const route = useRoute()
 
+/**
+ * 登录表单数据
+ * @property {string} email - 用户邮箱
+ * @property {string} password - 用户密码
+ */
 const form = reactive({
   email: '',
   password: ''
 })
 
+/**
+ * 表单错误信息
+ * @property {string} email - 邮箱字段错误提示
+ * @property {string} password - 密码字段错误提示
+ */
 const errors = reactive({
   email: '',
   password: ''
 })
 
+/** 是否正在提交登录请求 */
 const isSubmitting = ref(false)
+/** 登录错误提示信息 */
 const loginError = ref('')
 
+/**
+ * 处理登录表单提交
+ * @description 验证表单数据，调用认证服务进行登录，成功后跳转到目标页面
+ * @async
+ */
 async function handleLogin() {
+  // 重置错误信息
   errors.email = ''
   errors.password = ''
   loginError.value = ''
 
+  // 前端基础验证：检查必填字段
   if (!form.email) {
     errors.email = '请输入邮箱'
     return
@@ -97,20 +123,25 @@ async function handleLogin() {
   isSubmitting.value = true
 
   try {
+    // 调用认证服务登录接口
     const response = await authService.login({
       email: form.email,
       password: form.password
     })
 
+    // 登录成功处理：获取重定向地址并跳转
     if (response.success) {
       const redirect = route.query.redirect || '/'
       router.push(redirect)
     } else {
+      // 登录失败：显示服务端返回的错误信息
       loginError.value = response.error || '登录失败，请检查邮箱和密码'
     }
   } catch (error) {
+    // 网络或服务器异常处理
     loginError.value = error.message || '登录失败，请稍后重试'
   } finally {
+    // 无论成功失败，重置提交状态
     isSubmitting.value = false
   }
 }

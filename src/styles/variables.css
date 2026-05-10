@@ -1,0 +1,174 @@
+/**
+ * 主题变量系统
+ * @description 定义全站的CSS变量，支持暗黑/亮色主题切换
+ * @author Full-stack Team
+ */
+
+:root {
+  /* ========== 主色调 - 科技蓝 ========== */
+  --color-primary: #5fa9ff;
+  --color-primary-dark: #3d7bd9;
+  --color-primary-light: #8fc7ff;
+  --color-accent: #00d4ff;
+  --color-accent-2: #4ecdc4;
+  --color-success: #4ecdc4;
+  --color-warning: #f0ad4e;
+  --color-danger: #ff6b6b;
+
+  /* ========== 背景色阶 ========== */
+  --bg-deepest: #030810;
+  --bg-deep: #0a1620;
+  --bg-medium: #152030;
+  --bg-light: #1e3050;
+  --bg-overlay: rgba(10, 22, 40, 0.95);
+  --bg-card: linear-gradient(165deg, rgba(15, 30, 50, 0.8), rgba(8, 18, 32, 0.9));
+
+  /* ========== 文字颜色 ========== */
+  --text-primary: #e0e8f0;
+  --text-secondary: #8fa8c0;
+  --text-muted: #5a7a9a;
+  --text-accent: #5fa9ff;
+  --text-success: #4ecdc4;
+  --text-warning: #f0ad4e;
+  --text-danger: #ff6b6b;
+
+  /* ========== 边框/分割线 ========== */
+  --border-subtle: rgba(95, 169, 255, 0.15);
+  --border-medium: rgba(95, 169, 255, 0.3);
+  --border-strong: rgba(95, 169, 255, 0.5);
+  --border-line: rgba(143, 215, 255, 0.25);
+
+  /* ========== 阴影/光晕 ========== */
+  --glow-primary: 0 0 20px rgba(95, 169, 255, 0.3);
+  --glow-accent: 0 0 15px rgba(0, 212, 255, 0.25);
+  --glow-strong: 0 0 30px rgba(95, 169, 255, 0.5);
+  --glow-success: 0 0 20px rgba(78, 205, 196, 0.3);
+  --glow-danger: 0 0 20px rgba(255, 107, 107, 0.3);
+
+  /* ========== 动画时长 ========== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-slow: 500ms ease;
+
+  /* ========== 间距比例 ========== */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* ========== 字体大小 ========== */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  /* ========== 圆角 ========== */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* ========== Z-index 层级 ========== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-tooltip: 1060;
+  --z-notification: 10000;
+}
+
+/* ========== 亮色主题 ========== */
+[data-theme="light"] {
+  --bg-deepest: #f0f4f8;
+  --bg-deep: #e2e8f0;
+  --bg-medium: #ffffff;
+  --bg-light: #f8fafc;
+  --bg-overlay: rgba(255, 255, 255, 0.95);
+  --bg-card: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95));
+
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --text-accent: #3182ce;
+
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-medium: rgba(0, 0, 0, 0.2);
+  --border-strong: rgba(0, 0, 0, 0.3);
+  --border-line: rgba(0, 0, 0, 0.15);
+
+  --glow-primary: 0 0 20px rgba(49, 130, 206, 0.2);
+  --glow-accent: 0 0 15px rgba(0, 212, 255, 0.15);
+  --glow-strong: 0 0 30px rgba(49, 130, 206, 0.3);
+}
+
+/* ========== 通用工具类 ========== */
+.bg-deepest { background-color: var(--bg-deepest); }
+.bg-deep { background-color: var(--bg-deep); }
+.bg-medium { background-color: var(--bg-medium); }
+.bg-light { background-color: var(--bg-light); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--text-accent); }
+
+.border-subtle { border-color: var(--border-subtle); }
+.border-medium { border-color: var(--border-medium); }
+.border-strong { border-color: var(--border-strong); }
+
+/* ========== 响应式断点 ========== */
+/* 超小屏幕：< 576px */
+/* 小屏幕：≥ 576px */
+/* 中等屏幕：≥ 768px */
+/* 大屏幕：≥ 992px */
+/* 超大屏幕：≥ 1200px */
+
+/* ========== 无障碍支持 ========== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0.01ms;
+    --transition-normal: 0.01ms;
+    --transition-slow: 0.01ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========== 滚动条样式 ========== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* ========== 选中文本样式 ========== */
+::selection {
+  background: rgba(95, 169, 255, 0.3);
+  color: var(--text-primary);
+}

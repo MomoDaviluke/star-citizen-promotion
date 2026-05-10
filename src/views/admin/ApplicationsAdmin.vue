@@ -178,14 +178,31 @@
 </template>
 
 <script setup>
+/**
+ * 申请审核管理页面逻辑
+ * @description 管理入队申请的审核流程，包括列表展示、状态筛选、搜索和审核操作
+ * @summary 提供完整的申请审核工作流，支持分页、搜索和状态管理
+ */
+
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 
+/** 申请列表数据 */
 const applications = ref([])
+/** 状态筛选条件：pending(待审核)、approved(已通过)、rejected(已拒绝)或空(全部) */
 const statusFilter = ref('')
+/** 搜索关键词 */
 const searchQuery = ref('')
+/** 当前选中的申请详情（用于弹窗展示） */
 const selectedApplication = ref(null)
+/**
+ * 分页信息
+ * @property {number} total - 总记录数
+ * @property {number} limit - 每页条数
+ * @property {number} offset - 当前偏移量
+ * @property {boolean} hasMore - 是否还有更多数据
+ */
 const pagination = ref({
   total: 0,
   limit: 20,
@@ -193,13 +210,20 @@ const pagination = ref({
   hasMore: false
 })
 
+/**
+ * 筛选后的申请列表计算属性
+ * @description 根据状态筛选和搜索关键词过滤申请列表
+ * @returns {Array} 筛选后的申请数组
+ */
 const filteredApplications = computed(() => {
   let result = applications.value
 
+  // 按状态筛选
   if (statusFilter.value) {
     result = result.filter(app => app.status === statusFilter.value)
   }
 
+  // 按姓名或邮箱搜索
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(app =>
@@ -211,6 +235,12 @@ const filteredApplications = computed(() => {
   return result
 })
 
+/**
+ * 加载申请列表
+ * @description 从数据服务获取申请列表，支持分页
+ * @param {number} offset - 分页偏移量
+ * @async
+ */
 async function loadApplications(offset = 0) {
   try {
     const response = await dataService.getApplications({
@@ -227,14 +257,23 @@ async function loadApplications(offset = 0) {
   }
 }
 
+/**
+ * 更新申请状态
+ * @description 审核申请，更新为通过或拒绝状态
+ * @param {string} id - 申请唯一标识
+ * @param {string} status - 新状态：approved 或 rejected
+ * @async
+ */
 async function updateStatus(id, status) {
   try {
     const response = await dataService.updateApplicationStatus(id, status)
     if (response.success) {
+      // 更新本地列表中对应申请的状态
       const index = applications.value.findIndex(app => app.id === id)
       if (index > -1) {
         applications.value[index] = response.data
       }
+      // 如果当前弹窗展示的是该申请，同步更新弹窗数据
       if (selectedApplication.value?.id === id) {
         selectedApplication.value = response.data
       }
@@ -244,18 +283,38 @@ async function updateStatus(id, status) {
   }
 }
 
+/**
+ * 加载指定分页页码
+ * @description 根据偏移量加载对应页码的数据
+ * @param {number} offset - 分页偏移量
+ */
 function loadPage(offset) {
   loadApplications(offset)
 }
 
+/**
+ * 查看申请详情
+ * @description 打开申请详情弹窗
+ * @param {Object} app - 申请对象
+ */
 function viewApplication(app) {
   selectedApplication.value = app
 }
 
+/**
+ * 关闭详情弹窗
+ * @description 清空当前选中的申请，关闭弹窗
+ */
 function closeModal() {
   selectedApplication.value = null
 }
 
+/**
+ * 格式化日期时间
+ * @description 将 ISO 日期字符串格式化为中文日期时间格式
+ * @param {string} dateStr - ISO 格式日期字符串
+ * @returns {string} 格式化后的中文日期时间
+ */
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('zh-CN', {
@@ -267,16 +326,35 @@ function formatDate(dateStr) {
   })
 }
 
+/**
+ * 截断文本
+ * @description 将长文本截断为指定长度并添加省略号
+ * @param {string} text - 原始文本
+ * @param {number} length - 最大长度
+ * @returns {string} 截断后的文本
+ */
 function truncate(text, length) {
   if (!text) return ''
   return text.length > length ? text.slice(0, length) + '...' : text
 }
 
+/**
+ * 状态标签转换
+ * @description 将英文状态码转换为中文标签
+ * @param {string} status - 英文状态码
+ * @returns {string} 中文状态标签
+ */
 function statusLabel(status) {
   const labels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' }
   return labels[status] || status
 }
 
+/**
+ * 在线时间标签转换
+ * @description 将 availability 值转换为中文标签
+ * @param {string} value - 在线时间代码
+ * @returns {string} 中文描述
+ */
 function availabilityLabel(value) {
   const labels = {
     weekdays: '工作日晚上',

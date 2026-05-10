@@ -61,6 +61,48 @@
           暂无项目数据
         </div>
       </div>
+
+      <div v-if="editingProject" class="modal-overlay" @click.self="closeEdit">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>编辑项目</h3>
+            <button class="modal-close" @click="closeEdit">&times;</button>
+          </div>
+          <form @submit.prevent="saveEdit" class="edit-form">
+            <div class="form-group">
+              <label class="form-label">项目名称</label>
+              <input v-model="editForm.name" type="text" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">周期</label>
+              <input v-model="editForm.period" type="text" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">描述</label>
+              <textarea v-model="editForm.description" class="form-input form-textarea" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">状态</label>
+              <select v-model="editForm.status" class="form-input">
+                <option value="planning">规划中</option>
+                <option value="active">进行中</option>
+                <option value="completed">已完成</option>
+                <option value="cancelled">已取消</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">进度 (%)</label>
+              <input v-model.number="editForm.progress" type="number" min="0" max="100" class="form-input" />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" @click="closeEdit">取消</button>
+              <button type="submit" class="btn btn-primary" :disabled="isSaving">
+                {{ isSaving ? '保存中...' : '保存' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </AdminLayout>
 </template>
@@ -72,6 +114,9 @@ import { dataService } from '@/services'
 
 const projects = ref([])
 const statusFilter = ref('')
+const editingProject = ref(null)
+const editForm = ref({ name: '', period: '', description: '', status: 'active', progress: 0 })
+const isSaving = ref(false)
 
 const filteredProjects = computed(() => {
   if (!statusFilter.value) return projects.value
@@ -90,7 +135,36 @@ async function loadProjects() {
 }
 
 function editProject(project) {
-  console.log('编辑项目:', project)
+  editingProject.value = project
+  editForm.value = {
+    name: project.name || '',
+    period: project.period || '',
+    description: project.description || '',
+    status: project.status || 'active',
+    progress: project.progress || 0
+  }
+}
+
+function closeEdit() {
+  editingProject.value = null
+}
+
+async function saveEdit() {
+  isSaving.value = true
+  try {
+    const response = await dataService.updateProject(editingProject.value.id, editForm.value)
+    if (response.success) {
+      const index = projects.value.findIndex(p => p.id === editingProject.value.id)
+      if (index !== -1) {
+        projects.value[index] = { ...projects.value[index], ...response.data }
+      }
+      closeEdit()
+    }
+  } catch (error) {
+    console.error('保存项目失败:', error)
+  } finally {
+    isSaving.value = false
+  }
 }
 
 async function deleteProject(id) {
@@ -247,5 +321,90 @@ onMounted(() => {
   text-align: center;
   padding: 3rem;
   color: var(--text-muted);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: rgba(15, 30, 50, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.edit-form .form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.edit-form .form-input {
+  padding: 0.6rem 0.75rem;
+  background: rgba(3, 8, 16, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.edit-form .form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.edit-form .form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 </style>

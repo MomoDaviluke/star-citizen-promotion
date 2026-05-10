@@ -188,15 +188,16 @@
 
 <script setup>
 /**
- * 加入我们视图组件
+ * 加入我们视图组件逻辑
  * @description 展示招募条件、加入流程和申请表单
+ * @summary 提供完整的入队申请流程，包括条件展示、流程说明和表单提交
  */
 
 import PageTitle from '@/components/common/PageTitle.vue'
 import { ref, reactive } from 'vue'
 import { dataService } from '@/services'
 
-/** 招募条件列表 */
+/** 招募条件列表 - 展示加入团队的基本要求 */
 const requirements = ref([
   '尊重团队协作与沟通规则',
   '愿意参加基础训练与复盘',
@@ -204,7 +205,7 @@ const requirements = ref([
   '拥有基础的游戏设备与网络条件'
 ])
 
-/** 加入流程步骤 */
+/** 加入流程步骤 - 说明从申请到入队的完整流程 */
 const process = ref([
   '提交申请信息',
   '完成语音面谈',
@@ -212,7 +213,15 @@ const process = ref([
   '正式加入团队'
 ])
 
-/** 表单数据 */
+/**
+ * 申请表单数据
+ * @property {string} name - 申请人姓名（必填）
+ * @property {string} email - 联系邮箱（必填）
+ * @property {string} discord - Discord ID（可选）
+ * @property {string} availability - 在线时间偏好（可选）
+ * @property {string} experience - 游戏经验描述（可选）
+ * @property {string} reason - 加入原因（可选）
+ */
 const form = reactive({
   name: '',
   email: '',
@@ -222,27 +231,36 @@ const form = reactive({
   reason: ''
 })
 
-/** 表单验证错误 */
+/**
+ * 表单验证错误信息
+ * @property {string} name - 姓名字段错误
+ * @property {string} email - 邮箱字段错误
+ */
 const errors = reactive({
   name: '',
   email: ''
 })
 
-/** 提交状态 */
+/** 是否正在提交申请 */
 const isSubmitting = ref(false)
+/** 是否提交成功 */
 const submitSuccess = ref(false)
+/** 提交错误信息 */
 const submitError = ref(null)
 
 /**
- * 验证表单
- * @returns {boolean} 是否验证通过
+ * 验证申请表单
+ * @description 对必填字段进行前端验证
+ * @returns {boolean} 验证通过返回 true，否则返回 false
  */
 function validateForm() {
   let isValid = true
 
+  // 重置错误信息
   errors.name = ''
   errors.email = ''
 
+  // 姓名验证：必填、长度不超过50字符
   if (!form.name.trim()) {
     errors.name = '请输入姓名'
     isValid = false
@@ -251,6 +269,7 @@ function validateForm() {
     isValid = false
   }
 
+  // 邮箱验证：必填、格式正确
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!form.email.trim()) {
     errors.email = '请输入邮箱'
@@ -264,7 +283,9 @@ function validateForm() {
 }
 
 /**
- * 提交表单
+ * 处理申请表单提交
+ * @description 验证表单后提交申请数据到后端
+ * @async
  */
 async function handleSubmit() {
   if (!validateForm()) return
@@ -273,6 +294,7 @@ async function handleSubmit() {
   submitError.value = null
 
   try {
+    // 调用数据服务提交申请，对可选字段进行 trim 处理
     const response = await dataService.submitApplication({
       name: form.name.trim(),
       email: form.email.trim(),
@@ -288,14 +310,17 @@ async function handleSubmit() {
       submitError.value = response.error || '提交失败，请稍后重试'
     }
   } catch (error) {
+    // 网络或服务器异常处理
     submitError.value = error.message || '网络错误，请稍后重试'
   } finally {
+    // 无论成功失败，重置提交状态
     isSubmitting.value = false
   }
 }
 
 /**
- * 重置表单
+ * 重置申请表单
+ * @description 清空表单数据、错误信息和提交状态，允许用户重新提交
  */
 function resetForm() {
   form.name = ''

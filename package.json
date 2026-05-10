@@ -23,6 +23,11 @@
     "typecheck": "tsc --noEmit -p jsconfig.json"
   },
   "dependencies": {
+    "animejs": "^4.4.1",
+    "chart.js": "^4.5.1",
+    "howler": "^2.2.4",
+    "pinia": "^3.0.4",
+    "swiper": "^12.1.4",
     "vue": "^3.5.29",
     "vue-router": "^5.0.3"
   },
@@ -46,10 +51,10 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/star-citizen-team/star-citizen-promotion.git"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/star-citizen-team/star-citizen-promotion/issues"
   },
-  "homepage": ""
+  "homepage": "https://star-citizen-team.cn"
 }

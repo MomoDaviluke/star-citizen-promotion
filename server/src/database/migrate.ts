@@ -177,6 +177,69 @@ async function runMigration(): Promise<void> {
     await connection.query(createActivityLogsTable)
     console.log('   ✓ activity_logs 表')
 
+    const createShipsTable = `
+      CREATE TABLE IF NOT EXISTS ships (
+        id VARCHAR(36) PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        callsign VARCHAR(50),
+        ship VARCHAR(100) NOT NULL,
+        category ENUM('combat', 'transport', 'explore', 'support') DEFAULT 'combat',
+        status ENUM('available', 'borrowed', 'inMission', 'maintenance') DEFAULT 'available',
+        value BIGINT DEFAULT 0,
+        image VARCHAR(500),
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_category (category),
+        INDEX idx_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `
+    await connection.query(createShipsTable)
+    console.log('   ✓ ships 表')
+
+    const createEventsTable = `
+      CREATE TABLE IF NOT EXISTS events (
+        id VARCHAR(36) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        start_time DATETIME NOT NULL,
+        end_time DATETIME,
+        location VARCHAR(500),
+        status ENUM('upcoming', 'ongoing', 'completed', 'cancelled') DEFAULT 'upcoming',
+        creator_id VARCHAR(36),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_status (status),
+        INDEX idx_start_time (start_time),
+        FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `
+    await connection.query(createEventsTable)
+    console.log('   ✓ events 表')
+
+    const createEventParticipantsTable = `
+      CREATE TABLE IF NOT EXISTS event_participants (
+        event_id VARCHAR(36) NOT NULL,
+        user_id VARCHAR(36) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (event_id, user_id),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `
+    await connection.query(createEventParticipantsTable)
+    console.log('   ✓ event_participants 表')
+
+    const createSettingsTable = `
+      CREATE TABLE IF NOT EXISTS settings (
+        \`key\` VARCHAR(100) PRIMARY KEY,
+        \`value\` TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `
+    await connection.query(createSettingsTable)
+    console.log('   ✓ settings 表')
+
     await connection.end()
 
     console.log('\n✅ 数据库迁移完成!')

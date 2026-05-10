@@ -15,6 +15,7 @@ export const navItems = [
   { label: '首页', to: '/' },
   { label: '团队介绍', to: '/about' },
   { label: '核心成员', to: '/members' },
+  { label: '舰队展示', to: '/fleet' },
   { label: '活动项目', to: '/projects' },
   { label: '加入我们', to: '/join' },
   { label: '联系我们', to: '/contact' }

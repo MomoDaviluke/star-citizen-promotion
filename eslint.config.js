@@ -2,6 +2,8 @@ import js from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 export default [
   {
     name: 'app/files-to-ignore',
@@ -15,8 +17,8 @@ export default [
       'vue/multi-word-component-names': 'off',
       'vue/no-unused-vars': 'warn',
       'no-unused-vars': 'warn',
-      'no-console': 'warn',
-      'no-debugger': 'warn'
+      'no-console': isProduction ? 'error' : 'warn',
+      'no-debugger': isProduction ? 'error' : 'warn'
     }
   },
   {

@@ -87,12 +87,26 @@
 </template>
 
 <script setup>
+/**
+ * 注册视图组件逻辑
+ * @description 处理用户注册表单验证、提交和状态管理
+ * @summary 包含用户名、邮箱、密码的完整验证逻辑，确保数据符合后端要求
+ */
+
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '@/services'
 
+/** Vue Router 实例，用于注册成功后跳转到登录页 */
 const router = useRouter()
 
+/**
+ * 注册表单数据
+ * @property {string} username - 用户名（3-20字符）
+ * @property {string} email - 邮箱地址
+ * @property {string} password - 密码（至少8位，包含大小写字母和数字）
+ * @property {string} confirmPassword - 确认密码
+ */
 const form = reactive({
   username: '',
   email: '',
@@ -100,6 +114,13 @@ const form = reactive({
   confirmPassword: ''
 })
 
+/**
+ * 表单字段错误信息
+ * @property {string} username - 用户名验证错误
+ * @property {string} email - 邮箱验证错误
+ * @property {string} password - 密码验证错误
+ * @property {string} confirmPassword - 确认密码验证错误
+ */
 const errors = reactive({
   username: '',
   email: '',
@@ -107,17 +128,26 @@ const errors = reactive({
   confirmPassword: ''
 })
 
+/** 是否正在提交注册请求 */
 const isSubmitting = ref(false)
+/** 注册全局错误信息 */
 const registerError = ref('')
 
+/**
+ * 表单验证函数
+ * @description 对注册表单进行完整的前端验证
+ * @returns {boolean} 验证通过返回 true，否则返回 false
+ */
 function validateForm() {
   let isValid = true
 
+  // 重置所有错误信息
   errors.username = ''
   errors.email = ''
   errors.password = ''
   errors.confirmPassword = ''
 
+  // 用户名验证：必填、长度3-20字符
   if (!form.username) {
     errors.username = '请输入用户名'
     isValid = false
@@ -126,6 +156,7 @@ function validateForm() {
     isValid = false
   }
 
+  // 邮箱验证：必填、格式正确
   if (!form.email) {
     errors.email = '请输入邮箱'
     isValid = false
@@ -134,6 +165,7 @@ function validateForm() {
     isValid = false
   }
 
+  // 密码验证：必填、至少8位、包含大小写字母和数字
   if (!form.password) {
     errors.password = '请输入密码'
     isValid = false
@@ -145,6 +177,7 @@ function validateForm() {
     isValid = false
   }
 
+  // 确认密码验证：必填、与密码一致
   if (!form.confirmPassword) {
     errors.confirmPassword = '请确认密码'
     isValid = false
@@ -156,9 +189,15 @@ function validateForm() {
   return isValid
 }
 
+/**
+ * 处理注册表单提交
+ * @description 验证通过后调用认证服务注册，成功后跳转登录页
+ * @async
+ */
 async function handleRegister() {
   registerError.value = ''
 
+  // 前端验证失败则阻止提交
   if (!validateForm()) {
     return
   }
@@ -166,20 +205,25 @@ async function handleRegister() {
   isSubmitting.value = true
 
   try {
+    // 调用认证服务注册接口
     const response = await authService.register({
       username: form.username,
       email: form.email,
       password: form.password
     })
 
+    // 注册成功：跳转到登录页并标记已注册
     if (response.success) {
       router.push('/login?registered=true')
     } else {
+      // 注册失败：显示服务端返回的错误信息
       registerError.value = response.error || '注册失败，请稍后重试'
     }
   } catch (error) {
+    // 网络或服务器异常处理
     registerError.value = error.message || '注册失败，请稍后重试'
   } finally {
+    // 无论成功失败，重置提交状态
     isSubmitting.value = false
   }
 }

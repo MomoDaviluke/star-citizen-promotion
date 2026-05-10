@@ -71,7 +71,6 @@ import PageTransition from './components/common/PageTransition.vue'
 import LoadingIndicator from './components/common/LoadingIndicator.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 import { aiService, authService } from './services'
-import { onLoadingStateChange } from './router'
 
 /** 路由实例 */
 const router = useRouter()
@@ -149,17 +148,20 @@ function handleGlobalError(errorInfo) {
 provide('notification', { showNotification, removeNotification })
 
 /**
- * 监听路由加载状态变化（由 router/index.js 统一管理）
- * @description 替代之前在 App.vue 中重复注册的路由守卫
+ * 监听路由加载状态变化
  */
-onLoadingStateChange((loading) => {
-  isPageLoading.value = loading
+router.beforeEach((to, from, next) => {
+  isPageLoading.value = true
   if (loadingIndicator.value) {
-    if (loading) {
-      loadingIndicator.value.startLoading()
-    } else {
-      loadingIndicator.value.stopLoading()
-    }
+    loadingIndicator.value.startLoading()
+  }
+  next()
+})
+
+router.afterEach(() => {
+  isPageLoading.value = false
+  if (loadingIndicator.value) {
+    loadingIndicator.value.stopLoading()
   }
 })
 

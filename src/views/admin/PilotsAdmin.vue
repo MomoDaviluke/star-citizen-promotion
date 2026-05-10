@@ -55,6 +55,55 @@
       <div v-if="filteredPilots.length === 0" class="empty-state">
         暂无飞行员数据
       </div>
+
+      <div v-if="editingPilot" class="modal-overlay" @click.self="closeEdit">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>编辑飞行员</h3>
+            <button class="modal-close" @click="closeEdit">&times;</button>
+          </div>
+          <form @submit.prevent="saveEdit" class="edit-form">
+            <div class="form-group">
+              <label class="form-label">名称</label>
+              <input v-model="editForm.name" type="text" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">呼号</label>
+              <input v-model="editForm.callsign" type="text" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">驾驶飞船</label>
+              <input v-model="editForm.ship" type="text" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">描述</label>
+              <textarea v-model="editForm.description" class="form-input form-textarea" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">任务数</label>
+              <input v-model.number="editForm.missions" type="number" min="0" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">击杀数</label>
+              <input v-model.number="editForm.kills" type="number" min="0" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">状态</label>
+              <select v-model="editForm.status" class="form-input">
+                <option value="active">活跃</option>
+                <option value="inactive">非活跃</option>
+                <option value="kia">KIA</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" @click="closeEdit">取消</button>
+              <button type="submit" class="btn btn-primary" :disabled="isSaving">
+                {{ isSaving ? '保存中...' : '保存' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </AdminLayout>
 </template>
@@ -66,6 +115,9 @@ import { dataService } from '@/services'
 
 const pilots = ref([])
 const searchQuery = ref('')
+const editingPilot = ref(null)
+const editForm = ref({})
+const isSaving = ref(false)
 
 const filteredPilots = computed(() => {
   if (!searchQuery.value) return pilots.value
@@ -88,7 +140,38 @@ async function loadPilots() {
 }
 
 function editPilot(pilot) {
-  console.log('编辑飞行员:', pilot)
+  editingPilot.value = pilot
+  editForm.value = {
+    name: pilot.name || '',
+    callsign: pilot.callsign || '',
+    ship: pilot.ship || '',
+    description: pilot.description || '',
+    missions: pilot.missions || 0,
+    kills: pilot.kills || 0,
+    status: pilot.status || 'active'
+  }
+}
+
+function closeEdit() {
+  editingPilot.value = null
+}
+
+async function saveEdit() {
+  isSaving.value = true
+  try {
+    const response = await dataService.updatePilot(editingPilot.value.id, editForm.value)
+    if (response.success) {
+      const index = pilots.value.findIndex(p => p.id === editingPilot.value.id)
+      if (index !== -1) {
+        pilots.value[index] = { ...pilots.value[index], ...response.data }
+      }
+      closeEdit()
+    }
+  } catch (error) {
+    console.error('保存飞行员失败:', error)
+  } finally {
+    isSaving.value = false
+  }
 }
 
 async function deletePilot(id) {
@@ -236,5 +319,90 @@ onMounted(() => {
   text-align: center;
   padding: 3rem;
   color: var(--text-muted);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: rgba(15, 30, 50, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.edit-form .form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.edit-form .form-input {
+  padding: 0.6rem 0.75rem;
+  background: rgba(3, 8, 16, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.edit-form .form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.edit-form .form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 </style>

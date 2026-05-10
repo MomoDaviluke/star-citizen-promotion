@@ -54,13 +54,28 @@
 </template>
 
 <script setup>
+/**
+ * 管理后台布局组件逻辑
+ * @description 提供管理后台的整体布局结构，包括侧边栏导航、顶部栏和用户操作
+ * @summary 作为所有管理后台页面的父布局组件，提供统一的导航和用户信息展示
+ */
+
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '@/services'
 
+/** Vue Router 实例，用于页面导航 */
 const router = useRouter()
+/** 当前路由对象，用于获取当前路径 */
 const route = useRoute()
 
+/**
+ * 侧边栏菜单项配置
+ * @description 定义管理后台的导航菜单结构
+ * @property {string} label - 菜单项显示名称
+ * @property {string} to - 路由路径
+ * @property {string} icon - 图标表情符号
+ */
 const menuItems = [
   { label: '数据概览', to: '/admin', icon: '📊' },
   { label: '成员管理', to: '/admin/members', icon: '👥' },
@@ -70,18 +85,33 @@ const menuItems = [
   { label: '站点设置', to: '/admin/settings', icon: '⚙' }
 ]
 
+/** 当前登录用户信息 */
 const user = computed(() => authService.getUser())
 
+/**
+ * 用户角色标签计算属性
+ * @description 将角色代码转换为中文标签
+ * @returns {string} 中文角色名称
+ */
 const roleLabel = computed(() => {
   const roles = { admin: '管理员', member: '成员', guest: '访客' }
   return roles[user.value?.role] || '未知'
 })
 
+/**
+ * 当前页面标题计算属性
+ * @description 根据当前路由路径匹配对应的菜单项标题
+ * @returns {string} 当前页面标题
+ */
 const pageTitle = computed(() => {
   const item = menuItems.find(m => m.to === route.path)
   return item?.label || '管理后台'
 })
 
+/**
+ * 处理用户登出
+ * @description 清除认证状态并跳转到首页
+ */
 function handleLogout() {
   authService.logout()
   router.push('/')

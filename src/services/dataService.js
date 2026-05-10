@@ -78,7 +78,7 @@ export const dataService = {
         console.warn('从 API 获取飞行员详情失败:', error)
       }
     }
-    const pilot = acePilots.find((p) => p.id === id)
+    const pilot = acePilots.find(p => p.id === id)
     return { success: !!pilot, data: pilot, error: pilot ? null : '飞行员不存在' }
   },
 
@@ -118,7 +118,7 @@ export const dataService = {
         console.warn('从 API 获取成员详情失败:', error)
       }
     }
-    const member = members.find((m) => m.id === id)
+    const member = members.find(m => m.id === id)
     return { success: !!member, data: member, error: member ? null : '成员不存在' }
   },
 
@@ -158,7 +158,7 @@ export const dataService = {
         console.warn('从 API 获取项目详情失败:', error)
       }
     }
-    const project = projects.find((p) => p.id === id)
+    const project = projects.find(p => p.id === id)
     return { success: !!project, data: project, error: project ? null : '项目不存在' }
   },
 
@@ -171,7 +171,6 @@ export const dataService = {
     if (USE_API) {
       return httpClient.post('/applications', data)
     }
-    console.log('模拟提交申请:', data)
     return {
       success: true,
       message: '申请提交成功（模拟）',
@@ -304,6 +303,18 @@ export const dataService = {
    */
   async getActivityLogs(params = {}) {
     return httpClient.get('/activity-logs', params)
+  },
+
+  async updateSiteSettings(data) {
+    return httpClient.put('/settings', data)
+  },
+
+  async resetDatabase() {
+    return httpClient.post('/admin/reset-db')
+  },
+
+  async clearCache() {
+    return httpClient.post('/admin/clear-cache')
   }
 }
 

@@ -19,11 +19,11 @@ export const siteConfig = {
     nameEn: 'Star Citizen Team Portal',
     description: '面向星际公民玩家的团队门户，展示组织定位、核心成员、活动任务与招募信息',
     version: '1.0.0',
-    author: 'Your Team Name',
-    email: 'team@example.com',
-    discord: 'your-discord-invite',
-    qqGroup: '123456789',
-    github: 'https://github.com/your-org',
+    author: '星际公民战队',
+    email: 'contact@star-citizen-team.cn',
+    discord: 'https://discord.gg/star-citizen-cn',
+    qqGroup: '请填入真实QQ群号',
+    github: 'https://github.com/star-citizen-team',
     year: new Date().getFullYear()
   },
 

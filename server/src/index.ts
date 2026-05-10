@@ -9,6 +9,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import compression from 'compression'
+import cookieParser from 'cookie-parser'
 import { rateLimit } from 'express-rate-limit'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -31,6 +32,10 @@ import projectRoutes from './routes/projects.js'
 import applicationRoutes from './routes/applications.js'
 import statsRoutes from './routes/stats.js'
 import pilotRoutes from './routes/pilots.js'
+import fleetRoutes from './routes/fleet.js'
+import eventRoutes from './routes/events.js'
+import settingsRoutes from './routes/settings.js'
+import adminRoutes from './routes/admin.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -100,6 +105,7 @@ app.use(requestId)
  */
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+app.use(cookieParser())
 
 /**
  * 请求日志
@@ -233,7 +239,11 @@ const routeMounts = [
   { path: '/projects', router: projectRoutes },
   { path: '/applications', router: applicationRoutes },
   { path: '/stats', router: statsRoutes },
-  { path: '/pilots', router: pilotRoutes }
+  { path: '/pilots', router: pilotRoutes },
+  { path: '/fleet', router: fleetRoutes },
+  { path: '/events', router: eventRoutes },
+  { path: '/settings', router: settingsRoutes },
+  { path: '/admin', router: adminRoutes }
 ]
 
 for (const { path: routePath, router } of routeMounts) {

@@ -1,13 +1,6 @@
 {
   "ExpandedNodes": [
-    "\\public",
-    "\\src\\components",
-    "\\src\\components\\common",
-    "\\src\\components\\layout",
-    "\\src\\data",
-    "\\src\\router",
-    "\\src\\styles",
-    "\\src\\views"
+    "\\public"
   ],
   "PreviewInSolutionExplorer": false
 }

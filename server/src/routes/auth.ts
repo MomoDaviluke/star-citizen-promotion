@@ -52,6 +52,13 @@ router.post('/register', registerValidation, async (req: Request, res: Response,
 
     const result = await registerUser(req.body)
 
+    res.cookie('auth_token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    })
+
     res.status(201).json({
       success: true,
       message: '注册成功',
@@ -71,6 +78,13 @@ router.post('/login', loginValidation, async (req: Request, res: Response, next:
 
     const { email, password } = req.body as { email: string; password: string }
     const result = await loginUser(email, password)
+
+    res.cookie('auth_token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    })
 
     res.json({
       success: true,
@@ -163,14 +177,20 @@ router.put(
 
 router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization
+    const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       throw ApiError.unauthorized('缺少认证令牌')
     }
 
-    const token = authHeader.substring(7)
     const result = await refreshUserToken(token)
+
+    res.cookie('auth_token', result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    })
 
     res.json({
       success: true,
@@ -180,6 +200,15 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
   } catch (error) {
     next(error)
   }
+})
+
+router.post('/logout', (req: Request, res: Response) => {
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  })
+  res.json({ success: true, message: '登出成功' })
 })
 
 export default router

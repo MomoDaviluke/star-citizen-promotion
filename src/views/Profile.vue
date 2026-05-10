@@ -108,25 +108,50 @@
 </template>
 
 <script setup>
+/**
+ * 个人中心视图组件逻辑
+ * @description 用户资料管理、密码修改和账户安全操作
+ * @summary 提供用户基本信息编辑、密码修改和退出登录功能
+ */
+
 import { ref, reactive, onMounted } from 'vue'
 import PageTitle from '@/components/common/PageTitle.vue'
 import { authService } from '@/services'
 
+/**
+ * 用户资料表单数据
+ * @property {string} username - 用户名
+ * @property {string} email - 邮箱（只读）
+ * @property {string} avatar - 头像 URL
+ */
 const profile = reactive({
   username: '',
   email: '',
   avatar: ''
 })
 
+/**
+ * 密码修改表单数据
+ * @property {string} currentPassword - 当前密码
+ * @property {string} newPassword - 新密码
+ * @property {string} confirmPassword - 确认新密码
+ */
 const passwordForm = reactive({
   currentPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
 
+/** 是否正在更新资料 */
 const isUpdating = ref(false)
+/** 是否正在修改密码 */
 const isChangingPassword = ref(false)
 
+/**
+ * 加载用户资料
+ * @description 从认证服务获取当前用户信息并填充表单
+ * @async
+ */
 async function loadProfile() {
   const user = authService.getUser()
   if (user) {
@@ -136,6 +161,11 @@ async function loadProfile() {
   }
 }
 
+/**
+ * 更新用户资料
+ * @description 提交用户名和头像修改请求
+ * @async
+ */
 async function updateProfile() {
   isUpdating.value = true
   try {
@@ -150,7 +180,13 @@ async function updateProfile() {
   }
 }
 
+/**
+ * 修改用户密码
+ * @description 验证新密码一致性后提交密码修改请求
+ * @async
+ */
 async function changePassword() {
+  // 验证两次输入的新密码是否一致
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
     alert('两次输入的密码不一致')
     return
@@ -162,6 +198,7 @@ async function changePassword() {
       currentPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword
     })
+    // 密码修改成功后清空表单
     passwordForm.currentPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
@@ -172,11 +209,16 @@ async function changePassword() {
   }
 }
 
+/**
+ * 处理用户登出
+ * @description 清除认证状态并重定向到首页
+ */
 function handleLogout() {
   authService.logout()
   window.location.href = '/'
 }
 
+/** 组件挂载时加载用户资料 */
 onMounted(() => {
   loadProfile()
 })

@@ -99,15 +99,30 @@
 </template>
 
 <script setup>
+/**
+ * 申请状态查询视图组件逻辑
+ * @description 提供用户通过邮箱查询入队申请状态的功能
+ * @summary 支持查询申请详情、展示审核状态和相关操作指引
+ */
+
 import { ref, computed } from 'vue'
 import PageTitle from '@/components/common/PageTitle.vue'
 import { dataService } from '@/services'
 
+/** 查询邮箱输入值 */
 const queryEmail = ref('')
+/** 查询到的申请数据 */
 const application = ref(null)
+/** 是否未找到申请记录 */
 const notFound = ref(false)
+/** 是否正在查询中 */
 const isQuerying = ref(false)
 
+/**
+ * 状态图标计算属性
+ * @description 根据申请状态返回对应的表情符号图标
+ * @returns {string} 状态图标字符
+ */
 const statusIcon = computed(() => {
   const icons = {
     pending: '⏳',
@@ -117,6 +132,11 @@ const statusIcon = computed(() => {
   return icons[application.value?.status] || '?'
 })
 
+/**
+ * 状态文本计算属性
+ * @description 根据申请状态返回对应的中文描述
+ * @returns {string} 状态文本
+ */
 const statusText = computed(() => {
   const texts = {
     pending: '审核中',
@@ -126,6 +146,11 @@ const statusText = computed(() => {
   return texts[application.value?.status] || '未知'
 })
 
+/**
+ * 在线时间标签计算属性
+ * @description 将 availability 值转换为中文标签
+ * @returns {string} 在线时间中文描述
+ */
 const availabilityLabel = computed(() => {
   const labels = {
     weekdays: '工作日晚上',
@@ -136,6 +161,11 @@ const availabilityLabel = computed(() => {
   return labels[application.value?.availability] || application.value?.availability
 })
 
+/**
+ * 查询申请状态
+ * @description 根据输入的邮箱地址查询对应的入队申请信息
+ * @async
+ */
 async function queryApplication() {
   if (!queryEmail.value) return
 
@@ -157,6 +187,12 @@ async function queryApplication() {
   }
 }
 
+/**
+ * 格式化日期字符串
+ * @description 将 ISO 日期字符串格式化为中文本地化格式
+ * @param {string} dateStr - ISO 格式日期字符串
+ * @returns {string} 格式化后的中文日期
+ */
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('zh-CN', {

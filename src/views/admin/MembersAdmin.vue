@@ -64,18 +64,40 @@
 </template>
 
 <script setup>
+/**
+ * 成员管理页面逻辑
+ * @description 管理团队成员的 CRUD 操作，包括列表展示、状态筛选、编辑和删除
+ * @summary 提供完整的成员管理功能，支持按状态筛选和批量操作
+ */
+
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 
+/** 成员列表数据 */
 const members = ref([])
+/** 状态筛选条件：active(活跃)、inactive(非活跃)或空(全部) */
 const statusFilter = ref('')
+/** 编辑弹窗状态 */
+const editingMember = ref(null)
+const editForm = ref({ name: '', role: '', intro: '', avatar: '', status: 'active' })
+const isSaving = ref(false)
 
+/**
+ * 筛选后的成员列表计算属性
+ * @description 根据状态筛选条件过滤成员列表
+ * @returns {Array} 筛选后的成员数组
+ */
 const filteredMembers = computed(() => {
   if (!statusFilter.value) return members.value
   return members.value.filter(m => m.status === statusFilter.value)
 })
 
+/**
+ * 加载成员数据
+ * @description 从数据服务获取所有成员列表
+ * @async
+ */
 async function loadMembers() {
   try {
     const response = await dataService.getMembers()
@@ -87,10 +109,50 @@ async function loadMembers() {
   }
 }
 
+/**
+ * 编辑成员
+ * @description 打开成员编辑界面（待实现）
+ * @param {Object} member - 成员对象
+ */
 function editMember(member) {
-  console.log('编辑成员:', member)
+  editingMember.value = member
+  editForm.value = {
+    name: member.name || '',
+    role: member.role || '',
+    intro: member.intro || '',
+    avatar: member.avatar || '',
+    status: member.status || 'active'
+  }
 }
 
+function closeEdit() {
+  editingMember.value = null
+}
+
+async function saveEdit() {
+  isSaving.value = true
+  try {
+    const response = await dataService.updateMember(editingMember.value.id, editForm.value)
+    if (response.success) {
+      const index = members.value.findIndex(m => m.id === editingMember.value.id)
+      if (index !== -1) {
+        members.value[index] = { ...members.value[index], ...response.data }
+      }
+      closeEdit()
+    }
+  } catch (error) {
+    console.error('保存成员失败:', error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+/**
+ * 删除成员
+ * @description 确认后删除指定成员，并更新本地列表
+ * @param {string} id - 成员唯一标识
+ * @async
+ */
 async function deleteMember(id) {
   if (confirm('确定要删除该成员吗？')) {
     try {
@@ -102,16 +164,29 @@ async function deleteMember(id) {
   }
 }
 
+/**
+ * 格式化日期
+ * @description 将 ISO 日期字符串格式化为中文日期格式
+ * @param {string} dateStr - ISO 格式日期字符串
+ * @returns {string} 格式化后的中文日期
+ */
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString('zh-CN')
 }
 
+/**
+ * 状态标签转换
+ * @description 将英文状态码转换为中文标签
+ * @param {string} status - 英文状态码
+ * @returns {string} 中文状态标签
+ */
 function statusLabel(status) {
   const labels = { active: '活跃', inactive: '非活跃' }
   return labels[status] || status
 }
 
+/** 组件挂载时加载成员数据 */
 onMounted(() => {
   loadMembers()
 })
@@ -216,5 +291,90 @@ onMounted(() => {
   text-align: center;
   padding: 3rem;
   color: var(--text-muted);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: rgba(15, 30, 50, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.edit-form .form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.edit-form .form-input {
+  padding: 0.6rem 0.75rem;
+  background: rgba(3, 8, 16, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.edit-form .form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.edit-form .form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 </style>

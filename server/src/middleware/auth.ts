@@ -25,14 +25,12 @@ export interface AuthenticatedRequest extends Request {
  * @description 从 Authorization header 提取并验证 Bearer token，将用户信息注入 req.user
  */
 export function authenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization
+  const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     next(ApiError.unauthorized('缺少认证令牌'))
     return
   }
-
-  const token = authHeader.substring(7)
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
@@ -54,14 +52,12 @@ export function authenticate(req: AuthenticatedRequest, _res: Response, next: Ne
  * @description 即使未携带令牌也不报错，用于公开接口的增强验证
  */
 export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization
+  const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     next()
     return
   }
-
-  const token = authHeader.substring(7)
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }

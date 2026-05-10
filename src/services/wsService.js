@@ -194,7 +194,6 @@ class WebSocketService {
     this.reconnectAttempts++
 
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
-    console.log(`[WS] ${delay}ms 后重连 (第 ${this.reconnectAttempts} 次)`)
 
     setTimeout(() => {
       this.connect(token)
