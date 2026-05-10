@@ -293,6 +293,19 @@ export const httpClient = {
   },
 
   /**
+   * 发送 PATCH 请求
+   * @param {string} endpoint - API 端点
+   * @param {Object} data - 请求体数据
+   * @returns {Promise<Object>} 响应数据
+   */
+  patch(endpoint, data) {
+    return http(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    })
+  },
+
+  /**
    * 发送 DELETE 请求
    * @param {string} endpoint - API 端点
    * @returns {Promise<Object>} 响应数据

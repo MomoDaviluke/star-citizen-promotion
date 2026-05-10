@@ -23,6 +23,12 @@ async function login(credentials) {
 
   try {
     const response = await httpClient.post(`${BASE_URL}/login`, credentials)
+    if (response.data?.token) {
+      httpClient.setStoredToken(response.data.token)
+    }
+    if (response.data?.user) {
+      httpClient.setStoredUser(response.data.user)
+    }
     return response.data
   } catch (error) {
     console.error('登录失败:', error.response?.data || error.message)
@@ -45,6 +51,12 @@ async function register(userData) {
 
   try {
     const response = await httpClient.post(`${BASE_URL}/register`, userData)
+    if (response.data?.token) {
+      httpClient.setStoredToken(response.data.token)
+    }
+    if (response.data?.user) {
+      httpClient.setStoredUser(response.data.user)
+    }
     return response.data
   } catch (error) {
     console.error('注册失败:', error.response?.data || error.message)
@@ -73,7 +85,7 @@ async function getProfile() {
  */
 async function updateProfile(updates) {
   try {
-    const response = await httpClient.patch(`${BASE_URL}/profile`, updates)
+    const response = await httpClient.put(`${BASE_URL}/profile`, updates)
     return response.data
   } catch (error) {
     console.error('更新用户信息失败:', error.response?.data || error.message)
@@ -91,6 +103,12 @@ async function logout() {
   } catch (error) {
     console.error('登出请求失败:', error.response?.data || error.message)
     // 即使服务端失败，客户端仍应清除本地状态
+  } finally {
+    // 清除本地存储的认证信息
+    httpClient.clearStoredToken()
+    httpClient.setStoredUser(null)
+    // 触发自定义事件，通知应用其他部分用户已登出
+    window.dispatchEvent(new CustomEvent('auth:logout'))
   }
 }
 
@@ -152,6 +170,56 @@ async function resetPassword(token, newPassword) {
   }
 }
 
+/**
+ * 检查用户是否已认证
+ * @returns {boolean} 是否已登录
+ */
+function isAuthenticated() {
+  return !!httpClient.getStoredToken()
+}
+
+/**
+ * 获取存储的用户信息
+ * @returns {Object|null} 用户对象
+ */
+function getUser() {
+  return httpClient.getStoredUser()
+}
+
+/**
+ * 获取当前用户信息（从服务器）
+ * @returns {Promise<Object>} 用户信息
+ */
+async function getCurrentUser() {
+  try {
+    const response = await httpClient.get(`${BASE_URL}/me`)
+    if (response.data) {
+      httpClient.setStoredUser(response.data)
+    }
+    return response
+  } catch (error) {
+    console.error('获取用户信息失败:', error.response?.data || error.message)
+    throw error
+  }
+}
+
+/**
+ * 修改密码
+ * @param {Object} passwords - 密码数据
+ * @param {string} passwords.currentPassword - 当前密码
+ * @param {string} passwords.newPassword - 新密码
+ * @returns {Promise<Object>} 修改结果
+ */
+async function changePassword(passwords) {
+  try {
+    const response = await httpClient.put(`${BASE_URL}/password`, passwords)
+    return response
+  } catch (error) {
+    console.error('修改密码失败:', error.response?.data || error.message)
+    throw error
+  }
+}
+
 const authService = {
   login,
   register,
@@ -160,7 +228,11 @@ const authService = {
   logout,
   refreshToken,
   requestPasswordReset,
-  resetPassword
+  resetPassword,
+  isAuthenticated,
+  getUser,
+  getCurrentUser,
+  changePassword
 }
 
 export {
@@ -172,5 +244,9 @@ export {
   refreshToken,
   requestPasswordReset,
   resetPassword,
+  isAuthenticated,
+  getUser,
+  getCurrentUser,
+  changePassword,
   authService
 }

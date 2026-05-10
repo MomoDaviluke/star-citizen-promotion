@@ -12,6 +12,7 @@ vi.mock('@/services/http.js', () => ({
     post: vi.fn(),
     get: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
     setStoredToken: vi.fn(),
     setStoredUser: vi.fn(),
     getStoredToken: vi.fn(),
@@ -46,14 +47,14 @@ describe('authService', () => {
         password: 'password123'
       })
 
-      expect(httpClient.post).toHaveBeenCalledWith('/auth/register', {
+      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/register', {
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123'
       })
       expect(httpClient.setStoredToken).toHaveBeenCalledWith('test-token')
       expect(httpClient.setStoredUser).toHaveBeenCalledWith(mockResponse.data.user)
-      expect(result).toEqual(mockResponse)
+      expect(result).toEqual(mockResponse.data)
     })
 
     it('注册失败时不应存储令牌', async () => {
@@ -70,7 +71,7 @@ describe('authService', () => {
       })
 
       expect(httpClient.setStoredToken).not.toHaveBeenCalled()
-      expect(result).toEqual(mockResponse)
+      expect(result).toEqual(mockResponse.data)
     })
   })
 
@@ -86,24 +87,25 @@ describe('authService', () => {
       httpClient.post.mockResolvedValue(mockResponse)
 
       const result = await authService.login({
-        email: 'test@example.com',
+        username: 'testuser',
         password: 'password123'
       })
 
-      expect(httpClient.post).toHaveBeenCalledWith('/auth/login', {
-        email: 'test@example.com',
+      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/login', {
+        username: 'testuser',
         password: 'password123'
       })
       expect(httpClient.setStoredToken).toHaveBeenCalledWith('login-token')
-      expect(result).toEqual(mockResponse)
+      expect(result).toEqual(mockResponse.data)
     })
   })
 
   describe('logout', () => {
-    it('应清除令牌并触发事件', () => {
+    it('应清除令牌并触发事件', async () => {
       const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent')
+      httpClient.post.mockResolvedValue({ success: true })
 
-      authService.logout()
+      await authService.logout()
 
       expect(httpClient.clearStoredToken).toHaveBeenCalled()
       expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(CustomEvent))
@@ -120,7 +122,7 @@ describe('authService', () => {
 
       const result = await authService.getCurrentUser()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/auth/me')
+      expect(httpClient.get).toHaveBeenCalledWith('/api/auth/me')
       expect(httpClient.setStoredUser).toHaveBeenCalledWith(mockUser)
       expect(result.data).toEqual(mockUser)
     })
@@ -136,8 +138,8 @@ describe('authService', () => {
 
       const result = await authService.updateProfile({ username: 'newusername' })
 
-      expect(httpClient.put).toHaveBeenCalledWith('/auth/profile', { username: 'newusername' })
-      expect(result).toEqual(mockResponse)
+      expect(httpClient.put).toHaveBeenCalledWith('/api/auth/profile', { username: 'newusername' })
+      expect(result).toEqual(mockResponse.data)
     })
   })
 
@@ -151,7 +153,7 @@ describe('authService', () => {
         newPassword: 'newpass'
       })
 
-      expect(httpClient.put).toHaveBeenCalledWith('/auth/password', {
+      expect(httpClient.put).toHaveBeenCalledWith('/api/auth/password', {
         currentPassword: 'oldpass',
         newPassword: 'newpass'
       })

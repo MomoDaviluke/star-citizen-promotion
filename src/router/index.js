@@ -219,7 +219,7 @@ const router = createRouter({
  * @description 在每次路由切换前执行，用于权限检查和页面准备
  *              这是路由级别的安全控制，配合服务端鉴权形成双重保护
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   // 更新页面标题，提升 SEO 和用户体验
   if (to.meta.title) {
     document.title = to.meta.title
@@ -229,26 +229,22 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated()) {
     // 未登录用户访问需要认证的页面，重定向到登录页
     // 保存目标路径，登录后可自动跳转回来
-    next({ path: '/login', query: { redirect: to.fullPath } })
-    return
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
 
   // 检查路由是否需要管理员权限
   if (to.meta.requiresAdmin && !isAdmin()) {
     // 非管理员访问管理后台，重定向到首页
-    next({ path: '/' })
-    return
+    return { path: '/' }
   }
 
   // 检查路由是否仅允许未登录用户访问（如登录页、注册页）
   if (to.meta.guestOnly && isAuthenticated()) {
     // 已登录用户访问登录页，重定向到个人中心
-    next({ path: '/profile' })
-    return
+    return { path: '/profile' }
   }
 
-  // 通过所有检查，允许导航
-  next()
+  // 通过所有检查，允许导航（不返回任何值）
 })
 
 /**
