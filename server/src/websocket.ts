@@ -6,8 +6,7 @@
 
 import { Server as HttpServer } from 'node:http'
 import { WebSocketServer, WebSocket } from 'ws'
-import { verify } from 'jsonwebtoken'
-import { config } from './config/index.js'
+import { verifyToken } from './utils/jwt.js'
 import logger from './utils/logger.js'
 
 interface ClientInfo {
@@ -127,7 +126,7 @@ function handleAuth(clientId: string, data?: { token?: string }): void {
   if (!client || !data?.token) return
 
   try {
-    const decoded = verify(data.token, config.jwt.secret) as { userId: string }
+    const decoded = verifyToken(data.token) as { userId: string }
     client.userId = decoded.userId
     client.ws.send(JSON.stringify({
       type: 'auth_success',

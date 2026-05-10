@@ -103,8 +103,8 @@ app.use(requestId)
 /**
  * 请求体解析
  */
-app.use(express.json({ limit: '10kb' }))
-app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+app.use(express.json({ limit: '100kb' }))
+app.use(express.urlencoded({ extended: true, limit: '100kb' }))
 app.use(cookieParser())
 
 /**

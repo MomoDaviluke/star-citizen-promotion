@@ -81,23 +81,27 @@ export function requireRole(...allowedRoles: string[]) {
       return
     }
 
-    const user = await queryOne<{ role: string }>(
-      'SELECT role FROM users WHERE id = ?',
-      [req.user.id]
-    )
+    try {
+      const user = await queryOne<{ role: string }>(
+        'SELECT role FROM users WHERE id = ?',
+        [req.user.id]
+      )
 
-    if (!user) {
-      next(ApiError.unauthorized('用户不存在'))
-      return
+      if (!user) {
+        next(ApiError.unauthorized('用户不存在'))
+        return
+      }
+
+      if (!allowedRoles.includes(user.role)) {
+        next(ApiError.forbidden('权限不足，无权访问此资源'))
+        return
+      }
+
+      req.user.role = user.role
+      next()
+    } catch (error) {
+      next(ApiError.internal('权限验证失败'))
     }
-
-    if (!allowedRoles.includes(user.role)) {
-      next(ApiError.forbidden('权限不足，无权访问此资源'))
-      return
-    }
-
-    req.user.role = user.role
-    next()
   }
 }
 

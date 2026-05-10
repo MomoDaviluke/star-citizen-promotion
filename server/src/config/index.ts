@@ -16,6 +16,25 @@ dotenv.config({ path: join(__dirname, '../../', envFile) })
 
 const nodeEnv = process.env.NODE_ENV || 'development'
 
+/**
+ * 获取 JWT 密钥
+ * @description 安全地获取 JWT 密钥，非测试环境必须显式设置
+ * @returns JWT 密钥字符串
+ * @throws 如果非测试环境未设置 JWT_SECRET
+ */
+function getJwtSecret(): string {
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET
+  }
+  if (nodeEnv === 'test') {
+    return 'test-jwt-secret-key'
+  }
+  throw new Error(
+    'FATAL: JWT_SECRET must be explicitly set. ' +
+    'Use a cryptographically secure random string (at least 32 characters).'
+  )
+}
+
 export interface DatabaseConfig {
   host: string
   port: number
@@ -66,6 +85,17 @@ export interface AppConfig {
 }
 
 /**
+ * Cookie 配置常量
+ * @description 统一 Cookie 安全属性配置
+ */
+export const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7天，与 JWT expiresIn 保持一致
+}
+
+/**
  * 环境配置
  */
 export const config: AppConfig = {
@@ -74,16 +104,7 @@ export const config: AppConfig = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
   jwt: {
-    secret: process.env.JWT_SECRET || (
-      nodeEnv === 'test'
-        ? 'test-jwt-secret-key'
-        : (() => {
-            throw new Error(
-              'FATAL: JWT_SECRET must be explicitly set. ' +
-              'Use a cryptographically secure random string (at least 32 characters).'
-            )
-          })()
-    ),
+    secret: getJwtSecret(),
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   },
 

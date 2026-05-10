@@ -1,3 +1,9 @@
+/**
+ * @file 活动业务服务层
+ * @description 封装活动 CRUD、参与者管理和 ICS 日历生成等业务逻辑，支持事务保护
+ * @module server/services/eventService
+ */
+
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'

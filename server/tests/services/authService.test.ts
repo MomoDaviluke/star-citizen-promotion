@@ -168,7 +168,7 @@ describe('authService', () => {
 
   describe('refreshUserToken', () => {
     it('有效令牌应返回新令牌', async () => {
-      const token = jwt.sign({ userId: 'u1' }, config.jwt.secret, { expiresIn: '1h' })
+      const token = jwt.sign({ userId: 'u1' }, config.jwt.secret, { expiresIn: '1h', issuer: 'star-citizen-api' })
       queryOne.mockResolvedValueOnce({ id: 'u1', role: 'member' })
 
       const result = await refreshUserToken(token)
@@ -181,7 +181,7 @@ describe('authService', () => {
     })
 
     it('过期令牌应返回 401', async () => {
-      const token = jwt.sign({ userId: 'u1' }, config.jwt.secret, { expiresIn: '-1s' })
+      const token = jwt.sign({ userId: 'u1' }, config.jwt.secret, { expiresIn: '-1s', issuer: 'star-citizen-api' })
 
       await expect(refreshUserToken(token)).rejects.toMatchObject({ statusCode: 401 })
     })

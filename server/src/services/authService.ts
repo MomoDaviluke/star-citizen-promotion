@@ -5,10 +5,10 @@
  */
 
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { config } from '../config/index.js'
+import { generateToken, verifyToken } from '../utils/jwt.js'
 import { queryOne, transaction } from '../database/pool.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
@@ -52,7 +52,7 @@ export async function registerUser({ username, email, password }: {
       [userId, username, email, passwordHash, 'member']
     )
 
-    const token = jwt.sign({ userId }, config.jwt.secret, { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] })
+    const token = generateToken({ userId })
 
     return {
       user: {
@@ -88,11 +88,7 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
     throw ApiError.unauthorized('邮箱或密码错误')
   }
 
-  const token = jwt.sign(
-    { userId: user.id },
-    config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-  )
+  const token = generateToken({ userId: user.id })
 
   return {
     user: {
@@ -200,7 +196,7 @@ export async function changePassword(userId: string, currentPassword: string, ne
 export async function refreshUserToken(token: string): Promise<{ token: string }> {
   let decoded: { userId: string }
   try {
-    decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
+    decoded = verifyToken(token) as { userId: string }
   } catch (err) {
     if ((err as Error).name === 'TokenExpiredError') {
       throw ApiError.unauthorized('令牌已过期，请重新登录')
@@ -216,11 +212,7 @@ export async function refreshUserToken(token: string): Promise<{ token: string }
     throw ApiError.unauthorized('用户不存在')
   }
 
-  const newToken = jwt.sign(
-    { userId: user.id },
-    config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'] }
-  )
+  const newToken = generateToken({ userId: user.id })
 
   return { token: newToken }
 }

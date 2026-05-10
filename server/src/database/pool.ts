@@ -6,6 +6,7 @@
 
 import mysql, { Pool, PoolConnection, RowDataPacket, ResultSetHeader } from 'mysql2/promise'
 import { config } from '../config/index.js'
+import logger from '../utils/logger.js'
 
 let pool: Pool | null = null
 
@@ -133,7 +134,7 @@ export async function closePool(): Promise<void> {
   if (pool) {
     await pool.end()
     pool = null
-    console.log('📦 MySQL 连接池已关闭')
+    logger.info('📦 MySQL 连接池已关闭')
   }
 }
 
@@ -146,10 +147,10 @@ export async function testConnection(): Promise<boolean> {
     const connection = await getPool().getConnection()
     await connection.ping()
     connection.release()
-    console.log('✅ MySQL 数据库连接测试成功')
+    logger.info('✅ MySQL 数据库连接测试成功')
     return true
   } catch (error) {
-    console.error('❌ MySQL 数据库连接测试失败:', (error as Error).message)
+    logger.error('❌ MySQL 数据库连接测试失败:', { error: (error as Error).message })
     return false
   }
 }

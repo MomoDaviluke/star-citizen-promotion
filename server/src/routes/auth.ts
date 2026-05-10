@@ -8,6 +8,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { body, validationResult } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js'
+import { COOKIE_OPTIONS } from '../config/index.js'
 import {
   registerUser,
   loginUser,
@@ -52,12 +53,7 @@ router.post('/register', registerValidation, async (req: Request, res: Response,
 
     const result = await registerUser(req.body)
 
-    res.cookie('auth_token', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
-    })
+    res.cookie('auth_token', result.token, COOKIE_OPTIONS)
 
     res.status(201).json({
       success: true,
@@ -79,12 +75,7 @@ router.post('/login', loginValidation, async (req: Request, res: Response, next:
     const { email, password } = req.body as { email: string; password: string }
     const result = await loginUser(email, password)
 
-    res.cookie('auth_token', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000
-    })
+    res.cookie('auth_token', result.token, COOKIE_OPTIONS)
 
     res.json({
       success: true,
@@ -185,12 +176,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
 
     const result = await refreshUserToken(token)
 
-    res.cookie('auth_token', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000
-    })
+    res.cookie('auth_token', result.token, COOKIE_OPTIONS)
 
     res.json({
       success: true,
@@ -202,12 +188,8 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
   }
 })
 
-router.post('/logout', (req: Request, res: Response) => {
-  res.clearCookie('auth_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  })
+router.post('/logout', authenticate, (req: AuthenticatedRequest, res: Response) => {
+  res.clearCookie('auth_token', COOKIE_OPTIONS)
   res.json({ success: true, message: '登出成功' })
 })
 

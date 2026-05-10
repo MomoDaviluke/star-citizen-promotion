@@ -28,6 +28,7 @@ class WebSocketService {
     this.maxReconnectAttempts = 5
     this.reconnectDelay = 1000
     this.heartbeatInterval = null
+    this.reconnectTimeoutId = null
     this.eventHandlers = new Map()
   }
 
@@ -103,6 +104,7 @@ class WebSocketService {
    */
   disconnect() {
     this.stopHeartbeat()
+    this.stopReconnect()
     this.reconnectAttempts = this.maxReconnectAttempts // 阻止自动重连
 
     if (this.ws) {
@@ -182,6 +184,16 @@ class WebSocketService {
   }
 
   /**
+   * 停止重连定时器
+   */
+  stopReconnect() {
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = null
+    }
+  }
+
+  /**
    * 调度重连
    */
   _scheduleReconnect(token) {
@@ -195,7 +207,9 @@ class WebSocketService {
 
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
 
-    setTimeout(() => {
+    this.stopReconnect()
+    this.reconnectTimeoutId = setTimeout(() => {
+      this.reconnectTimeoutId = null
       this.connect(token)
     }, delay)
   }

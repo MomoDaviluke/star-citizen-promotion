@@ -115,16 +115,20 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     return
   }
 
-  const statusCode = errRecord.statusCode
-    || errRecord.status
+  const statusCode = (errRecord.statusCode as number)
+    || (errRecord.status as number)
     || 500
-  const message = config.nodeEnv === 'production'
+
+  // 生产环境隐藏内部错误详情，防止信息泄露
+  const isInternalError = statusCode >= 500
+  const message = config.nodeEnv === 'production' && isInternalError
     ? '服务器内部错误'
     : (err.message || '服务器内部错误')
 
-  res.status(statusCode as number).json({
+  res.status(statusCode).json({
     success: false,
     error: message,
+    ...(config.nodeEnv === 'development' && isInternalError ? { stack: err.stack } : {}),
     timestamp: new Date().toISOString()
   })
 }

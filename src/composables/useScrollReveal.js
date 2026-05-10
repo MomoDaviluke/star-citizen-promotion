@@ -36,6 +36,9 @@ export function useScrollReveal(options = {}) {
   /** Intersection Observer 实例 */
   let observer = null
 
+  /** setTimeout 定时器 ID */
+  let revealTimeoutId = null
+
   /**
    * 初始化 Intersection Observer
    * @param {HTMLElement} element - 目标元素
@@ -52,8 +55,9 @@ export function useScrollReveal(options = {}) {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // 延迟触发动画
-            setTimeout(() => {
+            // 延迟触发动画，记录定时器 ID 以便组件卸载时清理
+            revealTimeoutId = setTimeout(() => {
+              revealTimeoutId = null
               isVisible.value = true
             }, delay)
 
@@ -75,9 +79,13 @@ export function useScrollReveal(options = {}) {
   }
 
   /**
-   * 销毁观察器
+   * 销毁观察器并清理定时器
    */
   function destroyObserver() {
+    if (revealTimeoutId) {
+      clearTimeout(revealTimeoutId)
+      revealTimeoutId = null
+    }
     if (observer) {
       observer.disconnect()
       observer = null
