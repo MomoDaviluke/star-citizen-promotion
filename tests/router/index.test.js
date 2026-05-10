@@ -3,7 +3,7 @@
  * @description 测试路由配置、导航守卫和预加载功能
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [

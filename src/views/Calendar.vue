@@ -220,7 +220,7 @@
           <div v-if="selectedEvent.participants?.length > 0" class="detail-participants">
             <h4>已报名成员</h4>
             <div class="participant-list">
-              <span v-for="(id, idx) in selectedEvent.participants" :key="id" class="participant">
+              <span v-for="id in selectedEvent.participants" :key="id" class="participant">
                 {{ id }}
               </span>
             </div>

@@ -99,7 +99,7 @@ export function requireRole(...allowedRoles: string[]) {
 
       req.user.role = user.role
       next()
-    } catch (error) {
+    } catch {
       next(ApiError.internal('权限验证失败'))
     }
   }

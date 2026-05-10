@@ -35,5 +35,12 @@ export default [
         ...globals.jest
       }
     }
+  },
+  {
+    name: 'server/database-scripts',
+    files: ['src/database/**/*.ts', 'src/config/index.ts'],
+    rules: {
+      'no-console': 'off'
+    }
   }
 ]

@@ -57,7 +57,7 @@
  */
 
 import PageTitle from '@/components/common/PageTitle.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { dataService } from '@/services'
 
 /** 项目数据 */

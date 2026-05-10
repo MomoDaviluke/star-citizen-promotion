@@ -3,7 +3,7 @@
  * @description 测试 AIService 任务队列功能
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { AIService, TASK_STATUS, PRIORITY, aiService } from '@/services/AIService.js'
 
 describe('AIService', () => {

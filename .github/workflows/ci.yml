@@ -130,6 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test-frontend, test-backend, security-scan]
     if: always() && needs.lint.result == 'success' && needs.test-frontend.result == 'success' && needs.test-backend.result == 'success' && needs.security-scan.result == 'success'
+    # 安全扫描失败时阻断构建部署，防止漏洞代码进入生产环境
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -195,8 +196,21 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 安装前端依赖
+        run: npm ci
+
       - name: 前端安全审计
         run: npm audit --audit-level=high
+
+      - name: 安装后端依赖
+        working-directory: ./server
+        run: npm ci
 
       - name: 后端安全审计
         working-directory: ./server
@@ -251,6 +265,11 @@ jobs:
 
           if [ "$BUILD" != "success" ] && [ "$BUILD" != "skipped" ]; then
             echo "❌ 构建失败"
+            FAILED=1
+          fi
+
+          if [ "$SECURITY" != "success" ] && [ "$SECURITY" != "skipped" ]; then
+            echo "❌ 安全扫描失败"
             FAILED=1
           fi
 

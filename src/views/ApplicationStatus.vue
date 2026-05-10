@@ -180,7 +180,7 @@ async function queryApplication() {
     } else {
       notFound.value = true
     }
-  } catch (error) {
+  } catch {
     notFound.value = true
   } finally {
     isQuerying.value = false

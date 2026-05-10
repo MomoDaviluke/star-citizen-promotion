@@ -135,12 +135,35 @@ function removeNotification(id) {
 /**
  * 处理全局错误
  * @param {Object} errorInfo - 错误信息
+ * @param {string} errorInfo.message - 错误消息
+ * @param {string} [errorInfo.stack] - 错误堆栈
+ * @param {string} [errorInfo.component] - 发生错误的组件名
+ * @param {string} [errorInfo.info] - 错误上下文信息
+ * @param {string} [errorInfo.url] - 错误发生时的页面 URL
+ * @param {string} [errorInfo.timestamp] - 错误发生时间
  */
 function handleGlobalError(errorInfo) {
   console.error('全局错误:', errorInfo)
+
+  // 根据错误类型展示不同的用户提示
+  const isNetworkError = errorInfo.message?.includes('network') ||
+                         errorInfo.message?.includes('fetch') ||
+                         errorInfo.message?.includes('timeout')
+  const isAuthError = errorInfo.message?.includes('auth') ||
+                      errorInfo.message?.includes('token') ||
+                      errorInfo.message?.includes('unauthorized')
+
+  let message = '页面加载出错，请刷新重试'
+  if (isNetworkError) {
+    message = '网络连接异常，请检查网络后重试'
+  } else if (isAuthError) {
+    message = '登录状态已过期，请重新登录'
+  }
+
   showNotification({
-    message: '页面加载出错，请刷新重试',
-    type: 'error'
+    message,
+    type: 'error',
+    duration: 8000
   })
 }
 

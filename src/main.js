@@ -75,25 +75,41 @@ initErrorReporting(app, router)
  * 全局错误处理器
  * @description 捕获组件渲染和生命周期中的未处理错误
  *              作为最后一道防线，防止错误导致应用崩溃
+ *              生产环境自动上报到 Sentry，并展示用户友好的错误提示
  * @param {Error} err - 错误对象
  * @param {import('vue').ComponentPublicInstance|null} instance - 发生错误的组件实例
  * @param {string} info - 错误信息，说明错误发生在哪个生命周期钩子或渲染阶段
  */
 app.config.errorHandler = (err, instance, info) => {
-  // 避免在开发环境输出过多噪音（Vite 已有 HMR 错误覆盖）
-  // 开发环境的错误由 Vite 的 overlay 展示，更直观
+  const errorInfo = {
+    message: err.message,
+    stack: err.stack,
+    component: instance?.$options?.name || 'Unknown',
+    info,
+    url: window.location.href,
+    timestamp: new Date().toISOString()
+  }
+
+  // 生产环境：上报到 Sentry 并记录结构化日志
   if (import.meta.env.PROD) {
-    console.error('[全局错误]', {
-      message: err.message,
-      component: instance?.$options?.name || 'Unknown',
-      info
-    })
+    console.error('[全局错误]', errorInfo)
+
+    // 动态导入 Sentry 进行错误上报（避免阻塞应用启动）
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      import('./services/errorReporting.js').then(({ captureException }) => {
+        captureException(err, {
+          component: errorInfo.component,
+          info,
+          url: errorInfo.url
+        })
+      })
+    }
   }
 
   // 触发全局自定义事件，App.vue 等组件可以监听并展示错误通知
   // 这种事件驱动的方式实现了跨组件的通信，无需依赖全局状态管理
   window.dispatchEvent(new CustomEvent('app:error', {
-    detail: { message: err.message, info }
+    detail: errorInfo
   }))
 }
 

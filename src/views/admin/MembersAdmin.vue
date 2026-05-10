@@ -81,7 +81,6 @@ const statusFilter = ref('')
 /** 编辑弹窗状态 */
 const editingMember = ref(null)
 const editForm = ref({ name: '', role: '', intro: '', avatar: '', status: 'active' })
-const isSaving = ref(false)
 
 /**
  * 筛选后的成员列表计算属性
@@ -122,28 +121,6 @@ function editMember(member) {
     intro: member.intro || '',
     avatar: member.avatar || '',
     status: member.status || 'active'
-  }
-}
-
-function closeEdit() {
-  editingMember.value = null
-}
-
-async function saveEdit() {
-  isSaving.value = true
-  try {
-    const response = await dataService.updateMember(editingMember.value.id, editForm.value)
-    if (response.success) {
-      const index = members.value.findIndex(m => m.id === editingMember.value.id)
-      if (index !== -1) {
-        members.value[index] = { ...members.value[index], ...response.data }
-      }
-      closeEdit()
-    }
-  } catch (error) {
-    console.error('保存成员失败:', error)
-  } finally {
-    isSaving.value = false
   }
 }
 

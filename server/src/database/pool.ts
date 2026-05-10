@@ -155,6 +155,51 @@ export async function testConnection(): Promise<boolean> {
   }
 }
 
+/**
+ * 获取连接池状态指标
+ * @description 暴露连接池核心指标，用于监控和告警
+ * @returns 连接池状态对象
+ */
+export function getPoolStatus(): {
+  totalConnections: number
+  activeConnections: number
+  idleConnections: number
+  waitingRequests: number
+  connectionLimit: number
+} {
+  if (!pool) {
+    return {
+      totalConnections: 0,
+      activeConnections: 0,
+      idleConnections: 0,
+      waitingRequests: 0,
+      connectionLimit: 0
+    }
+  }
+
+  // mysql2/promise 内部 pool 属性类型为 Pool，但 _connectionQueue 等属性不在类型定义中
+  // 使用类型断言访问内部状态
+  const internalPool = pool as Pool & {
+    _connectionQueue?: unknown[]
+    _freeConnections?: unknown[]
+    _allConnections?: unknown[]
+    _connectionLimit?: number
+  }
+
+  const totalConnections = internalPool._allConnections?.length || 0
+  const freeConnections = internalPool._freeConnections?.length || 0
+  const waitingRequests = internalPool._connectionQueue?.length || 0
+  const connectionLimit = internalPool._connectionLimit || config.database.connectionLimit
+
+  return {
+    totalConnections,
+    activeConnections: totalConnections - freeConnections,
+    idleConnections: freeConnections,
+    waitingRequests,
+    connectionLimit
+  }
+}
+
 export default {
   createPool,
   getPool,
@@ -165,5 +210,6 @@ export default {
   remove,
   transaction,
   closePool,
-  testConnection
+  testConnection,
+  getPoolStatus
 }

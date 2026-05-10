@@ -18,6 +18,7 @@ import { Server } from 'node:http'
 import { config } from './config/index.js'
 import { setupSwagger } from './config/swagger.js'
 import { initDatabase, closePool } from './database/init.js'
+import logger from './utils/logger.js'
 import { query } from './database/pool.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
@@ -225,12 +226,17 @@ if (config.nodeEnv !== 'production') {
 }
 
 /**
- * API 路由（v1 版本前缀 + 无前缀兼容）
+ * API 版本控制
+ * @description 当前主版本为 v1，同时保留 /api/ 前缀作为兼容入口
+ *              未来发布 v2 时，可通过添加 /api/v2/ 前缀逐步迁移
  */
-const apiV1Prefix = '/api/v1'
+const API_VERSION = 'v1'
+const apiV1Prefix = `/api/${API_VERSION}`
+const apiCompatPrefix = '/api'
 
 // 审计日志中间件（仅对写操作生效）
-app.use('/api/', auditLogger)
+app.use(apiCompatPrefix + '/', auditLogger)
+app.use(apiV1Prefix + '/', auditLogger)
 
 // 挂载路由 — 同时支持 /api/v1/ 和 /api/ 两种前缀
 const routeMounts = [
@@ -247,7 +253,9 @@ const routeMounts = [
 ]
 
 for (const { path: routePath, router } of routeMounts) {
-  app.use(`/api${routePath}`, router)
+  // 兼容前缀 /api/*（将来可标记为 deprecated）
+  app.use(`${apiCompatPrefix}${routePath}`, router)
+  // 版本化前缀 /api/v1/*（推荐）
   app.use(`${apiV1Prefix}${routePath}`, router)
 }
 
@@ -282,10 +290,10 @@ function gracefulShutdown(server: Server) {
     if (isShuttingDown) return
     isShuttingDown = true
 
-    console.log(`\n收到 ${signal} 信号，正在优雅关闭...`)
+    logger.info(`收到 ${signal} 信号，正在优雅关闭...`)
 
     server.close(() => {
-      console.log('HTTP 服务器已停止接受新连接')
+      logger.info('HTTP 服务器已停止接受新连接')
     })
 
     closeWebSocket()
@@ -294,15 +302,15 @@ function gracefulShutdown(server: Server) {
       await closePool()
     } catch (err) {
       const error = err as Error
-      console.error('关闭数据库连接池失败:', error.message)
+      logger.error('关闭数据库连接池失败', { error: error.message })
     }
 
     setTimeout(() => {
-      console.error('⚠️ 优雅关闭超时，强制退出')
+      logger.error('⚠️ 优雅关闭超时，强制退出')
       process.exit(1)
     }, 30000)
 
-    console.log('✅ 服务器已优雅关闭')
+    logger.info('✅ 服务器已优雅关闭')
     process.exit(0)
   }
 }
@@ -313,12 +321,12 @@ function gracefulShutdown(server: Server) {
 async function startServer() {
   try {
     await initDatabase()
-    console.log('✅ 数据库初始化完成')
+    logger.info('✅ 数据库初始化完成')
 
     const server = app.listen(config.port, () => {
-      console.log(`🚀 服务器运行在 http://localhost:${config.port}`)
-      console.log(`📡 环境: ${config.nodeEnv}`)
-      console.log(`📋 API 版本: v1 (${apiV1Prefix}/*) + 兼容 (/api/*)`)
+      logger.info(`🚀 服务器运行在 http://localhost:${config.port}`)
+      logger.info(`📡 环境: ${config.nodeEnv}`)
+      logger.info(`📋 API 版本: v1 (${apiV1Prefix}/*) + 兼容 (/api/*)`)
     })
 
     startWebSocket(server)
@@ -330,7 +338,7 @@ async function startServer() {
 
     return server
   } catch (error) {
-    console.error('❌ 服务器启动失败:', error)
+    logger.error('❌ 服务器启动失败', { error })
     process.exit(1)
   }
 }

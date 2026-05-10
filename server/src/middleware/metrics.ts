@@ -6,6 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express'
 import client from 'prom-client'
+import { getPoolStatus } from '../database/pool.js'
 
 const register = new client.Registry()
 
@@ -29,9 +30,40 @@ const activeConnections = new client.Gauge({
   help: '当前活跃连接数'
 })
 
+// 数据库连接池指标
+const dbTotalConnections = new client.Gauge({
+  name: 'db_pool_total_connections',
+  help: '数据库连接池总连接数'
+})
+
+const dbActiveConnections = new client.Gauge({
+  name: 'db_pool_active_connections',
+  help: '数据库连接池活跃连接数'
+})
+
+const dbIdleConnections = new client.Gauge({
+  name: 'db_pool_idle_connections',
+  help: '数据库连接池空闲连接数'
+})
+
+const dbWaitingRequests = new client.Gauge({
+  name: 'db_pool_waiting_requests',
+  help: '数据库连接池等待请求数'
+})
+
+const dbConnectionLimit = new client.Gauge({
+  name: 'db_pool_connection_limit',
+  help: '数据库连接池连接上限'
+})
+
 register.registerMetric(httpRequestDuration)
 register.registerMetric(httpRequestTotal)
 register.registerMetric(activeConnections)
+register.registerMetric(dbTotalConnections)
+register.registerMetric(dbActiveConnections)
+register.registerMetric(dbIdleConnections)
+register.registerMetric(dbWaitingRequests)
+register.registerMetric(dbConnectionLimit)
 
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const start = Date.now()
@@ -53,6 +85,14 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
 }
 
 export function metricsEndpoint(_req: Request, res: Response): void {
+  // 更新数据库连接池指标
+  const poolStatus = getPoolStatus()
+  dbTotalConnections.set(poolStatus.totalConnections)
+  dbActiveConnections.set(poolStatus.activeConnections)
+  dbIdleConnections.set(poolStatus.idleConnections)
+  dbWaitingRequests.set(poolStatus.waitingRequests)
+  dbConnectionLimit.set(poolStatus.connectionLimit)
+
   res.set('Content-Type', register.contentType)
   register.metrics().then((metrics: string) => res.end(metrics))
 }

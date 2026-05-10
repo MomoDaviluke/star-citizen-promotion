@@ -3,13 +3,13 @@ import { validationResult, ValidationChain } from 'express-validator'
 import { ApiError } from './errorHandler.js'
 
 export const validate = (validations: ValidationChain[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     if (!validations || validations.length === 0) {
       return next()
     }
     
-    for (let validation of validations) {
-      const result = await validation.run(req)
+    for (const validation of validations) {
+      await validation.run(req)
     }
 
     const errors = validationResult(req)

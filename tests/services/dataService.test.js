@@ -3,7 +3,7 @@
  * @description 测试数据服务层功能
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { dataService } from '@/services/dataService.js'
 
 vi.mock('@/services/http.js', () => ({

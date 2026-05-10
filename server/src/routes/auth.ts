@@ -188,7 +188,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
   }
 })
 
-router.post('/logout', authenticate, (req: AuthenticatedRequest, res: Response) => {
+router.post('/logout', authenticate, (_req: AuthenticatedRequest, res: Response) => {
   res.clearCookie('auth_token', COOKIE_OPTIONS)
   res.json({ success: true, message: '登出成功' })
 })

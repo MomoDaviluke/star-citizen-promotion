@@ -69,10 +69,23 @@ onErrorCaptured((error, instance, info) => {
     message: error.message,
     stack: error.stack,
     component: instance?.$options?.name || 'Unknown',
-    info
+    info,
+    url: typeof window !== 'undefined' ? window.location.href : '',
+    timestamp: new Date().toISOString()
   }
 
-  emit('error', { error, instance, info })
+  emit('error', errorDetails.value)
+
+  // 生产环境上报到 Sentry
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    import('../../services/errorReporting.js').then(({ captureException }) => {
+      captureException(error, {
+        component: errorDetails.value.component,
+        info,
+        url: errorDetails.value.url
+      })
+    })
+  }
 
   console.error('ErrorBoundary 捕获错误:', error)
 
