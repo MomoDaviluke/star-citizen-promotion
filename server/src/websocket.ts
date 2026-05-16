@@ -1,10 +1,11 @@
 /**
  * @file WebSocket 服务
  * @description 基于 ws 库的 WebSocket 实时通信服务
+ *              包含连接速率限制、心跳检测和认证机制
  * @module server/websocket
  */
 
-import { Server as HttpServer } from 'node:http'
+import { Server as HttpServer, IncomingMessage } from 'node:http'
 import { WebSocketServer, WebSocket } from 'ws'
 import { verifyToken } from './utils/jwt.js'
 import logger from './utils/logger.js'
@@ -16,8 +17,75 @@ interface ClientInfo {
   connectedAt: string
 }
 
+interface ConnectionAttempt {
+  count: number
+  firstAttempt: number
+}
+
 let wss: WebSocketServer | null = null
 const clients = new Map<string, ClientInfo>()
+
+// 连接速率限制：每个 IP 每分钟最多 10 次连接
+const connectionAttempts = new Map<string, ConnectionAttempt>()
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 分钟
+const RATE_LIMIT_MAX = 10 // 最大连接次数
+
+/**
+ * 检查 IP 是否超出连接速率限制
+ * @param ip 客户端 IP 地址
+ * @returns 是否允许连接
+ */
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const attempt = connectionAttempts.get(ip)
+
+  if (!attempt) {
+    connectionAttempts.set(ip, { count: 1, firstAttempt: now })
+    return true
+  }
+
+  // 检查时间窗口是否过期
+  if (now - attempt.firstAttempt > RATE_LIMIT_WINDOW) {
+    connectionAttempts.set(ip, { count: 1, firstAttempt: now })
+    return true
+  }
+
+  // 检查是否超出限制
+  if (attempt.count >= RATE_LIMIT_MAX) {
+    logger.warn('WebSocket 连接速率超限', { ip, count: attempt.count })
+    return false
+  }
+
+  attempt.count++
+  return true
+}
+
+/**
+ * 清理过期的连接速率记录
+ * @description 每 5 分钟清理一次，防止内存泄漏
+ */
+function cleanupRateLimitRecords(): void {
+  const now = Date.now()
+  for (const [ip, attempt] of connectionAttempts) {
+    if (now - attempt.firstAttempt > RATE_LIMIT_WINDOW * 2) {
+      connectionAttempts.delete(ip)
+    }
+  }
+}
+
+/**
+ * 获取客户端真实 IP 地址
+ * @description 优先从代理头获取，支持 X-Forwarded-For 和 X-Real-IP
+ * @param req HTTP 请求对象
+ * @returns 客户端 IP 地址
+ */
+function getClientIp(req: IncomingMessage): string {
+  const forwarded = req.headers['x-forwarded-for']
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim()
+  }
+  return req.headers['x-real-ip'] as string || req.socket.remoteAddress || 'unknown'
+}
 
 export function startWebSocket(server: HttpServer): void {
   wss = new WebSocketServer({
@@ -26,8 +94,19 @@ export function startWebSocket(server: HttpServer): void {
     maxPayload: 1024 * 100
   })
 
-  wss.on('connection', (ws: WebSocket, req) => {
-    const clientIp = req.socket.remoteAddress
+  // 定期清理速率限制记录
+  const rateLimitCleanup = setInterval(cleanupRateLimitRecords, 5 * 60 * 1000)
+
+  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    const clientIp = getClientIp(req)
+
+    // 连接速率限制检查
+    if (!checkRateLimit(clientIp)) {
+      logger.warn('WebSocket 连接被拒绝：速率超限', { ip: clientIp })
+      ws.close(1008, '连接速率超限')
+      return
+    }
+
     logger.info('WebSocket 客户端连接', { ip: clientIp })
 
     const clientId = Date.now().toString(36) + Math.random().toString(36).slice(2)
@@ -48,6 +127,11 @@ export function startWebSocket(server: HttpServer): void {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString())
+        if (!isValidMessage(message)) {
+          logger.warn('WebSocket 收到非法消息类型', { clientId, messageType: (message as Record<string, unknown>)?.type })
+          ws.send(JSON.stringify({ type: 'error', message: '消息类型不合法' }))
+          return
+        }
         handleMessage(clientId, message)
       } catch (err) {
         logger.warn('WebSocket 消息解析失败', { error: (err as Error).message, clientId })
@@ -91,18 +175,46 @@ export function startWebSocket(server: HttpServer): void {
 
   wss.on('close', () => {
     clearInterval(heartbeat)
+    clearInterval(rateLimitCleanup)
     for (const [, client] of clients) {
       client.ws.close(1001, '服务器关闭')
     }
     clients.clear()
+    connectionAttempts.clear()
   })
 
   logger.info('🔌 WebSocket 服务已启动，路径: /ws')
 }
 
+/**
+ * 允许的 WebSocket 消息类型
+ */
+const ALLOWED_MESSAGE_TYPES = ['auth', 'ping']
+
 interface WSMessage {
   type: string
   data?: { token?: string; [key: string]: unknown }
+}
+
+/**
+ * 验证 WebSocket 消息结构
+ * @description 确保消息类型在允许列表中，且 data 为对象或 undefined
+ */
+function isValidMessage(message: unknown): message is WSMessage {
+  if (typeof message !== 'object' || message === null) {
+    return false
+  }
+  const msg = message as WSMessage
+  if (typeof msg.type !== 'string') {
+    return false
+  }
+  if (!ALLOWED_MESSAGE_TYPES.includes(msg.type)) {
+    return false
+  }
+  if (msg.data !== undefined && (typeof msg.data !== 'object' || msg.data === null)) {
+    return false
+  }
+  return true
 }
 
 function handleMessage(clientId: string, message: WSMessage): void {
@@ -124,6 +236,15 @@ function handleMessage(clientId: string, message: WSMessage): void {
 function handleAuth(clientId: string, data?: { token?: string }): void {
   const client = clients.get(clientId)
   if (!client || !data?.token) return
+
+  // 验证 token 字段类型，防止非字符串输入
+  if (typeof data.token !== 'string') {
+    client.ws.send(JSON.stringify({
+      type: 'auth_error',
+      data: { message: '认证令牌格式无效' }
+    }))
+    return
+  }
 
   try {
     const decoded = verifyToken(data.token) as { userId: string }
@@ -160,18 +281,7 @@ export function broadcast(message: Record<string, unknown>): void {
 
 export function closeWebSocket(): void {
   if (wss) {
-    for (const [, client] of clients) {
-      client.ws.close(1001, '服务器关闭')
-    }
-    clients.clear()
     wss.close()
     wss = null
-    logger.info('🔌 WebSocket 服务已关闭')
   }
 }
-
-export function getConnectedCount(): number {
-  return clients.size
-}
-
-export default { startWebSocket, sendToUser, broadcast, closeWebSocket, getConnectedCount }

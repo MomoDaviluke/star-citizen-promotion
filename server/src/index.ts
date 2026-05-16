@@ -63,6 +63,7 @@ app.use(helmet({
 
 /**
  * CORS 配置
+ * @description 生产环境严格限制来源，开发环境允许前端地址
  */
 const corsOptions: cors.CorsOptions = {
   credentials: true,
@@ -71,15 +72,31 @@ const corsOptions: cors.CorsOptions = {
 }
 
 if (config.nodeEnv === 'production') {
+  // 生产环境必须配置 ALLOWED_ORIGINS
+  if (!process.env.ALLOWED_ORIGINS) {
+    logger.warn('ALLOWED_ORIGINS 未设置，CORS 将拒绝所有跨域请求')
+  }
   corsOptions.origin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || config.cors.allowedOrigins.includes(origin)) {
+    if (!origin) {
+      // 允许无 Origin 的请求（如直接 curl 调用）
+      callback(null, true)
+    } else if (config.cors.allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
+      logger.warn(`CORS 拒绝来源: ${origin}`)
       callback(new Error(`CORS: Origin ${origin} not allowed`))
     }
   }
 } else {
-  corsOptions.origin = config.frontendUrl
+  // 开发环境允许前端地址和本地开发服务器
+  const devOrigins = [config.frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000']
+  corsOptions.origin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin || devOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS: Origin ${origin} not allowed in development`))
+    }
+  }
 }
 
 app.use(cors(corsOptions))
@@ -156,6 +173,20 @@ app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 
 /**
+ * 令牌刷新端点速率限制
+ * @description 防止对刷新端点的滥用和暴力探测
+ */
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 小时
+  max: 60,
+  keyGenerator: (req: Request) => req.ip || 'unknown',
+  message: { error: '令牌刷新过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+app.use('/api/auth/refresh', refreshLimiter)
+
+/**
  * 健康检查端点
  */
 interface HealthChecks {
@@ -212,6 +243,14 @@ app.get('/health/live', (_req: Request, res: Response) => {
 app.get('/health/ready', async (_req: Request, res: Response) => {
   const checks = await performHealthCheck()
   const allHealthy = Object.values(checks).every(Boolean)
+  // 生产环境仅返回状态码，不暴露内部检查详情
+  if (config.nodeEnv === 'production') {
+    res.status(allHealthy ? 200 : 503).json({
+      status: allHealthy ? 'ok' : 'not ready'
+    })
+    return
+  }
+  // 开发/测试环境返回详细检查信息，便于调试
   res.status(allHealthy ? 200 : 503).json({
     status: allHealthy ? 'ok' : 'not ready',
     checks
@@ -253,8 +292,14 @@ const routeMounts = [
 ]
 
 for (const { path: routePath, router } of routeMounts) {
-  // 兼容前缀 /api/*（将来可标记为 deprecated）
-  app.use(`${apiCompatPrefix}${routePath}`, router)
+  // 兼容前缀 /api/*（已标记为弃用，建议使用 /api/v1/*）
+  app.use(`${apiCompatPrefix}${routePath}`, (_req: Request, res: Response, next: NextFunction) => {
+    // 添加弃用警告头，提醒客户端迁移到新版本
+    res.setHeader('Deprecation', 'true')
+    res.setHeader('Sunset', new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString())
+    res.setHeader('Link', `<${config.frontendUrl}${apiV1Prefix}${routePath}>; rel="successor-version"`)
+    next()
+  }, router)
   // 版本化前缀 /api/v1/*（推荐）
   app.use(`${apiV1Prefix}${routePath}`, router)
 }
