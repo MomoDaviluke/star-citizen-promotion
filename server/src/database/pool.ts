@@ -33,7 +33,10 @@ export async function createPool(): Promise<Pool> {
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
     timezone: config.database.timezone,
-    charset: config.database.charset
+    charset: config.database.charset,
+    acquireTimeout: 60000,
+    timeout: 60000,
+    connectTimeout: 10000
   }
 
   pool = mysql.createPool(dbConfig)
