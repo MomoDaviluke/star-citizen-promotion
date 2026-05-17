@@ -158,6 +158,8 @@ export function startWebSocket(server: HttpServer): void {
   const heartbeat = setInterval(() => {
     if (!wss) return
 
+    // 注意：在 for...of 循环中删除 Map 元素是安全的
+    // Map 迭代器不受删除操作影响
     for (const [clientId, client] of clients) {
       if (!client.isAlive) {
         logger.info('WebSocket 心跳超时，断开连接', { clientId })
