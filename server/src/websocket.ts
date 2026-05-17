@@ -157,20 +157,17 @@ export function startWebSocket(server: HttpServer): void {
 
   const heartbeat = setInterval(() => {
     if (!wss) return
-    wss.clients.forEach((ws) => {
-      for (const [clientId, client] of clients) {
-        if (client.ws === ws) {
-          if (!client.isAlive) {
-            logger.info('WebSocket 心跳超时，断开连接', { clientId })
-            client.ws.terminate()
-            clients.delete(clientId)
-            return
-          }
-          client.isAlive = false
-          client.ws.ping()
-        }
+
+    for (const [clientId, client] of clients) {
+      if (!client.isAlive) {
+        logger.info('WebSocket 心跳超时，断开连接', { clientId })
+        client.ws.terminate()
+        clients.delete(clientId)
+        continue
       }
-    })
+      client.isAlive = false
+      client.ws.ping()
+    }
   }, 30000)
 
   wss.on('close', () => {
