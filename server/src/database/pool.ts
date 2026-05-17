@@ -35,7 +35,6 @@ export async function createPool(): Promise<Pool> {
     timezone: config.database.timezone,
     charset: config.database.charset,
     acquireTimeout: 60000,
-    timeout: 60000,
     connectTimeout: 10000
   }
 
