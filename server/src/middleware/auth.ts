@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken'
 import { config } from '../config/index.js'
 import { ApiError } from './errorHandler.js'
 import { queryOne } from '../database/pool.js'
+import logger from '../utils/logger.js'
 
 export interface AuthenticatedUser {
   id: string
@@ -24,7 +25,7 @@ export interface AuthenticatedRequest extends Request {
  * 验证 JWT 令牌
  * @description 从 Authorization header 提取并验证 Bearer token，将用户信息注入 req.user
  */
-export function authenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
+export async function authenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
   const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
   if (!token) {
@@ -34,8 +35,20 @@ export function authenticate(req: AuthenticatedRequest, _res: Response, next: Ne
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
+
+    const user = await queryOne<{ id: string; role: string }>(
+      'SELECT id, role FROM users WHERE id = ?',
+      [decoded.userId]
+    )
+
+    if (!user) {
+      next(ApiError.unauthorized('用户不存在或已被禁用'))
+      return
+    }
+
     req.user = {
-      id: decoded.userId
+      id: user.id,
+      role: user.role
     }
     next()
   } catch (err) {
@@ -43,7 +56,12 @@ export function authenticate(req: AuthenticatedRequest, _res: Response, next: Ne
       next(ApiError.unauthorized('认证令牌已过期'))
       return
     }
-    next(ApiError.unauthorized('无效的认证令牌'))
+    if ((err as Error).name === 'JsonWebTokenError') {
+      next(ApiError.unauthorized('无效的认证令牌'))
+      return
+    }
+    logger.error('认证验证失败', { error: (err as Error).message })
+    next(ApiError.internal('认证验证失败'))
   }
 }
 
@@ -51,7 +69,7 @@ export function authenticate(req: AuthenticatedRequest, _res: Response, next: Ne
  * 可选认证中间件
  * @description 即使未携带令牌也不报错，用于公开接口的增强验证
  */
-export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
+export async function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
   const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
   if (!token) {
@@ -61,9 +79,18 @@ export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: Ne
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
-    req.user = { id: decoded.userId }
-  } catch {
-    // Token 无效或过期，继续处理但不带用户信息
+    const user = await queryOne<{ id: string; role: string }>(
+      'SELECT id, role FROM users WHERE id = ?',
+      [decoded.userId]
+    )
+    if (user) {
+      req.user = { id: user.id, role: user.role }
+    }
+  } catch (err) {
+    logger.debug('可选认证令牌无效', {
+      error: (err as Error).message,
+      ip: req.ip
+    })
   }
 
   next()

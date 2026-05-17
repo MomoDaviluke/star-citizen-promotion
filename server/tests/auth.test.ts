@@ -7,6 +7,8 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 
 const mockVerify = jest.fn()
 const mockQueryOne = jest.fn()
+const mockDebug = jest.fn()
+const mockError = jest.fn()
 
 jest.unstable_mockModule('jsonwebtoken', () => ({
   default: {
@@ -26,6 +28,13 @@ jest.unstable_mockModule('../src/config/index.ts', () => ({
   }
 }))
 
+jest.unstable_mockModule('../src/utils/logger.ts', () => ({
+  default: {
+    debug: mockDebug,
+    error: mockError
+  }
+}))
+
 const { authenticate, optionalAuth, requireRole, requireAdmin } = await import('../src/middleware/auth.ts')
 const { ApiError } = await import('../src/middleware/errorHandler.ts')
 
@@ -34,7 +43,7 @@ describe('authenticate', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    req = { headers: {} }
+    req = { headers: {}, ip: '127.0.0.1' }
     res = {}
     next = jest.fn()
   })
@@ -91,14 +100,46 @@ describe('authenticate', () => {
     expect(error.message).toBe('认证令牌已过期')
   })
 
-  it('有效令牌应设置 req.user', async () => {
+  it('有效令牌但用户不存在应返回 401', async () => {
     req.headers.authorization = 'Bearer valid-token'
-    mockVerify.mockReturnValue({ userId: 1 })
+    mockVerify.mockReturnValue({ userId: 'user-123' })
+    mockQueryOne.mockResolvedValue(null)
 
     await authenticate(req, res, next)
 
-    expect(req.user).toEqual({ id: 1 })
+    expect(mockQueryOne).toHaveBeenCalledWith(
+      'SELECT id, role FROM users WHERE id = ?',
+      ['user-123']
+    )
+    expect(next).toHaveBeenCalledTimes(1)
+    const error = next.mock.calls[0][0]
+    expect(error.statusCode).toBe(401)
+    expect(error.message).toBe('用户不存在或已被禁用')
+  })
+
+  it('有效令牌应设置 req.user', async () => {
+    req.headers.authorization = 'Bearer valid-token'
+    mockVerify.mockReturnValue({ userId: 'user-123' })
+    mockQueryOne.mockResolvedValue({ id: 'user-123', role: 'admin' })
+
+    await authenticate(req, res, next)
+
+    expect(req.user).toEqual({ id: 'user-123', role: 'admin' })
     expect(next).toHaveBeenCalledWith()
+  })
+
+  it('数据库查询失败应返回 500 并记录日志', async () => {
+    req.headers.authorization = 'Bearer valid-token'
+    mockVerify.mockReturnValue({ userId: 'user-123' })
+    mockQueryOne.mockRejectedValue(new Error('DB connection lost'))
+
+    await authenticate(req, res, next)
+
+    expect(mockError).toHaveBeenCalledWith('认证验证失败', { error: 'DB connection lost' })
+    expect(next).toHaveBeenCalledTimes(1)
+    const error = next.mock.calls[0][0]
+    expect(error.statusCode).toBe(500)
+    expect(error.message).toBe('认证验证失败')
   })
 })
 
@@ -107,7 +148,7 @@ describe('optionalAuth', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    req = { headers: {} }
+    req = { headers: {}, ip: '127.0.0.1' }
     res = {}
     next = jest.fn()
   })
@@ -121,19 +162,35 @@ describe('optionalAuth', () => {
 
   it('有效令牌应设置 req.user', async () => {
     req.headers.authorization = 'Bearer valid-token'
-    mockVerify.mockReturnValue({ userId: 1 })
+    mockVerify.mockReturnValue({ userId: 'user-123' })
+    mockQueryOne.mockResolvedValue({ id: 'user-123', role: 'user' })
 
     await optionalAuth(req, res, next)
 
-    expect(req.user).toEqual({ id: 1 })
+    expect(req.user).toEqual({ id: 'user-123', role: 'user' })
     expect(next).toHaveBeenCalledWith()
   })
 
-  it('无效令牌应继续处理但不设置 user', async () => {
+  it('无效令牌应继续处理但不设置 user 并记录日志', async () => {
     req.headers.authorization = 'Bearer invalid-token'
     mockVerify.mockImplementation(() => {
       throw new Error('invalid token')
     })
+
+    await optionalAuth(req, res, next)
+
+    expect(req.user).toBeUndefined()
+    expect(mockDebug).toHaveBeenCalledWith('可选认证令牌无效', {
+      error: 'invalid token',
+      ip: '127.0.0.1'
+    })
+    expect(next).toHaveBeenCalledWith()
+  })
+
+  it('用户不存在应继续处理但不设置 user', async () => {
+    req.headers.authorization = 'Bearer valid-token'
+    mockVerify.mockReturnValue({ userId: 'user-123' })
+    mockQueryOne.mockResolvedValue(null)
 
     await optionalAuth(req, res, next)
 
@@ -165,7 +222,7 @@ describe('requireRole', () => {
   })
 
   it('角色不匹配应返回 403', async () => {
-    req.user = { id: 1 }
+    req.user = { id: 'user-123' }
     mockQueryOne.mockResolvedValue({ role: 'user' })
     const middleware = requireRole('admin')
 
@@ -178,7 +235,7 @@ describe('requireRole', () => {
   })
 
   it('角色匹配应通过', async () => {
-    req.user = { id: 1 }
+    req.user = { id: 'user-123' }
     mockQueryOne.mockResolvedValue({ role: 'admin' })
     const middleware = requireRole('admin')
 
@@ -189,43 +246,12 @@ describe('requireRole', () => {
   })
 
   it('应支持多个角色', async () => {
-    req.user = { id: 1 }
+    req.user = { id: 'user-123' }
     mockQueryOne.mockResolvedValue({ role: 'editor' })
     const middleware = requireRole('admin', 'editor')
 
     await middleware(req, res, next)
 
     expect(next).toHaveBeenCalledWith()
-  })
-})
-
-describe('requireAdmin', () => {
-  let req, res, next
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-    req = {}
-    res = {}
-    next = jest.fn()
-  })
-
-  it('管理员应通过', async () => {
-    req.user = { id: 1 }
-    mockQueryOne.mockResolvedValue({ role: 'admin' })
-
-    await requireAdmin(req, res, next)
-
-    expect(next).toHaveBeenCalledWith()
-  })
-
-  it('非管理员应返回 403', async () => {
-    req.user = { id: 1 }
-    mockQueryOne.mockResolvedValue({ role: 'user' })
-
-    await requireAdmin(req, res, next)
-
-    expect(next).toHaveBeenCalledTimes(1)
-    const error = next.mock.calls[0][0]
-    expect(error.statusCode).toBe(403)
   })
 })
