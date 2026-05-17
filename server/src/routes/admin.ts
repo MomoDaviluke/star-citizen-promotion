@@ -9,6 +9,8 @@ import logger from '../utils/logger.js'
 
 const router = Router()
 
+const ENABLE_DB_RESET = process.env.ENABLE_DB_RESET === 'true'
+
 /**
  * 管理员操作二次确认验证
  * @description 对高风险管理员操作要求额外的确认密码验证
@@ -41,6 +43,11 @@ router.post(
   adminActionValidation,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      if (!ENABLE_DB_RESET) {
+        logger.warn('数据库重置功能已禁用', { userId: req.user!.id })
+        throw ApiError.forbidden('数据库重置功能已在当前环境禁用')
+      }
+
       const errors = validationResult(req)
       if (!errors.isEmpty()) {
         throw ApiError.badRequest('验证失败', errors.array())
