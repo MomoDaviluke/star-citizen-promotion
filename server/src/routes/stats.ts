@@ -5,7 +5,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express'
-import { query } from '../database/pool.js'
+import { query, queryOne } from '../database/pool.js'
 
 interface StatsRow {
   id: number
@@ -28,26 +28,31 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const stats = await query<StatsRow>('SELECT * FROM stats ORDER BY sort_order ASC')
 
-    const summaryRows = await query<SummaryRow>(`
-      SELECT
-        (SELECT COUNT(*) FROM members WHERE status = 'active') AS activeMembers,
-        (SELECT COUNT(*) FROM projects WHERE status = 'active') AS activeProjects,
-        (SELECT COUNT(*) FROM pilots WHERE status = 'active') AS activePilots,
-        (SELECT COALESCE(SUM(missions), 0) FROM pilots) AS totalMissions
-    `)
+    // 并行执行独立查询，避免子查询性能问题
+    const [
+      activeMembersResult,
+      activeProjectsResult,
+      activePilotsResult,
+      totalMissionsResult
+    ] = await Promise.all([
+      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM members WHERE status = 'active'"),
+      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM projects WHERE status = 'active'"),
+      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM pilots WHERE status = 'active'"),
+      queryOne<{ total: number }>('SELECT COALESCE(SUM(missions), 0) as total FROM pilots')
+    ])
 
-    const summary = (summaryRows as unknown as SummaryRow[])[0]
+    const summary: SummaryRow = {
+      activeMembers: activeMembersResult?.count ?? 0,
+      activeProjects: activeProjectsResult?.count ?? 0,
+      activePilots: activePilotsResult?.count ?? 0,
+      totalMissions: totalMissionsResult?.total ?? 0
+    }
 
     res.json({
       success: true,
       data: {
         stats,
-        summary: {
-          activeMembers: summary.activeMembers,
-          activeProjects: summary.activeProjects,
-          activePilots: summary.activePilots,
-          totalMissions: summary.totalMissions
-        }
+        summary
       }
     })
   } catch (error) {
