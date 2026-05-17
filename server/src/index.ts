@@ -74,17 +74,19 @@ const corsOptions: cors.CorsOptions = {
 if (config.nodeEnv === 'production') {
   // 生产环境必须配置 ALLOWED_ORIGINS
   if (!process.env.ALLOWED_ORIGINS) {
-    logger.warn('ALLOWED_ORIGINS 未设置，CORS 将拒绝所有跨域请求')
-  }
-  corsOptions.origin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin) {
-      // 允许无 Origin 的请求（如直接 curl 调用）
-      callback(null, true)
-    } else if (config.cors.allowedOrigins.includes(origin)) {
-      callback(null, true)
-    } else {
-      logger.warn(`CORS 拒绝来源: ${origin}`)
-      callback(new Error(`CORS: Origin ${origin} not allowed`))
+    logger.error('FATAL: ALLOWED_ORIGINS 未设置，生产环境 CORS 将拒绝所有跨域请求')
+    corsOptions.origin = false
+  } else {
+    corsOptions.origin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin) {
+        // 允许无 Origin 的请求（如直接 curl 调用）
+        callback(null, true)
+      } else if (config.cors.allowedOrigins.includes(origin)) {
+        callback(null, true)
+      } else {
+        logger.warn(`CORS 拒绝来源: ${origin}`)
+        callback(new Error(`CORS: Origin ${origin} not allowed`))
+      }
     }
   }
 } else {
