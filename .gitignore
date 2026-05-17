@@ -49,6 +49,9 @@ playwright-report/
 test-results/
 playwright/.cache/
 
+# Git worktrees
+.worktrees/
+
 # Environment files (keep examples only)
 .env
 .env.local
