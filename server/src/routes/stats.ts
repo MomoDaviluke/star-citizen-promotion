@@ -29,16 +29,17 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
     const stats = await query<StatsRow>('SELECT * FROM stats ORDER BY sort_order ASC')
 
     // 并行执行独立查询，避免子查询性能问题
+    // 使用 .catch(() => null) 防止单个查询失败影响整体结果
     const [
       activeMembersResult,
       activeProjectsResult,
       activePilotsResult,
       totalMissionsResult
     ] = await Promise.all([
-      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM members WHERE status = 'active'"),
-      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM projects WHERE status = 'active'"),
-      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM pilots WHERE status = 'active'"),
-      queryOne<{ total: number }>('SELECT COALESCE(SUM(missions), 0) as total FROM pilots')
+      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM members WHERE status = 'active'").catch(() => null),
+      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM projects WHERE status = 'active'").catch(() => null),
+      queryOne<{ count: number }>("SELECT COUNT(*) as count FROM pilots WHERE status = 'active'").catch(() => null),
+      queryOne<{ total: number }>('SELECT COALESCE(SUM(missions), 0) as total FROM pilots').catch(() => null)
     ])
 
     const summary: SummaryRow = {
