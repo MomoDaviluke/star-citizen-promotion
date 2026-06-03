@@ -9,7 +9,7 @@
 # --------------------------------------------
 # 前端构建阶段
 # --------------------------------------------
-FROM node:22-alpine AS frontend-builder
+FROM node:26-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN npm run build
 # --------------------------------------------
 # 后端构建阶段
 # --------------------------------------------
-FROM node:22-alpine AS backend-builder
+FROM node:26-alpine AS backend-builder
 
 WORKDIR /app/server
 
@@ -39,7 +39,7 @@ RUN npm run build
 # --------------------------------------------
 # 生产阶段 — 最小化镜像
 # --------------------------------------------
-FROM node:22-alpine AS production
+FROM node:26-alpine AS production
 
 WORKDIR /app
 
