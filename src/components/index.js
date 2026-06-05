@@ -10,6 +10,7 @@ export { default as SiteFooter } from './layout/SiteFooter.vue'
 
 // 通用组件
 export { default as PageTitle } from './common/PageTitle.vue'
+export { default as PageHeader } from './common/PageHeader.vue'
 export { default as PageTransition } from './common/PageTransition.vue'
 export { default as LoadingIndicator } from './common/LoadingIndicator.vue'
 export { default as ErrorBoundary } from './common/ErrorBoundary.vue'
@@ -25,6 +26,9 @@ export { default as BaseTooltip } from './common/BaseTooltip.vue'
 export { default as FleetCard } from './fleet/FleetCard.vue'
 export { default as FleetFilter } from './fleet/FleetFilter.vue'
 export { default as FleetStats } from './fleet/FleetStats.vue'
+
+// 科幻 UI 组件
+export { default as ShipCard } from './ui/ShipCard.vue'
 
 // 日历相关组件
 export { default as CalendarMonth } from './calendar/CalendarMonth.vue'

@@ -1,227 +1,113 @@
 /**
- * 视差滚动组合式函数
- * @description 实现鼠标移动和滚动视差效果
+ * @file 滚动视差组合式函数
+ * @description 基于 GSAP ScrollTrigger 实现滚动视差效果，
+ *              支持速度控制、方向限制和自动清理。
+ *              遵循 prefers-reduced-motion 无障碍设置。
  * @module composables/useParallax
- * @author Full-stack Team
+ * @example
+ * const { addParallax } = useParallax()
+ * addParallax(heroRef.value, { speed: 0.3 })
+ * addParallax(bgRef.value, { speed: -0.15, direction: 'vertical' })
  */
 
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { onUnmounted } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 /**
- * 使用视差效果
- * @param {Object} options - 配置选项
- * @param {number} [options.strength=0.1] - 视差强度
- * @param {boolean} [options.onScroll=true] - 是否响应滚动
- * @param {boolean} [options.onMouseMove=true] - 是否响应鼠标移动
- * @param {number} [options.smooth=0.1] - 平滑插值系数
- * @returns {Object} 暴露的响应式状态和方法
+ * 检测用户是否偏好减少动画
  */
-export function useParallax(options = {}) {
-  const {
-    strength = 0.1,
-    onScroll = true,
-    onMouseMove = true,
-    smooth = 0.1
-  } = options
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  /** X轴偏移量 */
-  const offsetX = ref(0)
-  
-  /** Y轴偏移量 */
-  const offsetY = ref(0)
-  
-  /** 当前滚动位置 */
-  const scrollY = ref(0)
-  
-  /** 目标X轴偏移（用于平滑插值） */
-  let targetX = 0
-  
-  /** 目标Y轴偏移（用于平滑插值） */
-  let targetY = 0
-  
-  /** 动画帧ID */
-  let animationFrame = null
-  
-  /** 元素引用 */
-  let element = null
+/**
+ * 滚动视差组合式函数
+ * @returns {{ addParallax: Function }} 视差 API
+ */
+export function useParallax() {
+  const triggers = []
 
   /**
-   * 处理鼠标移动
-   * @param {MouseEvent} event - 鼠标事件
+   * 为元素添加滚动视差效果
+   * @param {HTMLElement} element - 目标元素
+   * @param {Object} options - 配置选项
+   * @param {number} [options.speed=0.2] - 视差速度，正值向下偏移，负值向上
+   * @param {'vertical'|'horizontal'|'both'} [options.direction='vertical'] - 视差方向
+   * @param {string} [options.start='top bottom'] - ScrollTrigger 起始位置
+   * @param {string} [options.end='bottom top'] - ScrollTrigger 结束位置
+   * @param {number} [options.ease=1] - 插值平滑度（0=无平滑，1=完全平滑）
    */
-  function handleMouseMove(event) {
-    if (!element || !onMouseMove) return
+  function addParallax(element, options = {}) {
+    if (!element || prefersReducedMotion) return null
 
-    const rect = element.getBoundingClientRect()
-    const x = (event.clientX - rect.left) / rect.width - 0.5
-    const y = (event.clientY - rect.top) / rect.height - 0.5
+    const {
+      speed = 0.2,
+      direction = 'vertical',
+      start = 'top bottom',
+      end = 'bottom top',
+      ease = 0.1
+    } = options
 
-    targetX = x * strength * 100
-    targetY = y * strength * 100
-  }
+    let currentY = 0
+    let targetY = 0
+    let currentX = 0
+    let targetX = 0
+    let rafId = null
 
-  /**
-   * 处理滚动
-   */
-  function handleScroll() {
-    if (!onScroll) return
-    scrollY.value = window.scrollY
-  }
+    const st = ScrollTrigger.create({
+      trigger: element,
+      start,
+      end,
+      onUpdate: (self) => {
+        const progress = self.progress
+        const offset = (progress - 0.5) * speed * 200
 
-  /**
-   * 动画循环（使用requestAnimationFrame实现平滑插值）
-   */
-  function animate() {
-    // 平滑插值
-    offsetX.value += (targetX - offsetX.value) * smooth
-    offsetY.value += (targetY - offsetY.value) * smooth
+        if (direction === 'vertical' || direction === 'both') {
+          targetY = offset
+        }
+        if (direction === 'horizontal' || direction === 'both') {
+          targetX = offset
+        }
 
-    // 继续动画循环
-    animationFrame = requestAnimationFrame(animate)
-  }
-
-  /**
-   * 初始化视差效果
-   * @param {HTMLElement} el - 目标元素
-   */
-  function init(el) {
-    if (!el) return
-    element = el
-
-    // 添加事件监听
-    if (onMouseMove) {
-      element.addEventListener('mousemove', handleMouseMove)
-      element.addEventListener('mouseleave', () => {
-        targetX = 0
-        targetY = 0
-      })
-    }
-
-    if (onScroll) {
-      window.addEventListener('scroll', handleScroll, { passive: true })
-    }
-
-    // 启动动画循环
-    animate()
-  }
-
-  /**
-   * 销毁视差效果
-   */
-  function destroy() {
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = null
-    }
-
-    if (element) {
-      if (onMouseMove) {
-        element.removeEventListener('mousemove', handleMouseMove)
-        element.removeEventListener('mouseleave', () => {
-          targetX = 0
-          targetY = 0
-        })
-      }
-      element = null
-    }
-
-    if (onScroll) {
-      window.removeEventListener('scroll', handleScroll)
-    }
-
-    offsetX.value = 0
-    offsetY.value = 0
-    scrollY.value = 0
-  }
-
-  /**
-   * 计算属性：变换样式
-   */
-  const transformStyle = computed(() => ({
-    transform: `translate(${offsetX.value}px, ${offsetY.value}px)`,
-    willChange: 'transform'
-  }))
-
-  /**
-   * 计算属性：滚动进度（0-1）
-   */
-  const scrollProgress = computed(() => {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight
-    return docHeight > 0 ? scrollY.value / docHeight : 0
-  })
-
-  // 组件挂载时初始化
-  onMounted(() => {
-    // 延迟初始化，确保DOM已渲染
-    nextTick(() => {
-      if (element) {
-        init(element)
+        if (!rafId) {
+          rafId = requestAnimationFrame(updatePosition)
+        }
       }
     })
-  })
 
-  // 组件卸载时清理
-  onUnmounted(() => {
-    destroy()
-  })
+    /**
+     * 平滑插值更新元素位置
+     */
+    function updatePosition() {
+      currentY += (targetY - currentY) * ease
+      currentX += (targetX - currentX) * ease
 
-  return {
-    offsetX,
-    offsetY,
-    scrollY,
-    scrollProgress,
-    transformStyle,
-    init,
-    destroy
-  }
-}
+      const transforms = []
+      if (direction === 'vertical' || direction === 'both') {
+        transforms.push(`translateY(${currentY}px)`)
+      }
+      if (direction === 'horizontal' || direction === 'both') {
+        transforms.push(`translateX(${currentX}px)`)
+      }
 
-/**
- * 使用滚动视差（简化版，只响应滚动）
- * @param {Object} options - 配置选项
- * @returns {Object} 暴露的响应式状态和方法
- */
-export function useScrollParallax(options = {}) {
-  const { speed = 0.5 } = options
-  
-  const offsetY = ref(0)
-  let ticking = false
+      element.style.transform = transforms.join(' ')
 
-  function handleScroll() {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        offsetY.value = window.scrollY * speed
-        ticking = false
-      })
-      ticking = true
+      if (Math.abs(targetY - currentY) > 0.1 || Math.abs(targetX - currentX) > 0.1) {
+        rafId = requestAnimationFrame(updatePosition)
+      } else {
+        rafId = null
+      }
     }
-  }
 
-  function init() {
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    triggers.push(st)
+    return st
   }
-
-  function destroy() {
-    window.removeEventListener('scroll', handleScroll)
-    offsetY.value = 0
-  }
-
-  onMounted(() => {
-    init()
-  })
 
   onUnmounted(() => {
-    destroy()
+    triggers.forEach(st => st.kill())
+    triggers.length = 0
   })
 
-  const transformStyle = computed(() => ({
-    transform: `translateY(${offsetY.value}px)`
-  }))
-
-  return {
-    offsetY,
-    transformStyle,
-    init,
-    destroy
-  }
+  return { addParallax }
 }

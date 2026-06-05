@@ -6,6 +6,9 @@
  */
 
 import { ref, onMounted, onUnmounted } from 'vue'
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('SoundEffect')
+
 
 // 音效配置
 const soundConfig = {
@@ -50,7 +53,7 @@ export function useSoundEffect(options = {}) {
 
       const config = soundConfig[name]
       if (!config) {
-        console.warn(`Sound "${name}" not found in config`)
+        logger.warn(`Sound "${name}" not found in config`)
         return Promise.resolve()
       }
 
@@ -65,7 +68,7 @@ export function useSoundEffect(options = {}) {
         }, { once: true })
 
         audio.addEventListener('error', () => {
-          console.warn(`Failed to load sound: ${name}`)
+          logger.warn(`Failed to load sound: ${name}`)
           resolve()
         }, { once: true })
       })
@@ -93,7 +96,7 @@ export function useSoundEffect(options = {}) {
       if (!audio) {
         const config = soundConfig[soundName]
         if (!config) {
-          console.warn(`Sound "${soundName}" not found in config`)
+          logger.warn(`Sound "${soundName}" not found in config`)
           return
         }
 
@@ -108,8 +111,10 @@ export function useSoundEffect(options = {}) {
 
       await clone.play()
     } catch (err) {
+      // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message
+      const error = err instanceof Error ? err : new Error(String(err))
       // 自动播放策略可能导致错误，静默失败
-      console.debug('Sound play failed:', err.message)
+      logger.debug('Sound play failed:', error.message)
     }
   }
 

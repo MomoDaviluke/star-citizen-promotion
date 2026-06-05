@@ -5,3 +5,4 @@
  */
 
 export { useAI, useAIStatus, aiService } from './useAI'
+export { useWebSocket } from './useWebSocket'
