@@ -1,174 +1,200 @@
 /**
- * 主题变量系统
- * @description 定义全站的CSS变量，支持暗黑/亮色主题切换
- * @author Full-stack Team
+ * 「星渊枢纽 · Stellar Nexus」主题变量系统
+ * @description 定义全站的CSS变量，融合星云紫雾、青蓝数据流、琥珀光痕与工业钢灰
+ * @version 5.0 - Stellar Nexus 版本
  */
 
 :root {
-  /* ========== 主色调 - 科技蓝 ========== */
-  --color-primary: #5fa9ff;
-  --color-primary-dark: #3d7bd9;
-  --color-primary-light: #8fc7ff;
-  --color-accent: #00d4ff;
-  --color-accent-2: #4ecdc4;
-  --color-success: #4ecdc4;
-  --color-warning: #f0ad4e;
-  --color-danger: #ff6b6b;
+  /* ========== 深渊底色色阶 ========== */
+  --void-deepest: #060b14;
+  --void-deep: #0c1424;
+  --void-mid: #111c30;
+  --void-surface: #192840;
+  --void-elevated: #22344e;
 
-  /* ========== 背景色阶 ========== */
-  --bg-deepest: #030810;
-  --bg-deep: #0a1620;
-  --bg-medium: #152030;
-  --bg-light: #1e3050;
-  --bg-overlay: rgba(10, 22, 40, 0.95);
-  --bg-card: linear-gradient(165deg, rgba(15, 30, 50, 0.8), rgba(8, 18, 32, 0.9));
+  /* ========== 星云紫雾系统 ========== */
+  --nebula-purple: #7c3aed;
+  --nebula-violet: #a78bfa;
+  --nebula-mist: #c4b5fd;
+  --nebula-glow: rgba(124, 58, 237, 0.35);
+  --nebula-glow-strong: rgba(124, 58, 237, 0.55);
+
+  /* ========== 琥珀光痕系统 ========== */
+  --amber-primary: #f59e0b;
+  --amber-bright: #fbbf24;
+  --amber-dim: #d97706;
+  --amber-glow: rgba(245, 158, 11, 0.4);
+  --amber-glow-strong: rgba(245, 158, 11, 0.6);
+
+  /* ========== 青蓝数据流系统 ========== */
+  --cyan-primary: #06b6d4;
+  --cyan-bright: #22d3ee;
+  --cyan-dim: #0891b2;
+  --cyan-glow: rgba(6, 182, 212, 0.35);
+  --cyan-glow-strong: rgba(6, 182, 212, 0.5);
+
+  /* ========== 工业钢灰系统 ========== */
+  --steel-dark: #2d3748;
+  --steel-mid: #4a5568;
+  --steel-light: #718096;
+
+  /* ========== 状态色 ========== */
+  --status-online: #10b981;
+  --status-warning: #f59e0b;
+  --status-danger: #ef4444;
+  --status-offline: #6b7280;
 
   /* ========== 文字颜色 ========== */
-  --text-primary: #e0e8f0;
-  --text-secondary: #8fa8c0;
-  --text-muted: #5a7a9a;
-  --text-accent: #5fa9ff;
-  --text-success: #4ecdc4;
-  --text-warning: #f0ad4e;
-  --text-danger: #ff6b6b;
+  --text-primary: #edf2f7;
+  --text-secondary: #cbd5e0;
+  --text-muted: #8a9bb5;
+  --text-dim: #5c6a82;
 
   /* ========== 边框/分割线 ========== */
-  --border-subtle: rgba(95, 169, 255, 0.15);
-  --border-medium: rgba(95, 169, 255, 0.3);
-  --border-strong: rgba(95, 169, 255, 0.5);
-  --border-line: rgba(143, 215, 255, 0.25);
+  --border-subtle: rgba(124, 58, 237, 0.1);
+  --border-medium: rgba(124, 58, 237, 0.2);
+  --border-strong: rgba(124, 58, 237, 0.4);
+  --border-amber: rgba(245, 158, 11, 0.2);
+  --border-cyan: rgba(6, 182, 212, 0.3);
 
   /* ========== 阴影/光晕 ========== */
-  --glow-primary: 0 0 20px rgba(95, 169, 255, 0.3);
-  --glow-accent: 0 0 15px rgba(0, 212, 255, 0.25);
-  --glow-strong: 0 0 30px rgba(95, 169, 255, 0.5);
-  --glow-success: 0 0 20px rgba(78, 205, 196, 0.3);
-  --glow-danger: 0 0 20px rgba(255, 107, 107, 0.3);
+  --glow-amber: 0 0 20px var(--amber-glow);
+  --glow-amber-strong: 0 0 40px var(--amber-glow-strong);
+  --glow-cyan: 0 0 20px var(--cyan-glow);
+  --glow-cyan-strong: 0 0 40px var(--cyan-glow-strong);
+  --glow-nebula: 0 0 20px var(--nebula-glow);
+  --glow-nebula-strong: 0 0 40px var(--nebula-glow-strong);
 
-  /* ========== 动画时长 ========== */
-  --transition-fast: 150ms ease;
-  --transition-normal: 300ms ease;
-  --transition-slow: 500ms ease;
-
-  /* ========== 间距比例 ========== */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
+  /* ========== 字体族 ========== */
+  --font-display: 'Orbitron', 'Rajdhani', sans-serif;
+  --font-body: 'Noto Sans SC', 'Inter', 'Segoe UI', 'PingFang SC', sans-serif;
+  --font-data: 'JetBrains Mono', 'Consolas', monospace;
+  --font-tech: 'Orbitron', 'Eurostile Extended', sans-serif;
 
   /* ========== 字体大小 ========== */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 2rem;
-  --text-4xl: 2.5rem;
+  --text-xs: 0.625rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 3rem;
+  --text-4xl: 4rem;
+
+  /* ========== 间距 ========== */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+  --space-12: 6rem;
 
   /* ========== 圆角 ========== */
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
-  --radius-xl: 12px;
 
-  /* ========== Z-index 层级 ========== */
-  --z-dropdown: 1000;
-  --z-sticky: 1020;
-  --z-fixed: 1030;
-  --z-modal-backdrop: 1040;
-  --z-modal: 1050;
-  --z-tooltip: 1060;
-  --z-notification: 10000;
+  /* ========== 动画时长 ========== */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-launch: 800ms;
+
+  /* ========== Z-index ========== */
+  --z-bg: -1;
+  --z-content: 1;
+  --z-overlay: 10;
+  --z-header: 100;
+  --z-modal: 1000;
+  --z-launch: 10000;
+}
+
+/* ========== 动态主题 ========== */
+[data-theme="hangar"] {
+  --theme-primary: var(--amber-primary);
+  --theme-glow: var(--amber-glow);
+  --theme-glow-strong: var(--amber-glow-strong);
+}
+
+[data-theme="space"] {
+  --theme-primary: var(--cyan-primary);
+  --theme-glow: var(--cyan-glow);
+  --theme-glow-strong: var(--cyan-glow-strong);
+}
+
+[data-theme="combat"] {
+  --theme-primary: var(--status-danger);
+  --theme-glow: rgba(239, 68, 68, 0.3);
+  --theme-glow-strong: rgba(239, 68, 68, 0.5);
+}
+
+[data-theme="nebula"] {
+  --theme-primary: var(--nebula-purple);
+  --theme-glow: var(--nebula-glow);
+  --theme-glow-strong: var(--nebula-glow-strong);
 }
 
 /* ========== 亮色主题 ========== */
 [data-theme="light"] {
-  --bg-deepest: #f0f4f8;
-  --bg-deep: #e2e8f0;
-  --bg-medium: #ffffff;
-  --bg-light: #f8fafc;
-  --bg-overlay: rgba(255, 255, 255, 0.95);
-  --bg-card: linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95));
+  /* 浅色背景色阶 */
+  --void-deepest: #f0f4f8;
+  --void-deep: #e2e8f0;
+  --void-mid: #cbd5e0;
+  --void-surface: #ffffff;
+  --void-elevated: #f7fafc;
 
+  /* 文字颜色反转 */
   --text-primary: #1a202c;
   --text-secondary: #4a5568;
   --text-muted: #718096;
-  --text-accent: #3182ce;
+  --text-dim: #a0aec0;
 
-  --border-subtle: rgba(0, 0, 0, 0.1);
-  --border-medium: rgba(0, 0, 0, 0.2);
-  --border-strong: rgba(0, 0, 0, 0.3);
-  --border-line: rgba(0, 0, 0, 0.15);
+  /* 边框适配 */
+  --border-subtle: rgba(124, 58, 237, 0.06);
+  --border-medium: rgba(124, 58, 237, 0.12);
+  --border-strong: rgba(124, 58, 237, 0.25);
+  --border-amber: rgba(217, 119, 6, 0.15);
+  --border-cyan: rgba(8, 145, 178, 0.2);
 
-  --glow-primary: 0 0 20px rgba(49, 130, 206, 0.2);
-  --glow-accent: 0 0 15px rgba(0, 212, 255, 0.15);
-  --glow-strong: 0 0 30px rgba(49, 130, 206, 0.3);
+  /* 星云紫雾在亮色下降低饱和度 */
+  --nebula-purple: #6d28d9;
+  --nebula-violet: #8b5cf6;
+  --nebula-mist: #a78bfa;
+  --nebula-glow: rgba(109, 40, 217, 0.15);
+  --nebula-glow-strong: rgba(109, 40, 217, 0.3);
+
+  /* 阴影适配 */
+  --glow-amber: 0 0 10px rgba(217, 119, 6, 0.15);
+  --glow-amber-strong: 0 0 20px rgba(217, 119, 6, 0.25);
+  --glow-cyan: 0 0 10px rgba(8, 145, 178, 0.15);
+  --glow-cyan-strong: 0 0 20px rgba(8, 145, 178, 0.25);
+  --glow-nebula: 0 0 10px var(--nebula-glow);
+  --glow-nebula-strong: 0 0 20px var(--nebula-glow-strong);
+
+  /* 钢灰色阶适配 */
+  --steel-dark: #cbd5e0;
+  --steel-mid: #a0aec0;
+  --steel-light: #718096;
 }
 
-/* ========== 通用工具类 ========== */
-.bg-deepest { background-color: var(--bg-deepest); }
-.bg-deep { background-color: var(--bg-deep); }
-.bg-medium { background-color: var(--bg-medium); }
-.bg-light { background-color: var(--bg-light); }
-
-.text-primary { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-muted { color: var(--text-muted); }
-.text-accent { color: var(--text-accent); }
-
-.border-subtle { border-color: var(--border-subtle); }
-.border-medium { border-color: var(--border-medium); }
-.border-strong { border-color: var(--border-strong); }
-
-/* ========== 响应式断点 ========== */
-/* 超小屏幕：< 576px */
-/* 小屏幕：≥ 576px */
-/* 中等屏幕：≥ 768px */
-/* 大屏幕：≥ 992px */
-/* 超大屏幕：≥ 1200px */
-
-/* ========== 无障碍支持 ========== */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --transition-fast: 0.01ms;
-    --transition-normal: 0.01ms;
-    --transition-slow: 0.01ms;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+/* ========== 亮色主题下的噪点纹理关闭（白色噪点难看） ========== */
+[data-theme="light"] body::after {
+  opacity: 0;
 }
 
-/* ========== 滚动条样式 ========== */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ========== 亮色主题下的滚动条 ========== */
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--void-deep);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--steel-light);
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-deep);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: var(--radius-sm);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
-}
-
-/* ========== 选中文本样式 ========== */
-::selection {
-  background: rgba(95, 169, 255, 0.3);
-  color: var(--text-primary);
+/* ========== 主题过渡 ========== */
+html, body, #app {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
