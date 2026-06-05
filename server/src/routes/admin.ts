@@ -5,6 +5,7 @@ import { authenticate, requireAdmin, AuthenticatedRequest } from '../middleware/
 import { initDatabase } from '../database/init.js'
 import { ApiError } from '../middleware/errorHandler.js'
 import { queryOne } from '../database/pool.js'
+import { clearAllCache, getCacheStats } from '../middleware/cache.js'
 import logger from '../utils/logger.js'
 
 const router = Router()
@@ -90,9 +91,34 @@ router.post(
       // 记录高风险操作审计日志
       logger.warn(`[SECURITY] 管理员 ${req.user!.id} 正在执行缓存清除操作`)
 
+      const clearedCount = clearAllCache()
+
       res.json({
         success: true,
-        message: '缓存已清除'
+        message: '缓存已清除',
+        cleared: clearedCount
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+/**
+ * GET /api/admin/cache-stats
+ * @description 返回缓存当前状态（条目数、命中率、存储估算）
+ * @security 仅管理员可访问，不走写操作密码验证（只读）
+ */
+router.get(
+  '/cache-stats',
+  authenticate,
+  requireAdmin,
+  (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const stats = getCacheStats()
+      res.json({
+        success: true,
+        data: stats
       })
     } catch (error) {
       next(error)

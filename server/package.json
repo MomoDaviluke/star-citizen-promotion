@@ -1,8 +1,25 @@
 {
   "name": "star-citizen-promotion-server",
-  "version": "1.0.0",
+  "version": "1.3.1",
   "type": "module",
   "description": "Star Citizen 战队宣传网站后端服务",
+  "license": "MIT",
+  "author": "星际公民战队 <contact@star-citizen-team.cn>",
+  "keywords": [
+    "star-citizen",
+    "gaming",
+    "team",
+    "portal",
+    "api"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/star-citizen-team/star-citizen-promotion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/star-citizen-team/star-citizen-promotion/issues"
+  },
+  "homepage": "https://star-citizen-team.cn",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -28,7 +45,7 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^17.3.1",
+    "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.2.1",
@@ -41,6 +58,7 @@
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.0.3",
     "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
@@ -52,7 +70,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^25.6.0",
+    "@types/node": "^20.14.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/ws": "^8.18.1",
@@ -62,7 +80,7 @@
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.59.2"
   },
   "engines": {

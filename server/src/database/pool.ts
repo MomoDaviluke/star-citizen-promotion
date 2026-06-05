@@ -25,9 +25,10 @@ export async function createPool(): Promise<Pool> {
     user: config.database.user,
     password: config.database.password,
     database: config.database.name,
-    waitForConnections: true,
+    waitForConnections: config.database.waitForConnections,
     connectionLimit,
-    queueLimit: 50,
+    // 从统一配置读取 queueLimit，保持单一配置源
+    queueLimit: config.database.queueLimit,
     maxIdleTime: 300000,
     idleTimeout: 60000,
     enableKeepAlive: true,
@@ -130,11 +131,44 @@ export async function transaction<T>(callback: (connection: PoolConnection) => P
 /**
  * 关闭数据库连接池
  */
-export async function closePool(): Promise<void> {
-  if (pool) {
-    await pool.end()
-    pool = null
-    logger.info('📦 MySQL 连接池已关闭')
+/**
+ * 带计时监控的查询包装器
+ * @description 执行查询并记录慢查询（>500ms），用于性能监控和诊断
+ * @param sql - SQL 语句
+ * @param params - 参数数组
+ * @param options.slowThreshold - 慢查询阈值（ms），默认 500
+ * @returns 查询结果
+ */
+export async function queryWithTiming<T = RowDataPacket[]>(
+  sql: string,
+  params: unknown[] = [],
+  options: { slowThreshold?: number } = {}
+): Promise<{ rows: T; durationMs: number }> {
+  const { slowThreshold = 500 } = options
+  const start = Date.now()
+
+  try {
+    const connection = getPool()
+    const [rows] = await connection.execute<RowDataPacket[]>(sql, params as never)
+    const durationMs = Date.now() - start
+
+    if (durationMs > slowThreshold) {
+      logger.warn('慢查询', {
+        sql: sql.length > 300 ? sql.substring(0, 300) + '...' : sql,
+        durationMs,
+        rowCount: rows.length
+      })
+    }
+
+    return { rows: rows as unknown as T, durationMs }
+  } catch (error) {
+    const durationMs = Date.now() - start
+    logger.error('查询失败', {
+      sql: sql.length > 300 ? sql.substring(0, 300) + '...' : sql,
+      durationMs,
+      error: (error as Error).message
+    })
+    throw error
   }
 }
 
@@ -200,11 +234,24 @@ export function getPoolStatus(): {
   }
 }
 
+/**
+ * 关闭连接池
+ * @description 优雅释放连接池资源，用于进程退出或测试清理
+ * @returns {Promise<void>}
+ */
+export async function closePool(): Promise<void> {
+  if (pool) {
+    await pool.end()
+    pool = null
+  }
+}
+
 export default {
   createPool,
   getPool,
   query,
   queryOne,
+  queryWithTiming,
   insert,
   update,
   remove,

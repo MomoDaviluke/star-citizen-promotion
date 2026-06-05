@@ -19,12 +19,13 @@ import { config } from './config/index.js'
 import { setupSwagger } from './config/swagger.js'
 import { initDatabase, closePool } from './database/init.js'
 import logger from './utils/logger.js'
-import { query } from './database/pool.js'
+import { query, getPoolStatus } from './database/pool.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { requestId } from './middleware/requestId.js'
 import { auditLogger, startAuditCleanupJob } from './middleware/auditLogger.js'
 import { metricsMiddleware, metricsEndpoint } from './middleware/metrics.js'
+import { cacheMiddleware, cacheInvalidationMiddleware } from './middleware/cache.js'
 import { startWebSocket, closeWebSocket } from './websocket.js'
 
 import authRoutes from './routes/auth.js'
@@ -139,6 +140,19 @@ if (config.nodeEnv !== 'test') {
 app.use(metricsMiddleware)
 
 /**
+ * HTTP 缓存中间件
+ * @description 对读密集端点启用 TTL 内存缓存 + ETag 条件请求
+ *              已认证路由（/api/auth/*、/api/admin/*）跳过缓存
+ */
+app.use(cacheMiddleware({ skipAuthRoutes: true }))
+
+/**
+ * 缓存失效
+ * @description POST/PUT/DELETE 操作后自动清除相关路由缓存
+ */
+app.use(cacheInvalidationMiddleware)
+
+/**
  * API 速率限制
  */
 const apiLimiter = rateLimit({
@@ -192,6 +206,7 @@ app.use('/api/auth/refresh', refreshLimiter)
 interface HealthChecks {
   database: boolean
   memory: boolean
+  poolStatus: ReturnType<typeof getPoolStatus>
 }
 
 interface MemoryUsageMB {
@@ -203,7 +218,8 @@ interface MemoryUsageMB {
 async function performHealthCheck(): Promise<HealthChecks> {
   const checks: HealthChecks = {
     database: false,
-    memory: false
+    memory: false,
+    poolStatus: getPoolStatus()
   }
 
   try {

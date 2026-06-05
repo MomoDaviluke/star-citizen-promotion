@@ -6,6 +6,7 @@
 
 import { createPool, query, queryOne, testConnection, closePool } from './pool.js'
 import { RowDataPacket } from 'mysql2/promise'
+import logger from '../utils/logger.js'
 
 export { closePool }
 
@@ -192,7 +193,7 @@ async function createTables(): Promise<void> {
   await query(createEventParticipantsTable)
   await query(createSettingsTable)
 
-  console.log('📋 数据库表结构创建完成')
+  logger.info('数据库表结构创建完成')
 }
 
 interface MemberSeed {
@@ -235,7 +236,7 @@ interface StatSeed {
 async function seedInitialData(): Promise<void> {
   const memberCount = await queryOne<RowDataPacket & { count: number }>('SELECT COUNT(*) as count FROM members')
   if (memberCount && memberCount.count > 0) {
-    console.log('🌱 数据已存在，跳过种子数据填充')
+    logger.info('数据已存在，跳过种子数据填充')
     return
   }
 
@@ -345,7 +346,7 @@ async function seedInitialData(): Promise<void> {
     )
   }
 
-  console.log('🌱 初始数据填充完成')
+  logger.info('初始数据填充完成')
 }
 
 export async function initDatabase(): Promise<void> {
@@ -359,7 +360,7 @@ export async function initDatabase(): Promise<void> {
   await createTables()
   await seedInitialData()
 
-  console.log('📊 数据库初始化完成')
+  logger.info('数据库初始化完成')
 }
 
 export default initDatabase

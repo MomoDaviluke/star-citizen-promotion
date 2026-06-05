@@ -1,10 +1,11 @@
 /**
  * @file Winston 日志模块
- * @description 统一的日志管理，支持控制台和文件输出
+ * @description 统一的日志管理，支持控制台、文件和按日期轮转输出
  * @module server/utils/logger
  */
 
 import winston from 'winston'
+import DailyRotateFile from 'winston-daily-rotate-file'
 import { config } from '../config/index.js'
 
 const { combine, timestamp, printf, colorize, errors, json } = winston.format
@@ -30,14 +31,26 @@ const transports: winston.transport[] = [
 ]
 
 if (config.logging?.file?.enabled) {
+  // 错误日志：按日期轮转，单文件 20MB，保留 30 天
   transports.push(
-    new winston.transports.File({
-      filename: config.logging.file.error || 'logs/error.log',
+    new DailyRotateFile({
+      filename: config.logging.file.error || 'logs/error-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
       level: 'error',
+      maxSize: '20m',
+      maxFiles: '30d',
+      zippedArchive: true,
       format: jsonFormat
-    }),
-    new winston.transports.File({
-      filename: config.logging.file.combined || 'logs/combined.log',
+    })
+  )
+  // 综合日志：按日期轮转，单文件 20MB，保留 14 天
+  transports.push(
+    new DailyRotateFile({
+      filename: config.logging.file.combined || 'logs/combined-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d',
+      zippedArchive: true,
       format: jsonFormat
     })
   )

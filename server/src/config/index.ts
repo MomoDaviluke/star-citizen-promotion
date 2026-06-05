@@ -24,10 +24,17 @@ const nodeEnv = process.env.NODE_ENV || 'development'
  */
 function getJwtSecret(): string {
   if (process.env.JWT_SECRET) {
+    // 生产环境强制要求密钥长度
+    if (nodeEnv === 'production' && process.env.JWT_SECRET.length < 32) {
+      throw new Error(
+        'FATAL: JWT_SECRET must be at least 32 characters in production. ' +
+        'Use a cryptographically secure random string.'
+      )
+    }
     return process.env.JWT_SECRET
   }
   if (nodeEnv === 'test') {
-    return 'test-jwt-secret-key'
+    return 'test-jwt-secret-key-not-for-production'
   }
   throw new Error(
     'FATAL: JWT_SECRET must be explicitly set. ' +
@@ -71,6 +78,11 @@ export interface LoggingConfig {
   }
 }
 
+export interface MetricsConfig {
+  enabled: boolean
+  allowedIps: string[]
+}
+
 export interface AppConfig {
   nodeEnv: string
   port: number
@@ -82,6 +94,7 @@ export interface AppConfig {
   websocket: { port: number }
   cors: CorsConfig
   logging: LoggingConfig
+  metrics: MetricsConfig
 }
 
 /**
@@ -112,7 +125,7 @@ export const config: AppConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306', 10),
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    password: process.env.DB_PASSWORD || (nodeEnv === 'test' ? '' : ''),
     name: process.env.DB_NAME || 'star_citizen_promotion',
     waitForConnections: true,
     connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10', 10),
@@ -147,6 +160,13 @@ export const config: AppConfig = {
       error: process.env.LOG_FILE_ERROR || 'logs/error.log',
       combined: process.env.LOG_FILE_COMBINED || 'logs/combined.log'
     }
+  },
+
+  metrics: {
+    enabled: process.env.METRICS_ENABLED !== 'false',
+    allowedIps: process.env.METRICS_ALLOWED_IPS
+      ? process.env.METRICS_ALLOWED_IPS.split(',').map(ip => ip.trim())
+      : ['127.0.0.1', '::1']
   }
 }
 
@@ -164,26 +184,22 @@ export function validateProductionConfig(): boolean {
         'Please set a strong secret key (at least 32 characters).'
       )
     }
-    console.warn('⚠️ 警告: JWT_SECRET not set. Application is insecure.')
+    process.stderr.write('⚠️ 警告: JWT_SECRET not set. Application is insecure.\n')
     errors.push('JWT_SECRET (not set, application is insecure)')
   }
 
   if (config.nodeEnv !== 'test' && !config.database.password) {
-    if (config.nodeEnv === 'production') {
-      throw new Error('FATAL: DB_PASSWORD must be set in production.')
-    }
-    console.warn('⚠️ 警告: DB_PASSWORD not set. Database connection may be insecure.')
-    errors.push('DB_PASSWORD')
+    throw new Error('FATAL: DB_PASSWORD must be set. Database connection is insecure without a password.')
   }
 
   if (config.nodeEnv === 'production') {
     if (!process.env.ALLOWED_ORIGINS) {
-      console.warn('⚠️ 警告: ALLOWED_ORIGINS not set. CORS will use FRONTEND_URL as fallback.')
+      process.stderr.write('⚠️ 警告: ALLOWED_ORIGINS not set. CORS will use FRONTEND_URL as fallback.\n')
     }
   }
 
   if (errors.length > 0) {
-    console.warn(`⚠️ 配置警告: ${errors.join(', ')}`)
+    process.stderr.write(`⚠️ 配置警告: ${errors.join(', ')}\n`)
   }
 
   return true

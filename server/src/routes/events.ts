@@ -20,13 +20,30 @@ router.get('/export', async (req: Request, res: Response, next: NextFunction) =>
   try {
     const { startDate, endDate, status } = req.query as { startDate?: string; endDate?: string; status?: string }
 
+    // 限制导出时间范围最多 90 天
+    let effectiveStartDate = startDate
+    let effectiveEndDate = endDate
+    if (!effectiveStartDate || !effectiveEndDate) {
+      const now = new Date()
+      effectiveEndDate = effectiveEndDate || now.toISOString().split('T')[0]
+      const start = new Date(now)
+      start.setDate(start.getDate() - 90)
+      effectiveStartDate = effectiveStartDate || start.toISOString().split('T')[0]
+    }
+
     const result = await getEvents({
-      startDate,
-      endDate,
+      startDate: effectiveStartDate,
+      endDate: effectiveEndDate,
       status,
-      limit: 500,
+      limit: 100,
       offset: 0
     })
+
+    // 限制最大导出数量
+    if (result.events.length >= 100) {
+      res.setHeader('X-Export-Limit', '100')
+      res.setHeader('X-Export-Note', '结果已截断至最近100条事件')
+    }
 
     const icsContent = result.events.map(generateICS).join('\r\n')
 

@@ -22,9 +22,11 @@ export interface AuthenticatedRequest extends Request {
 
 /**
  * 验证 JWT 令牌
- * @description 从 Authorization header 提取并验证 Bearer token，将用户信息注入 req.user
+ * @description 从 cookie 或 Authorization header 提取并验证 JWT token
+ *              解码后查询数据库验证用户是否仍然存在，防止已删除用户的 Token 继续有效
+ *              将用户信息（id, role）注入 req.user
  */
-export function authenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
+export async function authenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
   const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
   if (!token) {
@@ -32,18 +34,38 @@ export function authenticate(req: AuthenticatedRequest, _res: Response, next: Ne
     return
   }
 
+  // 验证 JWT 签名和有效期
+  let decoded: { userId: string }
   try {
-    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
-    req.user = {
-      id: decoded.userId
-    }
-    next()
+    decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
   } catch (err) {
     if ((err as Error).name === 'TokenExpiredError') {
       next(ApiError.unauthorized('认证令牌已过期'))
       return
     }
     next(ApiError.unauthorized('无效的认证令牌'))
+    return
+  }
+
+  // 验证用户是否仍然存在且未被禁用，防止已删除用户的 Token 继续有效
+  try {
+    const user = await queryOne<{ id: string; role: string }>(
+      'SELECT id, role FROM users WHERE id = ?',
+      [decoded.userId]
+    )
+
+    if (!user) {
+      next(ApiError.unauthorized('用户不存在或已被禁用'))
+      return
+    }
+
+    req.user = {
+      id: user.id,
+      role: user.role
+    }
+    next()
+  } catch {
+    next(ApiError.internal('认证验证失败'))
   }
 }
 

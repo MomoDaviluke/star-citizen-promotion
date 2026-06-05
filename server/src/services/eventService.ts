@@ -72,12 +72,28 @@ export async function getEvents({ startDate, endDate, status, creatorId, limit, 
 
   const events = await query<CalendarEvent[]>(sql, params)
 
-  for (const event of events) {
-    const participants = await query<RowDataPacket[]>(
-      'SELECT user_id FROM event_participants WHERE event_id = ?',
-      [event.id]
+  // 批量查询参与者，避免 N+1 查询问题
+  if (events.length > 0) {
+    const eventIds = events.map(e => e.id)
+    const placeholders = eventIds.map(() => '?').join(',')
+    const participantsResult = await query<RowDataPacket[]>(
+      `SELECT event_id, user_id FROM event_participants WHERE event_id IN (${placeholders})`,
+      eventIds
     )
-    event.participants = participants.map((p) => p.user_id)
+
+    // 将参与者映射到对应事件
+    const participantMap = new Map<string, string[]>()
+    for (const row of participantsResult) {
+      const eventId = row.event_id as string
+      if (!participantMap.has(eventId)) {
+        participantMap.set(eventId, [])
+      }
+      participantMap.get(eventId)!.push(row.user_id as string)
+    }
+
+    for (const event of events) {
+      event.participants = participantMap.get(event.id) || []
+    }
   }
 
   const countSql = conditions.length > 0
