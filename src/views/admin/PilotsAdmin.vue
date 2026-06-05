@@ -109,6 +109,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../../utils/logger.js'
+const logger = createLogger('PilotsAdmin')
+
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
@@ -135,7 +138,7 @@ async function loadPilots() {
       pilots.value = response.data
     }
   } catch (error) {
-    console.error('加载飞行员数据失败:', error)
+    logger.error('加载飞行员数据失败:', error)
   }
 }
 
@@ -168,7 +171,7 @@ async function saveEdit() {
       closeEdit()
     }
   } catch (error) {
-    console.error('保存飞行员失败:', error)
+    logger.error('保存飞行员失败:', error)
   } finally {
     isSaving.value = false
   }
@@ -180,7 +183,7 @@ async function deletePilot(id) {
       await dataService.deletePilot(id)
       pilots.value = pilots.value.filter(p => p.id !== id)
     } catch (error) {
-      console.error('删除飞行员失败:', error)
+      logger.error('删除飞行员失败:', error)
     }
   }
 }

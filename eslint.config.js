@@ -7,7 +7,24 @@ const isProduction = process.env.NODE_ENV === 'production'
 export default [
   {
     name: 'app/files-to-ignore',
-    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/node_modules/**']
+    ignores: [
+      '**/dist/**',
+      '**/dist-ssr/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      '.agents/**',
+      '.claude/**',
+      '.codebuddy/**',
+      '.workbuddy/**',
+      '.trae/**',
+      '.worktrees/**',
+      '.vs/**',
+      '.vscode/**',
+      'screenshots/**',
+      'test-results/**',
+      'playwright-report/**',
+      'server/**'
+    ]
   },
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
@@ -19,6 +36,13 @@ export default [
       'no-unused-vars': 'warn',
       'no-console': isProduction ? 'error' : 'warn',
       'no-debugger': isProduction ? 'error' : 'warn'
+    }
+  },
+  {
+    name: 'app/logger-allowed',
+    files: ['src/utils/logger.js'],
+    rules: {
+      'no-console': 'off'
     }
   },
   {

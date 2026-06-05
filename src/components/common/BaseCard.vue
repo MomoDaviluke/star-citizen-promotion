@@ -81,8 +81,6 @@
  * @emits {mouseleave} 鼠标离开事件
  */
 
-import { ref } from 'vue'
-
 const props = defineProps({
   variant: {
     type: String,

@@ -10,12 +10,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 const mockRouter = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: '首页' },
-    { path: '/about', name: '团队介绍' },
-    { path: '/members', name: '核心成员' },
-    { path: '/projects', name: '活动项目' },
-    { path: '/join', name: '加入我们' },
-    { path: '/contact', name: '联系我们' }
+    { path: '/', name: '首页', component: { template: '<div>Home</div>' } },
+    { path: '/about', name: '团队介绍', component: { template: '<div>About</div>' } },
+    { path: '/members', name: '核心成员', component: { template: '<div>Members</div>' } },
+    { path: '/projects', name: '活动项目', component: { template: '<div>Projects</div>' } },
+    { path: '/join', name: '加入我们', component: { template: '<div>Join</div>' } },
+    { path: '/contact', name: '联系我们', component: { template: '<div>Contact</div>' } }
   ]
 })
 

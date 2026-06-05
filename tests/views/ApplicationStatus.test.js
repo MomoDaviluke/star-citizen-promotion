@@ -5,8 +5,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 const mockRouter = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home' },
-    { path: '/application-status', name: 'applicationStatus' }
+    { path: '/', name: 'home', component: { template: '<div>Home</div>' } },
+    { path: '/application-status', name: 'applicationStatus', component: { template: '<div>ApplicationStatus</div>' } }
   ]
 })
 

@@ -59,7 +59,7 @@
  * @emits {close} 关闭事件
  */
 
-const props = defineProps({
+defineProps({
   text: {
     type: String,
     default: ''

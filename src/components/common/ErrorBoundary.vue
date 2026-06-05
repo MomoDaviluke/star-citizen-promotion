@@ -34,6 +34,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../../utils/logger.js'
+const logger = createLogger('ErrorBoundary')
+
 /**
  * 错误边界组件
  * @description 捕获子组件的渲染错误，显示友好的错误提示
@@ -42,7 +45,7 @@
 import { ref, onErrorCaptured } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = defineProps({
+defineProps({
   title: {
     type: String,
     default: '出现了一些问题'
@@ -87,7 +90,7 @@ onErrorCaptured((error, instance, info) => {
     })
   }
 
-  console.error('ErrorBoundary 捕获错误:', error)
+  logger.error('ErrorBoundary 捕获错误:', error)
 
   return false
 })

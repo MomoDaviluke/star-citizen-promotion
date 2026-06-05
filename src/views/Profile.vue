@@ -108,6 +108,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('Profile')
+
 /**
  * 个人中心视图组件逻辑
  * @description 用户资料管理、密码修改和账户安全操作
@@ -174,7 +177,7 @@ async function updateProfile() {
       avatar: profile.avatar
     })
   } catch (error) {
-    console.error('更新资料失败:', error)
+    logger.error('更新资料失败:', error)
   } finally {
     isUpdating.value = false
   }
@@ -203,7 +206,7 @@ async function changePassword() {
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
   } catch (error) {
-    console.error('修改密码失败:', error)
+    logger.error('修改密码失败:', error)
   } finally {
     isChangingPassword.value = false
   }

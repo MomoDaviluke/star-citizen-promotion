@@ -1,37 +1,38 @@
 /**
  * 认证服务模块
  * @description 封装所有认证相关的 API 调用（登录、注册、令牌管理等）
+ *              认证采用 httpOnly cookie 机制，Token 由浏览器自动携带
+ *              前端不存储 Token，用户信息由 Pinia store 管理
  * @module services/authService
- * @author Full-stack Team
  */
 
 import httpClient from './http.js'
+import { createLogger } from '../utils/logger.js'
+
+const logger = createLogger('AuthService')
 
 const BASE_URL = '/api/auth'
 
 /**
  * 用户登录
  * @param {Object} credentials - 登录凭证
- * @param {string} credentials.username - 用户名
+ * @param {string} credentials.email - 邮箱
  * @param {string} credentials.password - 密码
  * @returns {Promise<Object>} 包含 token 和 user 的响应
  */
 async function login(credentials) {
-  if (!credentials?.username || !credentials?.password) {
-    throw new Error('用户名和密码不能为空')
+  if (!credentials?.email || !credentials?.password) {
+    throw new Error('邮箱和密码不能为空')
   }
 
   try {
     const response = await httpClient.post(`${BASE_URL}/login`, credentials)
-    if (response.data?.token) {
-      httpClient.setStoredToken(response.data.token)
-    }
-    if (response.data?.user) {
-      httpClient.setStoredUser(response.data.user)
-    }
+    // 后端通过 Set-Cookie 设置 httpOnly cookie，前端无需手动存储 Token
     return response.data
-  } catch (error) {
-    console.error('登录失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('登录失败:', error.message)
     throw error
   }
 }
@@ -51,29 +52,29 @@ async function register(userData) {
 
   try {
     const response = await httpClient.post(`${BASE_URL}/register`, userData)
-    if (response.data?.token) {
-      httpClient.setStoredToken(response.data.token)
-    }
-    if (response.data?.user) {
-      httpClient.setStoredUser(response.data.user)
-    }
+    // 后端通过 Set-Cookie 设置 httpOnly cookie，前端无需手动存储 Token
     return response.data
-  } catch (error) {
-    console.error('注册失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('注册失败:', error.message)
     throw error
   }
 }
 
 /**
  * 获取当前用户信息
+ * @description 通过 httpOnly cookie 自动携带认证信息
  * @returns {Promise<Object>} 用户信息
  */
 async function getProfile() {
   try {
-    const response = await httpClient.get(`${BASE_URL}/profile`)
-    return response.data
-  } catch (error) {
-    console.error('获取用户信息失败:', error.response?.data || error.message)
+    const response = await httpClient.get(`${BASE_URL}/me`)
+    return response
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.warn('获取用户信息失败:', error.message)
     throw error
   }
 }
@@ -87,46 +88,44 @@ async function updateProfile(updates) {
   try {
     const response = await httpClient.put(`${BASE_URL}/profile`, updates)
     return response.data
-  } catch (error) {
-    console.error('更新用户信息失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('更新用户信息失败:', error.message)
     throw error
   }
 }
 
 /**
- * 用户登出（服务端使令牌失效）
+ * 用户登出
+ * @description 调用后端 /auth/logout 清除 httpOnly cookie
  * @returns {Promise<void>}
  */
 async function logout() {
   try {
     await httpClient.post(`${BASE_URL}/logout`)
-  } catch (error) {
-    console.error('登出请求失败:', error.response?.data || error.message)
-    // 即使服务端失败，客户端仍应清除本地状态
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('登出请求失败:', error.message)
   } finally {
-    // 清除本地存储的认证信息
-    httpClient.clearStoredToken()
-    httpClient.setStoredUser(null)
-    // 触发自定义事件，通知应用其他部分用户已登出
     window.dispatchEvent(new CustomEvent('auth:logout'))
   }
 }
 
 /**
  * 刷新访问令牌
- * @param {string} refreshToken - 刷新令牌
+ * @description 通过 httpOnly cookie 自动携带旧 Token 进行刷新
  * @returns {Promise<Object>} 新的访问令牌
  */
-async function refreshToken(refreshToken) {
-  if (!refreshToken) {
-    throw new Error('刷新令牌不能为空')
-  }
-
+async function refreshToken() {
   try {
-    const response = await httpClient.post(`${BASE_URL}/refresh`, { refreshToken })
+    const response = await httpClient.post(`${BASE_URL}/refresh`)
     return response.data
-  } catch (error) {
-    console.error('刷新令牌失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('刷新令牌失败:', error.message)
     throw error
   }
 }
@@ -144,8 +143,10 @@ async function requestPasswordReset(email) {
   try {
     const response = await httpClient.post(`${BASE_URL}/password-reset`, { email })
     return response.data
-  } catch (error) {
-    console.error('密码重置请求失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('密码重置请求失败:', error.message)
     throw error
   }
 }
@@ -164,41 +165,10 @@ async function resetPassword(token, newPassword) {
   try {
     const response = await httpClient.post(`${BASE_URL}/password-reset/${token}`, { password: newPassword })
     return response.data
-  } catch (error) {
-    console.error('密码重置失败:', error.response?.data || error.message)
-    throw error
-  }
-}
-
-/**
- * 检查用户是否已认证
- * @returns {boolean} 是否已登录
- */
-function isAuthenticated() {
-  return !!httpClient.getStoredToken()
-}
-
-/**
- * 获取存储的用户信息
- * @returns {Object|null} 用户对象
- */
-function getUser() {
-  return httpClient.getStoredUser()
-}
-
-/**
- * 获取当前用户信息（从服务器）
- * @returns {Promise<Object>} 用户信息
- */
-async function getCurrentUser() {
-  try {
-    const response = await httpClient.get(`${BASE_URL}/me`)
-    if (response.data) {
-      httpClient.setStoredUser(response.data)
-    }
-    return response
-  } catch (error) {
-    console.error('获取用户信息失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('密码重置失败:', error.message)
     throw error
   }
 }
@@ -214,8 +184,10 @@ async function changePassword(passwords) {
   try {
     const response = await httpClient.put(`${BASE_URL}/password`, passwords)
     return response
-  } catch (error) {
-    console.error('修改密码失败:', error.response?.data || error.message)
+  } catch (err) {
+    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 response
+    const error = err instanceof Error ? err : new Error(String(err))
+    logger.error('修改密码失败:', error.message)
     throw error
   }
 }
@@ -229,9 +201,6 @@ const authService = {
   refreshToken,
   requestPasswordReset,
   resetPassword,
-  isAuthenticated,
-  getUser,
-  getCurrentUser,
   changePassword
 }
 
@@ -244,9 +213,8 @@ export {
   refreshToken,
   requestPasswordReset,
   resetPassword,
-  isAuthenticated,
-  getUser,
-  getCurrentUser,
   changePassword,
   authService
 }
+
+export default authService

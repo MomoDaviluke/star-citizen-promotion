@@ -1,0 +1,56 @@
+# CodeQL 静态安全分析
+# 扫描 JavaScript/TypeScript 源码中的安全漏洞模式
+# 每天定时 + push/PR 触发
+
+name: CodeQL 安全分析
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'server/src/**'
+      - 'e2e/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'server/src/**'
+      - 'e2e/**'
+  schedule:
+    # 每天 07:00 UTC（北京时间 15:00）运行
+    - cron: '0 7 * * *'
+
+jobs:
+  analyze:
+    name: CodeQL 分析
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript']
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 初始化 CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: |
+            security-extended
+            security-and-quality
+
+      - name: 自动构建
+        uses: github/codeql-action/autobuild@v3
+
+      - name: 执行 CodeQL 分析
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'

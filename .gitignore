@@ -95,6 +95,13 @@ lcov.info
 # Docker volumes (local)
 docker-volumes/
 
+# Database backups
+backups/
+
+# Test output (手动重定向产生的临时文件)
+test-output.txt
+server/.jest-cache/
+
 # WorkBuddy local data
 .workbuddy/
 

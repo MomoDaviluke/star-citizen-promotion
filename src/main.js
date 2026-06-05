@@ -20,6 +20,26 @@ import './styles/base.css'
 import './styles/variables.css'
 // 导入动画关键帧库
 import './styles/animations.css'
+
+/**
+ * 预应用主题
+ * @description 在应用创建前读取 localStorage / 系统偏好并设置 data-theme
+ *              避免首屏闪烁（FOUC）
+ */
+function applyInitialTheme() {
+  try {
+    const stored = localStorage.getItem('star-citizen-theme')
+    let theme = stored
+    if (theme !== 'light' && theme !== 'dark') {
+      theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+    }
+    document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '')
+  } catch {
+    // localStorage 不可用时静默使用暗黑主题
+  }
+}
+applyInitialTheme()
+
 // 导入错误报告服务，集成 Sentry 进行生产环境错误监控
 import { initErrorReporting } from './services/errorReporting.js'
 // 导入全局基础组件
@@ -28,6 +48,11 @@ import BaseCard from './components/common/BaseCard.vue'
 import BaseModal from './components/common/BaseModal.vue'
 import BaseBadge from './components/common/BaseBadge.vue'
 import BaseTooltip from './components/common/BaseTooltip.vue'
+import { createLogger } from './utils/logger.js'
+import { vScrollReveal } from './directives/scrollReveal.js'
+import { vRipple } from './directives/ripple.js'
+const logger = createLogger('App')
+
 
 /**
  * 创建 Vue 应用实例
@@ -43,6 +68,27 @@ const app = createApp(App)
  */
 const pinia = createPinia()
 app.use(pinia)
+
+/**
+ * 初始化认证状态
+ * @description 应用启动时通过 /auth/me 恢复用户信息
+ *              httpOnly cookie 由浏览器自动携带，无需前端管理 Token
+ *              必须在 pinia 注册之后、router 之前调用
+ */
+import { useAuthStore } from './stores/auth.js'
+const authStore = useAuthStore(pinia)
+authStore.initializeAuth()
+
+/**
+ * 监听认证过期事件
+ * @description 当 httpOnly cookie 中的 Token 过期且刷新失败时
+ *              http.js 会派发 auth:session-expired 事件
+ *              此处监听并自动重定向到登录页
+ */
+window.addEventListener('auth:session-expired', () => {
+  authStore.user = null
+  router.push('/login')
+})
 
 /**
  * 注册 Vue Router 插件
@@ -63,6 +109,20 @@ app.component('BaseBadge', BaseBadge)
 app.component('BaseTooltip', BaseTooltip)
 
 /**
+ * 注册全局自定义指令
+ * @description v-scroll-reveal: 基于 GSAP ScrollTrigger 的声明式滚动揭示动画
+ *              使用方式：v-scroll-reveal="'fadeUp'" 或 v-scroll-reveal="{ animation: 'scaleIn', delay: 0.2 }"
+ */
+app.directive('scroll-reveal', vScrollReveal)
+
+/**
+ * 注册全局涟漪指令
+ * @description v-ripple: 点击时从点击位置产生涟漪扩散动画
+ *              使用方式：v-ripple
+ */
+app.directive('ripple', vRipple)
+
+/**
  * 初始化错误报告服务
  * @description 在生产环境且配置了 Sentry DSN 时启用错误上报
  *              帮助开发团队及时发现和修复线上问题
@@ -81,9 +141,11 @@ initErrorReporting(app, router)
  * @param {string} info - 错误信息，说明错误发生在哪个生命周期钩子或渲染阶段
  */
 app.config.errorHandler = (err, instance, info) => {
+  // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 stack
+  const error = err instanceof Error ? err : new Error(String(err))
   const errorInfo = {
-    message: err.message,
-    stack: err.stack,
+    message: error.message,
+    stack: error.stack,
     component: instance?.$options?.name || 'Unknown',
     info,
     url: window.location.href,
@@ -92,12 +154,12 @@ app.config.errorHandler = (err, instance, info) => {
 
   // 生产环境：上报到 Sentry 并记录结构化日志
   if (import.meta.env.PROD) {
-    console.error('[全局错误]', errorInfo)
+    logger.error('[全局错误]', errorInfo)
 
     // 动态导入 Sentry 进行错误上报（避免阻塞应用启动）
     if (import.meta.env.VITE_SENTRY_DSN) {
       import('./services/errorReporting.js').then(({ captureException }) => {
-        captureException(err, {
+        captureException(error, {
           component: errorInfo.component,
           info,
           url: errorInfo.url
@@ -119,10 +181,10 @@ app.config.errorHandler = (err, instance, info) => {
  *              开发环境保留默认行为，方便调试
  */
 app.config.warnHandler = import.meta.env.PROD
-  ? (msg, _instance, _trace) => {
-      // 生产环境将警告降级为 debug 级别，不干扰正常日志
-      console.debug('[Vue Warn]', msg)
-    }
+  ? (msg) => {
+    // 生产环境将警告降级为 debug 级别，不干扰正常日志
+    logger.debug('[Vue Warn]', msg)
+  }
   : undefined
 
 /**
@@ -131,3 +193,14 @@ app.config.warnHandler = import.meta.env.PROD
  *              这是应用启动的最后一步，之后用户即可看到交互界面
  */
 app.mount('#app')
+
+/**
+ * 注册 PWA Service Worker
+ * @description 仅生产环境有效，提供离线访问与自动更新能力
+ *              vite-plugin-pwa 会在构建时注入 virtual:pwa-register/vue 虚拟模块
+ */
+if (import.meta.env.PROD) {
+  import('./composables/usePwa.js').then(({ registerPWA }) => {
+    registerPWA()
+  })
+}

@@ -15,7 +15,8 @@ WORKDIR /app
 
 # 利用 Docker 缓存：先复制依赖文件
 COPY package*.json ./
-RUN npm ci --omit=dev --ignore-scripts
+# 前端构建需要 vite 等开发依赖，不能使用 --omit=dev
+RUN npm ci --ignore-scripts
 
 # 复制源代码并构建
 COPY . .
@@ -30,7 +31,8 @@ WORKDIR /app/server
 
 # 复制后端依赖文件
 COPY server/package*.json ./
-RUN npm ci --omit=dev --ignore-scripts
+# 后端构建需要 TypeScript 等开发依赖进行编译
+RUN npm ci --ignore-scripts
 
 # 复制后端源码并编译
 COPY server/ ./

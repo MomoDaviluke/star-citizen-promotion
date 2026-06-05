@@ -4,7 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const mockRouter = createRouter({
   history: createWebHistory(),
-  routes: [{ path: '/', name: 'home' }]
+  routes: [{ path: '/', name: 'home', component: { template: '<div>Home</div>' } }]
 })
 
 vi.mock('@/services/dataService.js', () => ({

@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellar Nexus · 星渊枢纽 — 星际公民战队</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================================================
+     「星渊枢纽 · Stellar Nexus」全局变量系统
+     深渊底色 + 星云紫雾 + 琥珀光痕 + 青蓝数据流 + 工业钢灰
+     ============================================================ */
+  :root {
+    --void-deepest: #060b14;
+    --void-deep: #0c1424;
+    --void-mid: #111c30;
+    --void-surface: #192840;
+    --void-elevated: #22344e;
+
+    --nebula-purple: #7c3aed;
+    --nebula-violet: #a78bfa;
+    --nebula-mist: #c4b5fd;
+    --nebula-glow: rgba(124, 58, 237, 0.35);
+    --nebula-glow-strong: rgba(124, 58, 237, 0.55);
+
+    --amber-primary: #f59e0b;
+    --amber-bright: #fbbf24;
+    --amber-dim: #d97706;
+    --amber-glow: rgba(245, 158, 11, 0.4);
+
+    --cyan-primary: #06b6d4;
+    --cyan-bright: #22d3ee;
+    --cyan-dim: #0891b2;
+    --cyan-glow: rgba(6, 182, 212, 0.35);
+
+    --steel-dark: #2d3748;
+    --steel-mid: #4a5568;
+    --steel-light: #718096;
+
+    --status-online: #10b981;
+    --status-warning: #f59e0b;
+    --status-danger: #ef4444;
+
+    --text-primary: #edf2f7;
+    --text-secondary: #cbd5e0;
+    --text-muted: #8a9bb5;
+    --text-dim: #5c6a82;
+
+    --font-display: 'Orbitron', sans-serif;
+    --font-data: 'JetBrains Mono', monospace;
+    --font-body: 'Noto Sans SC', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--void-deepest);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     全局噪点纹理 overlay
+     ============================================================ */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.025;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  /* ============================================================
+     星门启动序列 — 首页加载动画
+     ============================================================ */
+  @keyframes gate-expand {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
+    60% { transform: translate(-50%, -50%) scale(1.8); opacity: 0.3; }
+    100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  }
+
+  @keyframes gate-rotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  @keyframes title-decode {
+    0% { clip-path: inset(0 100% 0 0); opacity: 0; }
+    30% { clip-path: inset(0 40% 0 0); opacity: 0.5; }
+    50% { clip-path: inset(0 10% 0 0); opacity: 0.8; }
+    65% { clip-path: inset(0 30% 0 0); opacity: 0.3; }
+    75% { clip-path: inset(0 5% 0 0); opacity: 0.9; }
+    100% { clip-path: inset(0 0 0 0); opacity: 1; }
+  }
+
+  @keyframes title-glitch {
+    0%, 90%, 100% { transform: translate(0); }
+    92% { transform: translate(-3px, 2px); }
+    94% { transform: translate(3px, -2px); }
+    96% { transform: translate(-2px, -1px); }
+    98% { transform: translate(2px, 1px); }
+  }
+
+  @keyframes fadeRise {
+    0% { opacity: 0; transform: translateY(40px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 var(--nebula-glow-strong); }
+    50% { box-shadow: 0 0 0 18px rgba(124, 58, 237, 0); }
+  }
+
+  @keyframes scan-line-vertical {
+    0% { top: -2px; }
+    100% { top: calc(100% + 2px); }
+  }
+
+  @keyframes scan-line-horizontal {
+    0% { left: -2px; }
+    100% { left: calc(100% + 2px); }
+  }
+
+  @keyframes metal-flash {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes float-particle {
+    0%, 100% { transform: translate(0, 0); opacity: 0; }
+    20% { opacity: 0.6; }
+    80% { opacity: 0.3; }
+    100% { transform: translate(var(--tx, 100px), var(--ty, -100px)); opacity: 0; }
+  }
+
+  @keyframes nebula-drift {
+    0% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -20px) scale(1.1); }
+    50% { transform: translate(-20px, 30px) scale(0.95); }
+    75% { transform: translate(-30px, -30px) scale(1.05); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  @keyframes breathe-glow {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes data-corrupt {
+    0%, 98%, 100% { opacity: 1; }
+    98.5% { opacity: 0.2; transform: translateX(2px); }
+    99% { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ============================================================
+     导航栏 — 金属拉丝毛玻璃
+     ============================================================ */
+  .site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(12, 20, 36, 0.85);
+    backdrop-filter: blur(20px) saturate(150%);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.12);
+    transition: all 0.4s ease;
+  }
+
+  .site-nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+  }
+
+  .nav-logo-diamond {
+    width: 8px;
+    height: 8px;
+    background: var(--amber-primary);
+    transform: rotate(45deg);
+    box-shadow: 0 0 12px var(--amber-glow);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+  }
+
+  .nav-link {
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    position: relative;
+    text-transform: uppercase;
+  }
+
+  .nav-link:hover {
+    color: var(--cyan-bright);
+    background: rgba(6, 182, 212, 0.08);
+  }
+
+  .nav-link.active {
+    color: var(--amber-primary);
+    background: rgba(245, 158, 11, 0.08);
+  }
+
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: var(--amber-primary);
+    box-shadow: 0 0 8px var(--amber-glow);
+  }
+
+  .nav-cta {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--amber-primary);
+    text-decoration: none;
+    padding: 0.5rem 1.2rem;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-cta:hover {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 24px var(--amber-glow);
+  }
+
+  /* ============================================================
+     Hero 区域 — 星门启动 + 星云粒子场
+     ============================================================ */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 6rem 2rem 3rem;
+  }
+
+  /* 星云背景层 */
+  .hero-nebulae {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .nebula-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    animation: nebula-drift 20s ease-in-out infinite;
+  }
+
+  .nebula-blob--purple {
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.15), transparent 70%);
+    top: -20%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+
+  .nebula-blob--cyan {
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.1), transparent 70%);
+    bottom: -15%;
+    right: -10%;
+    animation-delay: -7s;
+  }
+
+  .nebula-blob--amber {
+    width: 35vw;
+    height: 35vw;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.08), transparent 70%);
+    top: 40%;
+    left: 35%;
+    animation-delay: -14s;
+  }
+
+  /* 星门光环 */
+  .star-gate {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80vmin;
+    height: 80vmin;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .gate-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    animation: gate-expand 3s ease-out forwards;
+    transform-origin: center;
+  }
+
+  .gate-ring:nth-child(2) {
+    animation-delay: 0.3s;
+    border-color: rgba(6, 182, 212, 0.25);
+    width: 90%;
+    height: 90%;
+  }
+
+  .gate-ring:nth-child(3) {
+    animation-delay: 0.6s;
+    border-color: rgba(245, 158, 11, 0.2);
+    width: 80%;
+    height: 80%;
+  }
+
+  .gate-spin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    border: 1px dashed rgba(124, 58, 237, 0.15);
+    animation: gate-rotate 60s linear infinite;
+    transform-origin: center;
+  }
+
+  .gate-spin:nth-child(5) {
+    width: 130%;
+    height: 130%;
+    animation-duration: 80s;
+    animation-direction: reverse;
+    border-color: rgba(6, 182, 212, 0.1);
+    border-style: dotted;
+  }
+
+  /* 浮动粒子 */
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .hero-particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: var(--cyan-bright);
+    border-radius: 50%;
+    animation: float-particle 6s ease-in-out infinite;
+  }
+
+  .hero-particle:nth-child(odd) {
+    background: var(--nebula-violet);
+    width: 3px;
+    height: 3px;
+  }
+
+  .hero-particle:nth-child(3n) {
+    background: var(--amber-bright);
+    width: 1.5px;
+    height: 1.5px;
+  }
+
+  /* Hero 内容 */
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 900px;
+    animation: fadeRise 1.2s ease-out 0.8s both;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 1.2rem;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    background: rgba(124, 58, 237, 0.06);
+    backdrop-filter: blur(10px);
+  }
+
+  .badge-icon {
+    color: var(--nebula-violet);
+    font-size: 0.55rem;
+  }
+
+  .badge-text {
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: var(--nebula-mist);
+  }
+
+  .hero-title {
+    margin-bottom: 1.5rem;
+  }
+
+  .title-main {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    line-height: 1.1;
+    animation: title-decode 1.8s steps(10) 0.5s both;
+    text-shadow: 0 0 80px rgba(124, 58, 237, 0.3), 0 0 40px rgba(6, 182, 212, 0.15);
+  }
+
+  .title-divider {
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--nebula-violet), var(--cyan-primary), transparent);
+    margin: 0.8rem auto;
+    box-shadow: 0 0 10px var(--nebula-glow);
+  }
+
+  .title-sub {
+    display: block;
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    color: var(--text-secondary);
+    animation: fadeRise 1s ease-out 1s both;
+  }
+
+  .hero-desc {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    animation: fadeRise 1s ease-out 1.2s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeRise 1s ease-out 1.4s both;
+  }
+
+  /* 主按钮 — 共振发光 */
+  .btn-primary {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--void-deepest);
+    background: linear-gradient(135deg, var(--nebula-purple), var(--cyan-primary));
+    padding: 0.9rem 2.2rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: 0 0 30px var(--nebula-glow);
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--nebula-violet), var(--cyan-bright), var(--nebula-purple));
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: -1;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px var(--nebula-glow-strong), 0 8px 30px rgba(124, 58, 237, 0.3);
+  }
+
+  .btn-primary:hover::before {
+    opacity: 0.6;
+  }
+
+  .btn-arrow {
+    margin-left: 0.5rem;
+    transition: transform 0.3s;
+  }
+
+  .btn-primary:hover .btn-arrow {
+    transform: translateX(4px);
+  }
+
+  .btn-outline {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    background: transparent;
+    padding: 0.9rem 2.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--cyan-primary);
+    color: var(--cyan-bright);
+    box-shadow: 0 0 20px var(--cyan-glow);
+    background: rgba(6, 182, 212, 0.05);
+  }
+
+  /* Hero 状态栏 */
+  .hero-status {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    z-index: 10;
+    padding: 0.6rem 1.5rem;
+    background: rgba(12, 20, 36, 0.7);
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    border-radius: 3px;
+    backdrop-filter: blur(10px);
+    animation: fadeRise 1s ease-out 1.6s both;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-online);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+    animation: breathe-glow 2s ease-in-out infinite;
+  }
+
+  .status-text {
+    font-family: var(--font-data);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--status-online);
+  }
+
+  .status-divider {
+    width: 1px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .status-item {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .status-label {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .status-value {
+    font-family: var(--font-data);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+  }
+
+  /* 底部滚动指示器 — 雷达扫描仪 */
+  .scroll-radar {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    animation: fadeRise 1s ease-out 2s both;
+  }
+
+  .radar-ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .radar-sweep {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: conic-gradient(from 0deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+    animation: gate-rotate 4s linear infinite;
+    transform-origin: center;
+  }
+
+  .scroll-text {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+  }
+
+  /* ============================================================
+     操作信息条 — 金属骨架 + 数据流
+     ============================================================ */
+  .ops-strip {
+    position: relative;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(124, 58, 237, 0.1);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+    background: linear-gradient(180deg, rgba(17, 28, 48, 0.9), rgba(25, 40, 64, 0.8));
+  }
+
+  .ops-strip::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.003) 1px, rgba(255,255,255,0.003) 2px);
+    pointer-events: none;
+  }
+
+  .ops-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .ops-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .ops-header-icon {
+    width: 10px;
+    height: 10px;
+    background: var(--cyan-primary);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px var(--cyan-glow);
+  }
+
+  .ops-header-title {
+    font-family: var(--font-display);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--cyan-primary);
+    text-transform: uppercase;
+  }
+
+  .ops-header-sub {
+    font-family: var(--font-data);
+    font-size: 0.52rem;
+    color: var(--text-dim);
+  }
+
+  .ops-live-dot {
+    margin-left: auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-online);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    animation: breathe-glow 2s ease-in-out infinite;
+  }
+
+  .data-block {
+    padding: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .data-block::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan-glow), transparent);
+    animation: scan-line-horizontal 4s linear infinite;
+  }
+
+  .data-label {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+  }
+
+  .data-value {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+  }
+
+  .data-value--cyan {
+    color: var(--cyan-bright);
+  }
+
+  .data-value--amber {
+    color: var(--amber-bright);
+  }
+
+  .data-value--green {
+    color: var(--status-online);
+  }
+
+  /* ============================================================
+     团队统计 — 金属卡片网格
+     ============================================================ */
+  .section {
+    padding: 5rem 2rem;
+    position: relative;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-eyebrow {
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--nebula-violet);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .section-line {
+    width: 40px;
+    height: 1px;
+    background: var(--nebula-violet);
+    margin: 0.8rem auto;
+    box-shadow: 0 0 6px var(--nebula-glow);
+  }
+
+  .stats-grid {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    position: relative;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(25, 40, 64, 0.6), rgba(17, 28, 48, 0.8));
+    border: 1px solid rgba(124, 58, 237, 0.12);
+    border-radius: 2px;
+    text-align: center;
+    transition: all 0.4s ease;
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(124, 58, 237, 0.03) 50%, transparent 100%);
+    background-size: 200% 200%;
+    transition: background-position 0.6s;
+  }
+
+  .stat-card:hover {
+    border-color: rgba(124, 58, 237, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(124, 58, 237, 0.15);
+  }
+
+  .stat-card:hover::before {
+    background-position: 100% 100%;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
+    transition: left 0.6s;
+  }
+
+  .stat-card:hover::after {
+    left: 200%;
+  }
+
+  .stat-label {
+    font-family: var(--font-data);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+  }
+
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    background: linear-gradient(135deg, var(--text-primary), var(--cyan-bright));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-unit {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .stat-card--accent .stat-label {
+    color: var(--amber-dim);
+  }
+
+  /* ============================================================
+     王牌飞行员 — 全息投影卡片
+     ============================================================ */
+  .ace-section {
+    background: linear-gradient(180deg, transparent, rgba(12, 20, 36, 0.5), transparent);
+  }
+
+  .ace-card {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 2rem;
+    background: linear-gradient(135deg, rgba(25, 40, 64, 0.4), rgba(12, 20, 36, 0.7));
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    border-radius: 2px;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.4s ease;
+  }
+
+  .ace-card:hover {
+    border-color: rgba(124, 58, 237, 0.35);
+    box-shadow: 0 0 60px var(--nebula-glow);
+  }
+
+  .ace-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 4px);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* 扫描线 */
+  .ace-scan {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan-glow), transparent);
+    animation: scan-line-vertical 3s linear infinite;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .ace-media {
+    position: relative;
+    background: var(--void-deepest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 350px;
+    overflow: hidden;
+  }
+
+  .ace-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+    transition: transform 0.6s ease;
+  }
+
+  .ace-card:hover .ace-media img {
+    transform: scale(1.05);
+  }
+
+  .ace-media-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(12,20,36,0.6) 0%, transparent 30%, transparent 70%, rgba(12,20,36,0.4) 100%);
+  }
+
+  .ace-rank-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--amber-primary);
+    border-radius: 2px;
+  }
+
+  .ace-rank-text {
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--amber-bright);
+    letter-spacing: 0.1em;
+  }
+
+  .ace-rank-num {
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    color: var(--amber-dim);
+  }
+
+  .ace-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .ace-eyebrow {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  .ace-name {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+  }
+
+  .ace-callsign {
+    font-family: var(--font-data);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--cyan-bright);
+    margin-bottom: 1.2rem;
+  }
+
+  .ace-ship-label {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 0.2rem;
+  }
+
+  .ace-ship-name {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.8rem;
+  }
+
+  .ace-desc {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  /* 能力条 */
+  .stat-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .stat-bar-label {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    width: 70px;
+  }
+
+  .stat-bar-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+    background: linear-gradient(90deg, var(--cyan-primary), var(--nebula-purple));
+    box-shadow: 0 0 8px var(--cyan-glow);
+  }
+
+  .stat-bar-fill--amber {
+    background: linear-gradient(90deg, var(--amber-dim), var(--amber-bright));
+    box-shadow: 0 0 8px var(--amber-glow);
+  }
+
+  .stat-bar-fill--green {
+    background: linear-gradient(90deg, #059669, var(--status-online));
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+
+  .stat-bar-val {
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 35px;
+    text-align: right;
+  }
+
+  /* 控制按钮 */
+  .ace-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .ace-btn {
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.4rem 0.9rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .ace-btn:hover {
+    border-color: var(--cyan-primary);
+    color: var(--cyan-bright);
+    background: rgba(6, 182, 212, 0.06);
+  }
+
+  .ace-dots {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .ace-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .ace-dot.active {
+    background: var(--nebula-violet);
+    box-shadow: 0 0 8px var(--nebula-glow);
+  }
+
+  /* ============================================================
+     舰船展示 — 全息投影台
+     ============================================================ */
+  .ship-section {
+    position: relative;
+  }
+
+  .ship-viewer {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(17, 28, 48, 0.6), rgba(12, 20, 36, 0.8));
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ship-viewer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.008) 2px, rgba(6,182,212,0.008) 4px);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .ship-header {
+    padding: 1rem 2rem;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .ship-header-icon {
+    width: 10px;
+    height: 10px;
+    background: var(--amber-primary);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px var(--amber-glow);
+  }
+
+  .ship-header-title {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text-primary);
+  }
+
+  .ship-header-sub {
+    font-family: var(--font-data);
+    font-size: 0.5rem;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .ship-header-status {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-online);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+
+  .ship-body {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 0;
+  }
+
+  .ship-viewport {
+    position: relative;
+    background: var(--void-deepest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 380px;
+    overflow: hidden;
+    cursor: grab;
+  }
+
+  .ship-viewport:active {
+    cursor: grabbing;
+  }
+
+  .ship-image-wrap {
+    width: 85%;
+    transition: transform 0.1s ease-out;
+  }
+
+  .ship-image-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.2));
+  }
+
+  .ship-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .ship-rotate-hint {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .ship-specs {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.15);
+    border-left: 1px solid rgba(124, 58, 237, 0.1);
+  }
+
+  .spec-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .spec-label {
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .spec-value {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+  }
+
+  .spec-item:hover .spec-value {
+    color: var(--cyan-bright);
+  }
+
+  /* ============================================================
+     CTA 区域 — 电影级紧迫感
+     ============================================================ */
+  .cta-section {
+    padding: 6rem 2rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .cta-panel {
+    max-width: 700px;
+    text-align: center;
+    padding: 3rem;
+    position: relative;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.06), rgba(245, 158, 11, 0.04));
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .cta-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(245,158,11,0.01) 2px, rgba(245,158,11,0.01) 4px);
+    pointer-events: none;
+  }
+
+  .cta-panel::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(245,158,11,0.05), transparent 60deg);
+    animation: gate-rotate 12s linear infinite;
+    pointer-events: none;
+  }
+
+  .cta-alert {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 1rem;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-data);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--amber-bright);
+  }
+
+  .cta-alert-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--amber-primary);
+    box-shadow: 0 0 8px var(--amber-glow);
+    animation: breathe-glow 1.5s ease-in-out infinite;
+  }
+
+  .cta-icon {
+    margin-bottom: 1.2rem;
+    opacity: 0.6;
+  }
+
+  .cta-icon svg {
+    width: 36px;
+    height: 36px;
+    color: var(--amber-primary);
+    filter: drop-shadow(0 0 10px var(--amber-glow));
+  }
+
+  .cta-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-desc {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-danger {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--void-deepest);
+    background: linear-gradient(135deg, var(--status-danger), var(--amber-primary));
+    padding: 0.9rem 2.2rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.4s ease;
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+  }
+
+  .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.5), 0 8px 30px rgba(239, 68, 68, 0.3);
+  }
+
+  /* ============================================================
+     页脚
+     ============================================================ */
+  .site-footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid rgba(124, 58, 237, 0.08);
+  }
+
+  .footer-text {
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  /* ============================================================
+     响应式
+     ============================================================ */
+  @media (max-width: 768px) {
+    .site-nav { padding: 0 1rem; }
+    .nav-links { display: none; }
+    .hero-status { gap: 0.8rem; padding: 0.4rem 1rem; }
+
+    .ops-inner { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .stats-grid { grid-template-columns: 1fr; }
+
+    .ace-card { grid-template-columns: 1fr; }
+    .ace-media { min-height: 250px; }
+
+    .ship-body { grid-template-columns: 1fr; }
+    .ship-specs { border-left: none; border-top: 1px solid rgba(124, 58, 237, 0.1); }
+
+    .cta-panel { padding: 2rem 1.5rem; }
+  }
+
+  @media (max-width: 480px) {
+    .title-main { font-size: 2rem; }
+    .hero-actions { flex-direction: column; align-items: center; }
+    .ops-inner { grid-template-columns: 1fr; }
+    .cta-actions { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ========== 导航栏 ========== -->
+  <nav class="site-nav">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-diamond"></div>
+      STELLAR NEXUS
+    </a>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-link active">首页</a></li>
+      <li><a href="#" class="nav-link">团队介绍</a></li>
+      <li><a href="#" class="nav-link">核心成员</a></li>
+      <li><a href="#" class="nav-link">舰队展示</a></li>
+      <li><a href="#" class="nav-link">活动项目</a></li>
+      <li><a href="#" class="nav-link">加入我们</a></li>
+      <li><a href="#" class="nav-link">联系我们</a></li>
+    </ul>
+    <a href="#" class="nav-cta">ENLIST NOW</a>
+  </nav>
+
+  <!-- ========== Hero 区域 ========== -->
+  <section class="hero">
+    <!-- 星云背景 -->
+    <div class="hero-nebulae">
+      <div class="nebula-blob nebula-blob--purple"></div>
+      <div class="nebula-blob nebula-blob--cyan"></div>
+      <div class="nebula-blob nebula-blob--amber"></div>
+    </div>
+
+    <!-- 星门光环 -->
+    <div class="star-gate">
+      <div class="gate-ring"></div>
+      <div class="gate-ring"></div>
+      <div class="gate-ring"></div>
+      <div class="gate-spin"></div>
+      <div class="gate-spin"></div>
+    </div>
+
+    <!-- 浮动粒子 -->
+    <div class="hero-particles">
+      <div class="hero-particle" style="left:10%;top:20%;--tx:80px;--ty:-60px;animation-delay:0s"></div>
+      <div class="hero-particle" style="left:25%;top:60%;--tx:-60px;--ty:-40px;animation-delay:1.2s"></div>
+      <div class="hero-particle" style="left:40%;top:30%;--tx:100px;--ty:-80px;animation-delay:0.6s"></div>
+      <div class="hero-particle" style="left:55%;top:70%;--tx:-80px;--ty:-50px;animation-delay:2s"></div>
+      <div class="hero-particle" style="left:70%;top:25%;--tx:60px;--ty:-70px;animation-delay:0.3s"></div>
+      <div class="hero-particle" style="left:85%;top:50%;--tx:-100px;--ty:-30px;animation-delay:1.5s"></div>
+      <div class="hero-particle" style="left:15%;top:80%;--tx:40px;--ty:-90px;animation-delay:2.5s"></div>
+      <div class="hero-particle" style="left:50%;top:15%;--tx:-40px;--ty:-100px;animation-delay:1.8s"></div>
+      <div class="hero-particle" style="left:75%;top:75%;--tx:90px;--ty:-20px;animation-delay:0.9s"></div>
+      <div class="hero-particle" style="left:30%;top:45%;--tx:-70px;--ty:-60px;animation-delay:3s"></div>
+      <div class="hero-particle" style="left:60%;top:55%;--tx:50px;--ty:-45px;animation-delay:1.1s"></div>
+      <div class="hero-particle" style="left:5%;top:40%;--tx:-90px;--ty:-35px;animation-delay:2.2s"></div>
+    </div>
+
+    <!-- 内容 -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-icon">◆</span>
+        <span class="badge-text">UEE STYLE ORGANIZATION PORTAL</span>
+        <span class="badge-icon">◆</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span class="title-main">星际公民战队</span>
+        <div class="title-divider"></div>
+        <span class="title-sub">官方招募站</span>
+      </h1>
+
+      <p class="hero-desc">
+        面向星际公民玩家的精英团队门户，展示组织定位、核心成员、活动任务与招募信息。加入我们，征服星辰大海。
+      </p>
+
+      <div class="hero-actions">
+        <a href="#" class="btn-primary">
+          立即加入 <span class="btn-arrow">→</span>
+        </a>
+        <a href="#" class="btn-outline">探索团队</a>
+      </div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="hero-status">
+      <div class="status-item">
+        <div class="status-dot"></div>
+        <span class="status-text">系统在线</span>
+      </div>
+      <div class="status-divider"></div>
+      <div class="status-item">
+        <span class="status-label">SECTOR</span>
+        <span class="status-value">PYRO-7</span>
+      </div>
+      <div class="status-divider"></div>
+      <div class="status-item">
+        <span class="status-label">COORDS</span>
+        <span class="status-value">45.22.91</span>
+      </div>
+      <div class="status-divider"></div>
+      <div class="status-item">
+        <span class="status-label">TIME</span>
+        <span class="status-value" id="live-time">--</span>
+      </div>
+    </div>
+
+    <!-- 底部雷达扫描仪 -->
+    <div class="scroll-radar">
+      <div class="radar-ring">
+        <div class="radar-sweep"></div>
+      </div>
+      <span class="scroll-text">向下滚动</span>
+    </div>
+  </section>
+
+  <!-- ========== 操作信息条 ========== -->
+  <section class="ops-strip">
+    <div class="ops-inner">
+      <div class="ops-header">
+        <div class="ops-header-icon"></div>
+        <span class="ops-header-title">TACTICAL DATA</span>
+        <span class="ops-header-sub">&nbsp;// REAL-TIME</span>
+        <div class="ops-live-dot"></div>
+      </div>
+
+      <div class="data-block">
+        <div class="data-label">STARDATE</div>
+        <div class="data-value data-value--cyan">2956.05</div>
+      </div>
+      <div class="data-block">
+        <div class="data-label">SECTOR</div>
+        <div class="data-value">PYRO FRINGE</div>
+      </div>
+      <div class="data-block">
+        <div class="data-label">OP ID</div>
+        <div class="data-value data-value--amber">F8C-ALPHA</div>
+      </div>
+      <div class="data-block">
+        <div class="data-label">STATUS</div>
+        <div class="data-value data-value--green">RECRUITING</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 团队统计 ========== -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-eyebrow">// OVERVIEW</span>
+      <h2 class="section-title">团队数据</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">团队成员</div>
+        <div class="stat-number">20+</div>
+        <div class="stat-unit">UNITS</div>
+      </div>
+      <div class="stat-card stat-card--accent">
+        <div class="stat-label">每周活动</div>
+        <div class="stat-number">3 场</div>
+        <div class="stat-unit">EVENTS / WEEK</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">合作组织</div>
+        <div class="stat-number">12+</div>
+        <div class="stat-unit">ALLIANCES</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 王牌飞行员 ========== -->
+  <section class="section ace-section">
+    <div class="section-header">
+      <span class="section-eyebrow">// FEATURED</span>
+      <h2 class="section-title">王牌飞行员</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="ace-card" id="aceCard">
+      <div class="ace-media">
+        <img src="https://robertsspaceindustries.com/media/8x2a290cmxfzfr/source/F8C_Store_Shot.jpg" alt="F8C Lightning" />
+        <div class="ace-media-overlay"></div>
+        <div class="ace-rank-badge">
+          <span class="ace-rank-text">ACE</span>
+          <span class="ace-rank-num" id="aceNum">#1</span>
+        </div>
+      </div>
+      <div class="ace-scan"></div>
+
+      <div class="ace-content">
+        <p class="ace-eyebrow">PILOT PROFILE // CLASSIFIED</p>
+        <h3 class="ace-name" id="aceName">维穆 · 王牌飞行员</h3>
+        <p class="ace-callsign" id="aceCall">F8C Vanguard Spearhead</p>
+
+        <div class="stat-bar-group">
+          <div class="stat-bar-row">
+            <span class="stat-bar-label">COMBAT</span>
+            <div class="stat-bar-track"><div class="stat-bar-fill" style="width:85%"></div></div>
+            <span class="stat-bar-val">85%</span>
+          </div>
+          <div class="stat-bar-row">
+            <span class="stat-bar-label">MOBILITY</span>
+            <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill--amber" style="width:75%"></div></div>
+            <span class="stat-bar-val">75%</span>
+          </div>
+          <div class="stat-bar-row">
+            <span class="stat-bar-label">TACTICS</span>
+            <div class="stat-bar-track"><div class="stat-bar-fill stat-bar-fill--green" style="width:90%"></div></div>
+            <span class="stat-bar-val">90%</span>
+          </div>
+        </div>
+
+        <div class="ace-ship-label">座驾</div>
+        <div class="ace-ship-name" id="aceShip">Anvil F8C Lightning</div>
+        <p class="ace-desc" id="aceDesc">专注于制空和快速拦截任务，擅长以 F8C Lightning 进行高强度近距空战与舰队护航。</p>
+
+        <div class="ace-controls">
+          <button class="ace-btn" onclick="prevPilot()">← PREV</button>
+          <div class="ace-dots">
+            <button class="ace-dot active" onclick="selectPilot(0)"></button>
+            <button class="ace-dot" onclick="selectPilot(1)"></button>
+            <button class="ace-dot" onclick="selectPilot(2)"></button>
+          </div>
+          <button class="ace-btn" onclick="nextPilot()">NEXT →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 舰船展示 ========== -->
+  <section class="section ship-section">
+    <div class="section-header">
+      <span class="section-eyebrow">// FLEET</span>
+      <h2 class="section-title">舰船展示</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="ship-viewer" id="shipViewer">
+      <div class="ship-header">
+        <div class="ship-header-icon"></div>
+        <span class="ship-header-title">SHIP SPECIFICATIONS</span>
+        <span class="ship-header-sub">// HOLOGRAPHIC DISPLAY</span>
+        <div class="ship-header-status"></div>
+      </div>
+
+      <div class="ship-body">
+        <div class="ship-viewport"
+             onmousemove="rotateShip(event)"
+             onmouseleave="resetShip()">
+          <div class="ship-image-wrap" id="shipImage">
+            <img src="https://robertsspaceindustries.com/media/8x2a290cmxfzfr/source/F8C_Store_Shot.jpg" alt="F8C Lightning" />
+          </div>
+          <div class="ship-grid-overlay"></div>
+          <div class="ship-rotate-hint">◄ DRAG TO ROTATE ►</div>
+        </div>
+
+        <div class="ship-specs">
+          <div class="spec-item">
+            <span class="spec-label">MODEL</span>
+            <span class="spec-value">F8C LIGHTNING</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">ROLE</span>
+            <span class="spec-value">SUPERIORITY FIGHTER</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">MAX SPEED</span>
+            <span class="spec-value">1,340 M/S</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">SHIELD</span>
+            <span class="spec-value">S2 x2</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">WEAPONS</span>
+            <span class="spec-value">S4 x4 + S3 x2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta-section">
+    <div class="cta-panel">
+      <div class="cta-alert">
+        <div class="cta-alert-dot"></div>
+        RECRUITMENT PROTOCOL // PRIORITY: HIGH
+      </div>
+      <div class="cta-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <h2 class="cta-title">准备好加入了吗？</h2>
+      <p class="cta-desc">
+        成为星际公民战队的一员，与志同道合的飞行员一起探索宇宙、执行任务、建立传奇。
+      </p>
+      <div class="cta-actions">
+        <a href="#" class="btn-danger">
+          开始申请 <span class="btn-arrow">→</span>
+        </a>
+        <a href="#" class="btn-outline">探索团队</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 页脚 ========== -->
+  <footer class="site-footer">
+    <span class="footer-text">© 2026 STELLAR NEXUS · 星际公民战队 官方招募站 · SECTOR PYRO-7</span>
+  </footer>
+
+  <script>
+    /* ========== 实时时钟 ========== */
+    function updateTime() {
+      const now = new Date()
+      document.getElementById('live-time').textContent = now.toLocaleTimeString('zh-CN', { hour12: false })
+    }
+    updateTime()
+    setInterval(updateTime, 1000)
+
+    /* ========== 飞行员轮播 ========== */
+    const pilots = [
+      {
+        name: '维穆 · 王牌飞行员',
+        callsign: 'F8C Vanguard Spearhead',
+        ship: 'Anvil F8C Lightning',
+        desc: '专注于制空和快速拦截任务，擅长以 F8C Lightning 进行高强度近距空战与舰队护航。',
+        combat: 85, mobility: 75, tactics: 90
+      },
+      {
+        name: 'Orion · 战术领航员',
+        callsign: 'F8C Night Lance',
+        ship: 'Anvil F8C Lightning',
+        desc: '负责小队切入路线规划与火力牵引，擅长夜战和高风险突防。',
+        combat: 90, mobility: 83, tactics: 87
+      },
+      {
+        name: 'Vega · 拦截专家',
+        callsign: 'F8C Blue Comet',
+        ship: 'Anvil F8C Lightning',
+        desc: '以高速截击和近距压制见长，常执行护航核心与快速救援任务。',
+        combat: 95, mobility: 91, tactics: 84
+      }
+    ]
+
+    let currentIndex = 0
+
+    function showPilot(index) {
+      currentIndex = index
+      const p = pilots[index]
+
+      document.getElementById('aceName').textContent = p.name
+      document.getElementById('aceCall').textContent = p.callsign
+      document.getElementById('aceShip').textContent = p.ship
+      document.getElementById('aceDesc').textContent = p.desc
+      document.getElementById('aceNum').textContent = '#' + (index + 1)
+
+      // 更新能力条
+      const bars = document.querySelectorAll('.stat-bar-fill, .stat-bar-fill--amber, .stat-bar-fill--green')
+      bars[0].style.width = p.combat + '%'
+      bars[1].style.width = p.mobility + '%'
+      bars[2].style.width = p.tactics + '%'
+      document.querySelectorAll('.stat-bar-val')[0].textContent = p.combat + '%'
+      document.querySelectorAll('.stat-bar-val')[1].textContent = p.mobility + '%'
+      document.querySelectorAll('.stat-bar-val')[2].textContent = p.tactics + '%'
+
+      // 更新 dot
+      document.querySelectorAll('.ace-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === index)
+      })
+    }
+
+    function nextPilot() { showPilot((currentIndex + 1) % pilots.length) }
+    function prevPilot() { showPilot((currentIndex - 1 + pilots.length) % pilots.length) }
+    function selectPilot(index) { showPilot(index) }
+
+    /* ========== 飞船3D旋转 ========== */
+    function rotateShip(e) {
+      const el = e.currentTarget
+      const rect = el.getBoundingClientRect()
+      const x = (e.clientX - rect.left) / rect.width - 0.5
+      const y = (e.clientY - rect.top) / rect.height - 0.5
+      const img = document.getElementById('shipImage')
+      img.style.transform = `perspective(1000px) rotateY(${x * 30}deg) rotateX(${-y * 15}deg) scale(1.1)`
+    }
+
+    function resetShip() {
+      const img = document.getElementById('shipImage')
+      img.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1)'
+    }
+  </script>
+
+</body>
+</html>

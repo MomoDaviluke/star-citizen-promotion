@@ -103,6 +103,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../../utils/logger.js'
+const logger = createLogger('Dashboard')
+
 /**
  * 管理后台仪表盘组件逻辑
  * @description 展示管理后台的核心数据概览，包括统计卡片、待审核申请和活动日志
@@ -173,7 +176,7 @@ async function loadDashboardData() {
       }))
     }
   } catch (error) {
-    console.error('加载仪表盘数据失败:', error)
+    logger.error('加载仪表盘数据失败:', error)
   }
 }
 

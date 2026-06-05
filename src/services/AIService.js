@@ -6,6 +6,9 @@
 
 import { PriorityQueue, PRIORITY } from './PriorityQueue.js'
 import ResourceMonitor from './ResourceMonitor.js'
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('AIService')
+
 
 /**
  * 默认服务配置
@@ -244,7 +247,9 @@ class AIService {
       this.cleanupCompletedTasks()
 
       task.resolve(result)
-    } catch (error) {
+    } catch (err) {
+      // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 name 和 message
+      const error = err instanceof Error ? err : new Error(String(err))
       clearTimeout(timeoutId)
       await this.handleTaskError(task, error)
     } finally {
@@ -366,7 +371,7 @@ class AIService {
    * @param {Object} info - 警告信息对象
    */
   handleResourceWarning(info) {
-    console.warn('[AIService] Resource warning:', info.message)
+    logger.warn('[AIService] Resource warning:', info.message)
 
     if (this.activeCount > 1) {
       const lowPriorityTasks = Array.from(this.runningTasks.values())
@@ -384,7 +389,7 @@ class AIService {
    * @param {Object} info - 严重警告信息对象
    */
   handleResourceCritical(info) {
-    console.error('[AIService] Resource critical:', info.message)
+    logger.error('[AIService] Resource critical:', info.message)
 
     const criticalTasks = Array.from(this.runningTasks.values())
       .filter(t => t.priority < PRIORITY.CRITICAL)

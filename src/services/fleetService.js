@@ -6,6 +6,9 @@
  */
 
 import httpClient from './http.js'
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('FleetService')
+
 
 const BASE_URL = '/api/fleet'
 
@@ -23,7 +26,7 @@ async function getFleet(params = {}) {
     const response = await httpClient.get(BASE_URL, { params })
     return response.data
   } catch (error) {
-    console.error('获取舰队列表失败:', error.response?.data || error.message)
+    logger.warn('获取舰队列表失败:', error.response?.data || error.message)
     throw error
   }
 }
@@ -40,7 +43,7 @@ async function getShip(shipId) {
     const response = await httpClient.get(`${BASE_URL}/${shipId}`)
     return response.data
   } catch (error) {
-    console.error('获取飞船详情失败:', error.response?.data || error.message)
+    logger.warn('获取飞船详情失败:', error.response?.data || error.message)
     throw error
   }
 }
@@ -67,7 +70,7 @@ async function createShip(shipData) {
     const response = await httpClient.post(BASE_URL, shipData)
     return response.data
   } catch (error) {
-    console.error('创建飞船失败:', error.response?.data || error.message)
+    logger.error('创建飞船失败:', error.response?.data || error.message)
     throw error
   }
 }
@@ -85,7 +88,7 @@ async function updateShip(shipId, updates) {
     const response = await httpClient.patch(`${BASE_URL}/${shipId}`, updates)
     return response.data
   } catch (error) {
-    console.error('更新飞船失败:', error.response?.data || error.message)
+    logger.error('更新飞船失败:', error.response?.data || error.message)
     throw error
   }
 }
@@ -101,7 +104,7 @@ async function deleteShip(shipId) {
   try {
     await httpClient.delete(`${BASE_URL}/${shipId}`)
   } catch (error) {
-    console.error('删除飞船失败:', error.response?.data || error.message)
+    logger.error('删除飞船失败:', error.response?.data || error.message)
     throw error
   }
 }
@@ -115,7 +118,7 @@ async function getFleetStats() {
     const response = await httpClient.get(`${BASE_URL}/stats`)
     return response.data
   } catch (error) {
-    console.error('获取舰队统计失败:', error.response?.data || error.message)
+    logger.warn('获取舰队统计失败:', error.response?.data || error.message)
     throw error
   }
 }

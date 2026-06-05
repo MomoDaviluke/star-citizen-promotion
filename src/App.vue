@@ -6,6 +6,9 @@
 
 <template>
   <div class="app-shell">
+    <!-- 全局星空粒子背景 -->
+    <StarfieldBg quality="high" :speed="0.8" :parallax="true" />
+
     <!-- 技术风格背景装饰层 -->
     <div class="tech-overlay" aria-hidden="true">
       <div class="tech-grid"></div>
@@ -32,6 +35,9 @@
 
     <!-- 全局加载指示器 -->
     <LoadingIndicator ref="loadingIndicator" />
+
+    <!-- PWA 更新与离线提示 -->
+    <PwaUpdateToast />
 
     <!-- 全局通知容器 -->
     <Teleport to="body">
@@ -70,7 +76,12 @@ import SiteFooter from './components/layout/SiteFooter.vue'
 import PageTransition from './components/common/PageTransition.vue'
 import LoadingIndicator from './components/common/LoadingIndicator.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
+import StarfieldBg from './components/effects/StarfieldBg.vue'
+import PwaUpdateToast from './components/PwaUpdateToast.vue'
 import { aiService, authService } from './services'
+import { createLogger } from './utils/logger.js'
+
+const logger = createLogger('App')
 
 /** 路由实例 */
 const router = useRouter()
@@ -143,7 +154,7 @@ function removeNotification(id) {
  * @param {string} [errorInfo.timestamp] - 错误发生时间
  */
 function handleGlobalError(errorInfo) {
-  console.error('全局错误:', errorInfo)
+  logger.error('全局错误:', errorInfo)
 
   // 根据错误类型展示不同的用户提示
   const isNetworkError = errorInfo.message?.includes('network') ||

@@ -1,22 +1,38 @@
 <!--
- * @fileoverview 网站头部导航组件
- * @description 提供响应式导航栏，包含品牌标识、导航链接和移动端菜单
+ * @fileoverview MFD风格导航栏组件
+ * @description 科幻军事终端风格的响应式导航栏
  * @module components/layout/SiteHeader
- * @example
- * <SiteHeader />
- -->
+ * @version 3.0 - 星舰方舟版本
+-->
 
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'header-scrolled': isScrolled }">
     <!-- 背景层 -->
     <div class="header-bg"></div>
+
+    <!-- 顶部装饰线 -->
+    <div class="header-accent-line"></div>
 
     <div class="container header-inner">
       <!-- 品牌标识 -->
       <RouterLink class="brand" to="/">
-        <span class="brand-icon">◆</span>
-        <span class="brand-text">星际公民团队站</span>
+        <span class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <span class="brand-title font-tech">星际公民战队</span>
+          <span class="brand-subtitle font-data">STAR CITIZEN SQUADRON</span>
+        </div>
       </RouterLink>
+
+      <!-- 系统状态显示 -->
+      <div class="header-status hide-mobile">
+        <StatusIndicator type="online" label="系统在线" :pulse="false" size="small" />
+        <span class="header-time font-data">{{ currentTime }}</span>
+        <ThemeToggle />
+      </div>
 
       <!-- 移动端菜单切换按钮 -->
       <button
@@ -33,39 +49,67 @@
 
       <!-- 导航菜单 -->
       <nav class="nav" :class="{ open: menuOpen }">
-        <!-- 导航悬停发光效果 -->
-        <div class="nav-glow"></div>
-
         <!-- 导航链接列表 -->
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="nav-link"
+          class="nav-link font-tech"
           @click="menuOpen = false"
         >
           <span class="link-indicator"></span>
           <span class="link-text">{{ item.label }}</span>
-          <span class="link-underline"></span>
+          <span class="link-id font-data">{{ item.id }}</span>
         </RouterLink>
       </nav>
     </div>
 
     <!-- 底部分隔线 -->
     <div class="header-line"></div>
+
+    <!-- 装饰边角 -->
+    <div class="header-corner header-corner--tl"></div>
+    <div class="header-corner header-corner--tr"></div>
   </header>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+/**
+ * MFD风格网站头部导航组件
+ * @description 提供科幻军事终端风格的响应式导航栏
+ */
+
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { navItems } from '@/data/siteContent'
+import StatusIndicator from '@/components/ui/StatusIndicator.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 /** 当前路由对象 */
 const route = useRoute()
 
 /** 移动端菜单展开状态 */
 const menuOpen = ref(false)
+
+/** 滚动状态 */
+const isScrolled = ref(false)
+
+/** 当前时间 */
+const currentTime = ref('')
+
+/**
+ * 更新时间
+ */
+function updateTime() {
+  const now = new Date()
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  currentTime.value = `${hours}:${minutes}:${seconds}`
+}
+
+/** 时间更新定时器 */
+let timeInterval = null
 
 /**
  * 监听路由变化
@@ -77,34 +121,76 @@ watch(
     menuOpen.value = false
   }
 )
+
+/**
+ * 处理滚动事件
+ * @description 检测页面滚动位置，添加滚动状态类
+ */
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 20
+}
+
+/** 组件挂载时添加监听 */
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
+  updateTime()
+  timeInterval = setInterval(updateTime, 1000)
+})
+
+/** 组件卸载时移除监听 */
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+  if (timeInterval) {
+    clearInterval(timeInterval)
+  }
+})
 </script>
 
 <style scoped>
 /*
  * ============================================
- * 头部容器样式
- * 使用 sticky 定位实现滚动时固定
+ * MFD风格头部容器
  * ============================================
  */
 .site-header {
   position: sticky;
   top: 0;
-  z-index: 100;
-  border-bottom: 1px solid var(--line);
+  z-index: var(--z-header);
+  border-bottom: 1px solid var(--border-subtle);
   overflow: hidden;
+  transition: border-color var(--duration-normal);
+}
+
+.site-header.header-scrolled {
+  border-color: var(--border-medium);
+}
+
+.site-header.header-scrolled .header-bg {
+  background: linear-gradient(90deg, rgba(10, 14, 23, 0.98), rgba(17, 24, 39, 0.96));
+  backdrop-filter: blur(24px);
+}
+
+.site-header.header-scrolled .header-accent-line {
+  opacity: 1;
+  animation: accent-pulse 2s ease-in-out infinite;
+}
+
+@keyframes accent-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 /*
  * --------------------------------------------
  * 背景层样式
- * 包含渐变背景和顶部发光效果
  * --------------------------------------------
  */
 .header-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(4, 8, 16, 0.95), rgba(8, 15, 28, 0.92));
-  backdrop-filter: blur(12px);
+  background: linear-gradient(90deg, rgba(10, 14, 23, 0.95), rgba(17, 24, 39, 0.92));
+  backdrop-filter: blur(16px);
   z-index: -1;
 }
 
@@ -113,14 +199,34 @@ watch(
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(95, 169, 255, 0.05) 0%, transparent 100%),
-    radial-gradient(ellipse 50% 100% at 50% 0%, rgba(95, 169, 255, 0.08), transparent);
+    linear-gradient(180deg, rgba(245, 158, 11, 0.04) 0%, transparent 100%),
+    radial-gradient(ellipse 50% 100% at 50% 0%, rgba(6, 182, 212, 0.08), transparent);
+}
+
+/*
+ * --------------------------------------------
+ * 顶部装饰线
+ * --------------------------------------------
+ */
+.header-accent-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--amber-primary) 20%,
+    var(--nebula-purple) 50%,
+    var(--amber-primary) 80%,
+    transparent 100%
+  );
+  opacity: 0.6;
 }
 
 /*
  * --------------------------------------------
  * 底部分隔线
- * 渐变发光效果
  * --------------------------------------------
  */
 .header-line {
@@ -129,7 +235,34 @@ watch(
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(143, 215, 255, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, var(--amber-primary), transparent);
+  opacity: 0.4;
+}
+
+/*
+ * --------------------------------------------
+ * 装饰边角
+ * --------------------------------------------
+ */
+.header-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--amber-primary);
+  border-style: solid;
+  opacity: 0.5;
+}
+
+.header-corner--tl {
+  top: 4px;
+  left: 4px;
+  border-width: 2px 0 0 2px;
+}
+
+.header-corner--tr {
+  top: 4px;
+  right: 4px;
+  border-width: 2px 2px 0 0;
 }
 
 /*
@@ -138,11 +271,12 @@ watch(
  * --------------------------------------------
  */
 .header-inner {
-  min-height: 70px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: var(--space-4);
+  padding: 0 var(--space-4);
 }
 
 /*
@@ -153,27 +287,70 @@ watch(
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  color: var(--text);
-  transition: color var(--transition-fast);
+  gap: var(--space-3);
+  text-decoration: none;
+  position: relative;
 }
 
 .brand:hover {
-  color: var(--accent-2);
+  opacity: 0.9;
 }
 
 .brand-icon {
-  color: var(--accent-2);
-  font-size: 0.6rem;
-  animation: pulse 2s ease-in-out infinite;
+  color: var(--amber-primary);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.brand-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .brand-text {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.brand-subtitle {
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/*
+ * --------------------------------------------
+ * 系统状态显示
+ * --------------------------------------------
+ */
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-left: auto;
+  margin-right: var(--space-4);
+}
+
+.header-time {
+  font-size: var(--text-xs);
+  color: var(--nebula-violet);
+  letter-spacing: 0.1em;
+  min-width: 70px;
+  text-align: right;
 }
 
 /*
@@ -184,44 +361,27 @@ watch(
 .nav {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-1);
   position: relative;
-}
-
-.nav-glow {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 200px;
-  height: 100%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse, rgba(95, 169, 255, 0.1), transparent 70%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--transition-normal);
-}
-
-.nav:hover .nav-glow {
-  opacity: 1;
 }
 
 /*
  * --------------------------------------------
- * 导航链接样式
- * 包含悬停指示器和下划线动画
+ * 导航链接样式 - MFD风格
  * --------------------------------------------
  */
 .nav-link {
   position: relative;
-  padding: 0.5rem 0.9rem;
-  border-radius: 3px;
-  color: var(--text-muted);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-secondary);
   text-transform: uppercase;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 500;
   letter-spacing: 0.12em;
-  transition: color var(--transition-fast);
+  transition: all var(--duration-fast);
   overflow: hidden;
+  border: 1px solid transparent;
+  text-decoration: none;
 }
 
 .link-indicator {
@@ -231,9 +391,9 @@ watch(
   transform: translateY(-50%);
   width: 2px;
   height: 0;
-  background: var(--accent-2);
-  transition: height var(--transition-fast);
-  box-shadow: 0 0 8px rgba(143, 215, 255, 0.5);
+  background: var(--amber-primary);
+  transition: height var(--duration-fast);
+  box-shadow: 0 0 8px var(--amber-glow);
 }
 
 .link-text {
@@ -241,28 +401,23 @@ watch(
   z-index: 1;
 }
 
-.link-underline {
+.link-id {
   position: absolute;
-  bottom: 0.35rem;
-  left: 0.9rem;
-  right: 0.9rem;
-  height: 1px;
-  background: var(--accent-2);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--transition-fast);
+  right: 4px;
+  top: 2px;
+  font-size: 0.5rem;
+  color: var(--text-dim);
+  opacity: 0.5;
 }
 
 .nav-link:hover {
-  color: var(--text);
+  color: var(--amber-primary);
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
 .nav-link:hover .link-indicator {
   height: 60%;
-}
-
-.nav-link:hover .link-underline {
-  transform: scaleX(1);
 }
 
 /*
@@ -271,21 +426,13 @@ watch(
  * --------------------------------------------
  */
 .nav-link.router-link-active {
-  color: var(--text);
-  background: rgba(95, 169, 255, 0.08);
+  color: var(--amber-primary);
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .nav-link.router-link-active .link-indicator {
   height: 60%;
-}
-
-.nav-link.router-link-active::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgba(143, 215, 255, 0.2);
-  border-radius: 3px;
-  pointer-events: none;
 }
 
 /*
@@ -298,34 +445,32 @@ watch(
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  width: 36px;
-  height: 36px;
-  padding: 8px;
-  border: 1px solid var(--line);
-  background: rgba(95, 169, 255, 0.05);
-  border-radius: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(245, 158, 11, 0.05);
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition: all var(--duration-fast);
 }
 
 .menu-toggle:hover {
-  background: rgba(95, 169, 255, 0.1);
-  border-color: var(--accent);
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--amber-primary);
 }
 
 .toggle-bar {
   display: block;
   width: 100%;
   height: 2px;
-  background: var(--text);
+  background: var(--text-primary);
   border-radius: 1px;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition: transform var(--duration-fast), opacity var(--duration-fast);
 }
 
 /*
  * --------------------------------------------
  * 汉堡菜单展开动画
- * 三条横线变形为 X
  * --------------------------------------------
  */
 .menu-toggle[aria-expanded="true"] .toggle-bar:nth-child(1) {
@@ -338,15 +483,6 @@ watch(
 
 .menu-toggle[aria-expanded="true"] .toggle-bar:nth-child(3) {
   transform: translateY(-6px) rotate(-45deg);
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
 }
 
 /*
@@ -366,23 +502,19 @@ watch(
 
   .nav {
     position: absolute;
-    left: -1.25rem;
-    right: -1.25rem;
+    left: 0;
+    right: 0;
     top: 100%;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 1rem;
-    background: rgba(4, 8, 16, 0.98);
-    border: 1px solid var(--line);
+    gap: var(--space-1);
+    padding: var(--space-4);
+    background: rgba(10, 14, 23, 0.98);
+    border: 1px solid var(--border-subtle);
     border-top: none;
-    border-radius: 0 0 8px 8px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition:
-      opacity var(--transition-fast),
-      visibility var(--transition-fast),
-      transform var(--transition-fast);
+    transition: all var(--duration-fast);
   }
 
   .nav.open {
@@ -391,18 +523,24 @@ watch(
     transform: translateY(0);
   }
 
-  .nav-glow {
+  .nav-link {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-title {
+    font-size: var(--text-xs);
+  }
+
+  .brand-subtitle {
     display: none;
   }
 
-  .nav-link {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-  }
-
-  .nav-link.router-link-active::before {
-    border-radius: 4px;
+  .brand-icon {
+    width: 24px;
+    height: 24px;
   }
 }
 </style>

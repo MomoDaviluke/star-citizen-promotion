@@ -1,7 +1,8 @@
 <!--
- * @fileoverview 页面过渡动画组件
- * @description 封装 Vue Transition 组件，提供智能的页面切换动画效果，
- *              支持前进/后退方向检测和多种过渡模式
+ * @fileoverview 页面过渡动画组件 — 星门跃迁版
+ * @description 封装 Vue Transition 组件，提供星际公民风格的页面切换动画效果，
+ *              核心效果为"星门跃迁"：页面切换时模拟超空间跃迁的视觉冲击
+ *              离开页面 → 星光拉伸 → 白光闪烁 → 新页面展开
  * @module components/common/PageTransition
  * @example
  * <PageTransition direction="auto" mode="out-in">
@@ -29,7 +30,7 @@ import { useRoute } from 'vue-router'
 
 /**
  * 组件属性定义
- * @property {string} name - 过渡动画基础名称（默认 'page'）
+ * @property {string} name - 过渡动画基础名称（默认 'stargate'）
  * @property {string} mode - 过渡模式：'out-in' | 'in-out' | 'default'
  * @property {boolean} appear - 是否在初始渲染时应用过渡
  * @property {string} direction - 动画方向：'auto' | 'forward' | 'backward' | 'none'
@@ -37,7 +38,7 @@ import { useRoute } from 'vue-router'
 const props = defineProps({
   name: {
     type: String,
-    default: 'page'
+    default: 'stargate'
   },
   mode: {
     type: String,
@@ -75,8 +76,6 @@ const isForward = ref(true)
 
 /**
  * 监听路由变化，判断导航方向
- * @description 通过维护历史栈来判断用户是前进还是后退导航，
- *              从而应用不同的过渡动画效果
  */
 watch(
   () => route.path,
@@ -84,16 +83,13 @@ watch(
     if (from) {
       const lastIndex = historyStack.value.lastIndexOf(from)
       if (lastIndex !== -1 && historyStack.value[lastIndex + 1] === to) {
-        // 如果目标路径在历史栈中紧随当前路径之后，则为前进
         isForward.value = true
       } else if (historyStack.value.includes(to)) {
-        // 如果目标路径已在历史栈中，则为后退
         isForward.value = false
         const toIndex = historyStack.value.lastIndexOf(to)
         historyStack.value = historyStack.value.slice(0, toIndex + 1)
         return
       } else {
-        // 新页面，视为前进
         isForward.value = true
       }
       historyStack.value.push(to)
@@ -105,33 +101,32 @@ watch(
 /**
  * 计算过渡动画名称
  * @returns {string} 过渡动画 CSS 类名前缀
- * @description 根据导航方向返回对应的过渡动画名称：
+ * @description 根据导航方向返回对应的星门跃迁动画：
  *              - 'none' 方向：使用淡入淡出效果
- *              - 'auto' 方向：根据历史栈自动判断
- *              - 'forward'/'backward'：使用指定方向
+ *              - 'auto' 方向：根据历史栈自动判断前进/后退
+ *              - 前进：星光拉伸 + 白光闪烁
+ *              - 后退：逆向收缩效果
  */
 const transitionName = computed(() => {
-  if (props.direction === 'none') return 'page-fade'
+  if (props.direction === 'none') return 'stargate-fade'
   if (props.direction === 'auto') {
-    return isForward.value ? 'page-slide-forward' : 'page-slide-backward'
+    return isForward.value ? 'stargate-forward' : 'stargate-backward'
   }
-  return props.direction === 'forward' ? 'page-slide-forward' : 'page-slide-backward'
+  return props.direction === 'forward' ? 'stargate-forward' : 'stargate-backward'
 })
 
 /**
  * 进入动画开始前钩子
  * @param {HTMLElement} el - 过渡元素
- * @description 设置 will-change 属性优化动画性能
  */
 const onBeforeEnter = (el) => {
   emit('before-enter', el)
-  el.style.willChange = 'transform, opacity'
+  el.style.willChange = 'transform, opacity, filter'
 }
 
 /**
  * 进入动画结束后钩子
  * @param {HTMLElement} el - 过渡元素
- * @description 清除 will-change 属性释放资源
  */
 const onAfterEnter = (el) => {
   emit('after-enter', el)
@@ -141,17 +136,15 @@ const onAfterEnter = (el) => {
 /**
  * 离开动画开始前钩子
  * @param {HTMLElement} el - 过渡元素
- * @description 设置 will-change 属性优化动画性能
  */
 const onBeforeLeave = (el) => {
   emit('before-leave', el)
-  el.style.willChange = 'transform, opacity'
+  el.style.willChange = 'transform, opacity, filter'
 }
 
 /**
  * 离开动画结束后钩子
  * @param {HTMLElement} el - 过渡元素
- * @description 清除 will-change 属性释放资源
  */
 const onAfterLeave = (el) => {
   emit('after-leave', el)
@@ -162,7 +155,124 @@ const onAfterLeave = (el) => {
 <style>
 /*
  * ============================================
- * 淡入淡出过渡动画
+ * 星门跃迁 — 淡入淡出（降级模式）
+ * ============================================
+ */
+.stargate-fade-enter-active,
+.stargate-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.stargate-fade-enter-from,
+.stargate-fade-leave-to {
+  opacity: 0;
+}
+
+/*
+ * ============================================
+ * 星门跃迁 — 前进方向
+ * 离开：当前页面星光拉伸 → 白光闪烁 → 消失
+ * 进入：新页面从中心扩展出现
+ * ============================================
+ */
+.stargate-forward-enter-active {
+  transition:
+    opacity 0.5s ease 0.2s,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s,
+    filter 0.3s ease 0.2s;
+  position: absolute;
+  width: 100%;
+}
+
+.stargate-forward-leave-active {
+  transition:
+    transform 0.4s cubic-bezier(0.7, 0, 0.84, 0),
+    opacity 0.3s ease 0.1s,
+    filter 0.3s ease;
+  position: absolute;
+  width: 100%;
+}
+
+/** 离开 — 星光拉伸 + 白光闪烁 */
+.stargate-forward-leave-from {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(1);
+}
+
+.stargate-forward-leave-to {
+  opacity: 0;
+  transform: scale(1.5);
+  filter: brightness(3) blur(4px);
+}
+
+/** 进入 — 从中心扩展 */
+.stargate-forward-enter-from {
+  opacity: 0;
+  transform: scale(0.85);
+  filter: brightness(2) blur(2px);
+}
+
+.stargate-forward-enter-to {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(1) blur(0px);
+}
+
+/*
+ * ============================================
+ * 星门跃迁 — 后退方向
+ * 离开：当前页面收缩消失
+ * 进入：新页面从边缘滑入
+ * ============================================
+ */
+.stargate-backward-enter-active {
+  transition:
+    opacity 0.5s ease 0.15s,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s,
+    filter 0.3s ease 0.15s;
+  position: absolute;
+  width: 100%;
+}
+
+.stargate-backward-leave-active {
+  transition:
+    transform 0.35s cubic-bezier(0.7, 0, 0.84, 0),
+    opacity 0.3s ease 0.1s,
+    filter 0.3s ease;
+  position: absolute;
+  width: 100%;
+}
+
+/** 离开 — 收缩消失 */
+.stargate-backward-leave-from {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(1);
+}
+
+.stargate-backward-leave-to {
+  opacity: 0;
+  transform: scale(0.7);
+  filter: brightness(2) blur(4px);
+}
+
+/** 进入 — 从边缘滑入 */
+.stargate-backward-enter-from {
+  opacity: 0;
+  transform: scale(1.1);
+  filter: brightness(1.5) blur(2px);
+}
+
+.stargate-backward-enter-to {
+  opacity: 1;
+  transform: scale(1);
+  filter: brightness(1) blur(0px);
+}
+
+/*
+ * ============================================
+ * 保留旧版兼容（page- 前缀）
  * ============================================
  */
 .page-fade-enter-active,
@@ -175,12 +285,6 @@ const onAfterLeave = (el) => {
   opacity: 0;
 }
 
-/*
- * ============================================
- * 前进滑动过渡动画
- * 新页面从右侧滑入，旧页面向左滑出
- * ============================================
- */
 .page-slide-forward-enter-active,
 .page-slide-forward-leave-active,
 .page-slide-backward-enter-active,
@@ -200,12 +304,6 @@ const onAfterLeave = (el) => {
   transform: translateX(-30px);
 }
 
-/*
- * ============================================
- * 后退滑动过渡动画
- * 新页面从左侧滑入，旧页面向右滑出
- * ============================================
- */
 .page-slide-backward-enter-from {
   opacity: 0;
   transform: translateX(-30px);
@@ -222,6 +320,12 @@ const onAfterLeave = (el) => {
  * --------------------------------------------
  */
 @media (prefers-reduced-motion: reduce) {
+  .stargate-fade-enter-active,
+  .stargate-fade-leave-active,
+  .stargate-forward-enter-active,
+  .stargate-forward-leave-active,
+  .stargate-backward-enter-active,
+  .stargate-backward-leave-active,
   .page-fade-enter-active,
   .page-fade-leave-active,
   .page-slide-forward-enter-active,
@@ -230,13 +334,19 @@ const onAfterLeave = (el) => {
   .page-slide-backward-leave-active {
     transition: opacity 0.15s ease;
     transform: none !important;
+    filter: none !important;
   }
 
+  .stargate-forward-enter-from,
+  .stargate-forward-leave-to,
+  .stargate-backward-enter-from,
+  .stargate-backward-leave-to,
   .page-slide-forward-enter-from,
   .page-slide-forward-leave-to,
   .page-slide-backward-enter-from,
   .page-slide-backward-leave-to {
     transform: none !important;
+    filter: none !important;
   }
 }
 </style>

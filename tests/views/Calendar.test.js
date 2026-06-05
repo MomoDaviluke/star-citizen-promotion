@@ -6,8 +6,8 @@ import { createPinia, setActivePinia } from 'pinia'
 const mockRouter = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home' },
-    { path: '/calendar', name: 'calendar' }
+    { path: '/', name: 'home', component: { template: '<div>Home</div>' } },
+    { path: '/calendar', name: 'calendar', component: { template: '<div>Calendar</div>' } }
   ]
 })
 

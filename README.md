@@ -2,7 +2,7 @@
 
 # 🚀 星际公民战队宣传网站
 
-**企业级全栈项目 · 95%+ 测试覆盖率 · 完整 CI/CD 流水线**
+**企业级全栈项目 · 后端 310 测试用例全通过 · 完整 CI/CD 流水线**
 
 *面向星际公民玩家的专业团队门户*
 
@@ -42,8 +42,8 @@
 
 | 特性 | 说明 |
 |:-----|:-----|
-| 🏗️ **三层架构** | Controllers → Services → Repositories 严格分层，职责清晰 |
-| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试，覆盖率阈值 80%+ |
+| 🏗️ **分层架构** | Routes → Services → Database 严格分层，职责清晰 |
+| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试，后端覆盖率门禁 60%，实际 63.86% |
 | 🚀 **CI/CD** | GitHub Actions 自动化代码检查、测试、安全扫描、构建流水线 |
 | 🔐 **安全加固** | JWT 认证、bcrypt 加密、Helmet 安全头、速率限制、CORS 策略、敏感数据脱敏 |
 | 📝 **企业日志** | Winston 结构化日志，支持多级别输出与文件归档 |
@@ -74,7 +74,7 @@
 - **RESTful API** — 规范的资源路由设计，统一的响应格式
 - **JWT 认证** — 令牌签发 / 验证 / 刷新，支持可选认证与角色鉴权
 - **数据库连接池** — MySQL2 连接池管理，支持事务操作
-- **请求日志** — Morgan + 自定义请求日志中间件，全链路追踪
+- **请求日志** — Morgan 访问日志 + Winston 结构化日志 + requestId 全链路追踪
 - **速率限制** — express-rate-limit 防止 API 滥用
 - **参数校验** — express-validator 请求数据验证
 - **WebSocket** — ws 实时通信支持
@@ -152,51 +152,57 @@
 star-citizen-promotion/
 ├── .github/workflows/          # CI/CD 配置
 │   └── ci.yml                  # GitHub Actions 流水线
-├── docs/                       # 项目文档 (16+ 份)
+├── docs/                       # 项目文档 (8 份)
 ├── e2e/                        # Playwright E2E 测试
 │   ├── home.spec.js
 │   └── join.spec.js
 ├── public/                     # 静态资源
 ├── server/                     # ===== 后端服务 =====
 │   └── src/
-│       ├── config/index.js         # 环境配置中心
-│       ├── controllers/            # 控制器层（路由处理）
-│       │   ├── authController.js       # 认证控制器
-│       │   ├── memberController.js     # 成员控制器
-│       │   ├── pilotController.js      # 飞行员控制器
-│       │   ├── projectController.js    # 项目控制器
-│       │   ├── applicationController.js# 申请控制器
-│       │   └── statsController.js      # 统计控制器
+│       ├── config/                 # 配置
+│       │   ├── index.ts                # 统一配置加载
+│       │   └── swagger.ts              # Swagger 文档配置
+│       ├── routes/                 # 路由层（路由定义 + 中间件编排）
+│       │   ├── admin.ts                # 管理员操作
+│       │   ├── applications.ts         # 申请管理
+│       │   ├── auth.ts                 # 用户认证
+│       │   ├── events.ts               # 活动管理
+│       │   ├── fleet.ts                # 舰队管理
+│       │   ├── members.ts              # 成员管理
+│       │   ├── pilots.ts               # 飞行员管理
+│       │   ├── projects.ts             # 项目管理
+│       │   ├── settings.ts             # 站点设置
+│       │   └── stats.ts                # 统计数据
 │       ├── services/               # 业务逻辑层
-│       │   ├── authService.js          # 认证服务（注册/登录/令牌）
-│       │   ├── memberService.js        # 成员服务
-│       │   ├── pilotService.js         # 飞行员服务
-│       │   ├── projectService.js       # 项目服务
-│       │   ├── applicationService.js   # 申请服务
-│       │   └── statsService.js         # 统计服务
-│       ├── repositories/           # 数据访问层
-│       │   ├── baseRepository.js       # 基础仓储（通用 CRUD）
-│       │   ├── userRepository.js       # 用户仓储
-│       │   ├── memberRepository.js     # 成员仓储
-│       │   ├── pilotRepository.js      # 飞行员仓储
-│       │   ├── projectRepository.js    # 项目仓储
-│       │   └── applicationRepository.js# 申请仓储
+│       │   ├── authService.ts          # 认证服务（注册/登录/令牌）
+│       │   ├── memberService.ts        # 成员服务
+│       │   ├── pilotService.ts         # 飞行员服务
+│       │   ├── projectService.ts       # 项目服务
+│       │   ├── applicationService.ts   # 申请服务
+│       │   ├── fleetService.ts         # 舰队服务
+│       │   ├── eventService.ts         # 活动服务
+│       │   ├── settingsService.ts      # 站点设置服务
+│       │   └── statsService.ts         # 统计服务
 │       ├── middleware/             # Express 中间件
-│       │   ├── auth.js                 # JWT 认证 / 角色鉴权
-│       │   ├── errorHandler.js         # 统一错误处理
-│       │   └── requestLogger.js        # 请求日志
-│       ├── routes/                 # 路由定义
+│       │   ├── auth.ts                 # JWT 认证 (async/await)
+│       │   ├── cache.ts                # HTTP 缓存 (TTL + ETag)
+│       │   ├── auditLogger.ts          # 审计日志
+│       │   ├── errorHandler.ts         # 统一错误处理
+│       │   ├── metrics.ts              # Prometheus 指标
+│       │   ├── pagination.ts           # 分页解析
+│       │   ├── requestId.ts            # 请求关联 ID
+│       │   ├── requestLogger.ts        # 请求日志 (Winston)
+│       │   └── validator.ts            # 输入校验
 │       ├── database/               # 数据库管理
-│       │   ├── pool.js                 # MySQL 连接池
-│       │   ├── init.js                 # 表结构初始化
-│       │   ├── migrate.js              # 数据库迁移
-│       │   └── seed.js                 # 种子数据
+│       │   ├── pool.ts                 # MySQL 连接池 + queryWithTiming
+│       │   ├── init.ts                 # 表结构初始化
+│       │   ├── migrate.ts              # Knex.js 迁移
+│       │   └── seed.ts                 # 种子数据
 │       ├── utils/                  # 工具模块
-│       │   ├── errors.js               # 统一错误类体系
-│       │   ├── jwt.js                  # JWT 工具函数
-│       │   ├── logger.js               # Winston 日志配置
-│       │   └── container.js            # 依赖注入容器
-│       └── index.js               # 服务入口
+│       │   ├── jwt.ts                  # JWT 工具函数
+│       │   └── logger.ts               # Winston 日志配置
+│       ├── websocket.ts            # WebSocket 服务端
+│       └── index.ts                # Express 入口
 ├── src/                        # ===== 前端应用 =====
 │   ├── components/             # Vue 组件
 │   │   ├── common/                 # 通用组件
@@ -208,7 +214,12 @@ star-citizen-promotion/
 │   │       ├── SiteHeader.vue          # 站点头部导航
 │   │       └── SiteFooter.vue          # 站点底部
 │   ├── composables/            # 组合式函数
-│   │   └── useAI.js                # AI 任务管理 Hook
+│   │   ├── useAI.js                # AI 任务管理 Hook
+│   │   ├── useWebSocket.js          # WebSocket 封装
+│   │   ├── useGSAPReveal.js         # 滚动动画
+│   │   ├── useEffectQuality.js      # 特效分级
+│   │   ├── usePwa.js                # PWA 生命周期
+│   │   └── useTheme.js              # 主题切换
 │   ├── config/                 # 前端配置
 │   │   └── site.config.js          # 站点内容配置
 │   ├── data/                   # 静态数据
@@ -221,9 +232,18 @@ star-citizen-promotion/
 │   │   ├── ResourceMonitor.js      # 浏览器资源监控器
 │   │   ├── authService.js          # 认证 API 调用
 │   │   ├── dataService.js          # 数据服务（API/静态切换）
-│   │   └── http.js                 # HTTP 客户端封装
+│   │   ├── wsService.js            # WebSocket 客户端
+│   │   ├── http.js                 # HTTP 客户端封装
+│   │   └── errorReporting.js       # Sentry 错误上报
+│   ├── stores/                 # Pinia 状态管理
+│   │   ├── auth.js                 # 认证状态
+│   │   ├── calendar.js             # 日历状态
+│   │   └── fleet.js                # 舰队状态
 │   ├── styles/                 # 全局样式
-│   │   └── base.css                # 基础样式与 CSS 变量
+│   │   ├── base.css                # 基础样式
+│   │   ├── variables.css           # CSS 变量
+│   │   ├── animations.css          # 动画定义
+│   │   └── utilities.css           # 工具类
 │   └── views/                  # 页面视图
 │       ├── Home.vue                # 首页
 │       ├── About.vue               # 团队介绍
@@ -235,6 +255,9 @@ star-citizen-promotion/
 │       ├── Register.vue            # 注册
 │       ├── Profile.vue             # 个人中心
 │       ├── ApplicationStatus.vue   # 申请状态
+│       ├── Calendar.vue             # 活动日历
+│       ├── Fleet.vue                # 舰队展示
+│       ├── Offline.vue              # 离线页面 (PWA)
 │       ├── NotFound.vue            # 404 页面
 │       └── admin/                  # 管理后台
 │           ├── AdminLayout.vue         # 后台布局
@@ -312,21 +335,19 @@ docker-compose --profile production up -d
 
 ### 1. 三层架构设计
 
-项目后端严格遵循 **Controllers → Services → Repositories** 三层架构：
+项目后端遵循 **Routes → Services → Database** 分层架构：
 
 ```
-请求 → Controller（参数校验、响应格式化）
+请求 → Route（路由定义、中间件编排）
          ↓
-      Service（业务逻辑、错误处理）
+      Service（业务逻辑、数据访问、错误处理）
          ↓
-      Repository（数据访问、SQL 构建）
-         ↓
-      MySQL（数据持久化）
+      MySQL（连接池 + 参数化查询）
 ```
 
-- **Controller 层** — 负责接收请求、参数校验（express-validator）、调用 Service、格式化响应
-- **Service 层** — 核心业务逻辑，处理认证、数据转换、错误抛出（统一错误类）
-- **Repository 层** — 数据访问抽象，封装 SQL 操作，继承 `baseRepository` 通用 CRUD
+- **Route 层** — 负责 HTTP 路由定义、中间件组合（认证/校验/限流）、请求分发
+- **Service 层** — 核心业务逻辑，直接调用数据库连接池执行 SQL，封装业务操作
+- **Database 层** — MySQL2 连接池管理，提供 `query/queryOne/execute/transaction` 统一接口
 
 ### 2. AI 服务引擎
 
@@ -395,7 +416,7 @@ const data = await execute(async ({ signal, onProgress }) => {
 | 安全头 | Helmet 中间件，配置 CSP / XSS 保护 / HSTS |
 | CORS | 限定前端域名，支持 credentials |
 | 速率限制 | 15 分钟窗口内最多 100 次请求 |
-| 请求体限制 | JSON 10kb / URL-encoded 10kb |
+| 请求体限制 | JSON 100kb / URL-encoded 100kb |
 | SQL 注入防护 | mysql2 参数化查询（`?` 占位符） |
 | 用户数据脱敏 | `sanitizeUser()` 移除 password_hash / passwordHash |
 
@@ -414,68 +435,42 @@ router.delete('/admin/users', authenticate, requireRole('admin'), handler)
 
 ### 4. 统一错误处理
 
-后端定义了完整的错误类体系，所有业务错误均继承自 `AppError`：
-
-```javascript
-// 错误类层级
-AppError (基类, statusCode=500)
-  ├── BadRequestError    (400)  // 请求参数错误
-  ├── UnauthorizedError  (401)  // 未授权访问
-  ├── ForbiddenError     (403)  // 禁止访问
-  ├── NotFoundError      (404)  // 资源不存在
-  └── ConflictError      (409)  // 资源冲突
-```
-
-`errorHandler` 中间件统一捕获并格式化错误响应：
+后端通过 `errorHandler` 中间件统一捕获并格式化错误响应，支持 HTTP 状态码和结构化错误信息：
 
 ```json
 {
   "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "无效的认证令牌"
-  }
+  "message": "无效的认证令牌"
 }
 ```
 
-同时处理 `JsonWebTokenError`、`TokenExpiredError`、`SQLITE_CONSTRAINT` / `ER_DUP_ENTRY` 等第三方错误。
+同时处理 `JsonWebTokenError`、`TokenExpiredError`、`ER_DUP_ENTRY` 等第三方错误。
 
 ### 5. 数据库连接池
 
-```javascript
-// 连接池配置（server/src/database/pool.js）
+```typescript
+// 连接池配置（server/src/database/pool.ts）
 import mysql from 'mysql2/promise'
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  port: 3306,
-  connectionLimit: 10,
+  host: config.database.host,
+  port: config.database.port,
+  connectionLimit: config.database.connectionLimit,
   waitForConnections: true,
-  queueLimit: 0,
   timezone: '+08:00',
   charset: 'utf8mb4'
 })
 
 // 统一查询接口
-export async function query(sql, params)     // 返回行数组
-export async function queryOne(sql, params)  // 返回单行或 null
-export async function execute(sql, params)   // 返回执行结果
-export async function transaction(callback)  // 事务支持
+export async function query(sql, params)      // 返回行数组
+export async function queryOne(sql, params)   // 返回单行或 null
+export async function queryWithTiming(sql, params) // 带慢查询监控（500ms 阈值）
+export async function transaction(callback)   // 事务支持
+export function getPoolStatus()               // 连接池状态
+export function closePool()                   // 优雅关闭
 ```
 
-### 6. 依赖注入容器
-
-```javascript
-// server/src/utils/container.js
-const container = new Container()
-
-container.register('authService', (c) => new AuthService(c.get('userRepository')), { singleton: true })
-container.register('userRepository', () => new UserRepository())
-
-const authService = container.get('authService')
-```
-
-### 7. 前端 HTTP 客户端
+### 6. 前端 HTTP 客户端
 
 ```javascript
 // src/services/http.js — 统一 HTTP 请求封装
@@ -693,22 +688,21 @@ Content-Type: application/json
 
 ### 测试统计
 
-| 测试类型 | 框架 | 用例数 | 覆盖范围 |
+| 测试类型 | 框架 | 文件数 | 覆盖范围 |
 |:---------|:-----|:-------|:---------|
-| 前端单元测试 | Vitest | 195 | 服务层、组合式函数、组件、路由 |
-| 后端集成测试 | Jest + Supertest | 65 | API 接口、认证中间件、错误处理、仓储层 |
-| E2E 测试 | Playwright | 10 | 首页、加入流程 |
+| 前端单元测试 | Vitest | 33 | 服务层、组合式函数、组件、路由、视图、工具 |
+| 后端集成测试 | Jest + Supertest | 26（310 用例） | API 接口、认证中间件、错误处理、仓储层、缓存 |
+| E2E 测试 | Playwright | 5 spec | 首页、加入流程、认证流程、申请流程、导航 |
 
-### 核心模块覆盖率
+### 核心模块覆盖率（后端整体 63.86%，以下为高覆盖模块）
 
 | 模块 | 覆盖率 |
 |:-----|:-------|
-| AIService.js | **92%** |
-| authService.js（后端） | **95%** |
-| dataService.js | **95%** |
-| ResourceMonitor.js | **94%** |
-| PriorityQueue.js | **100%** |
-| Admin Views | **100%** |
+| `routes/admin.ts` | **98%** |
+| `routes/auth.ts` | **97%** |
+| `services/*` | **93~100%** |
+| `middleware/cache.ts` | **100%** |
+| `database/pool.ts` | **88%** |
 
 ### 运行测试
 
@@ -832,13 +826,11 @@ VITE_BACKEND_URL=http://localhost:3001
 
 ### Q: 如何添加新的 API 接口？
 
-遵循三层架构模式：
+遵循分层架构模式：
 
-1. **Repository** — 在 `server/src/repositories/` 新建仓储文件，继承 `baseRepository`
-2. **Service** — 在 `server/src/services/` 新建服务文件，注入 Repository
-3. **Controller** — 在 `server/src/controllers/` 新建控制器，调用 Service
-4. **Route** — 在 `server/src/routes/` 新建路由文件，绑定 Controller 方法
-5. 在 `server/src/index.js` 中注册路由
+1. **Service** — 在 `server/src/services/` 新建服务文件，封装业务逻辑和数据库操作
+2. **Route** — 在 `server/src/routes/` 新建路由文件，组合中间件（认证/校验/限流）并调用 Service
+3. 在 `server/src/index.ts` 中注册路由
 
 ### Q: 如何运行 E2E 测试？
 
@@ -867,21 +859,20 @@ backend:
 
 | 文档 | 说明 |
 |:-----|:-----|
-| [PROJECT_BACKGROUND.md](docs/PROJECT_BACKGROUND.md) | 项目背景与目标 |
-| [REQUIREMENTS.md](docs/REQUIREMENTS.md) | 需求规格说明 |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统架构设计 |
-| [TECH_STACK.md](docs/TECH_STACK.md) | 技术选型依据 |
-| [CONFIG.md](docs/CONFIG.md) | 配置参数说明 |
-| [DEVELOPMENT.md](docs/DEVELOPMENT.md) | 开发指南 |
-| [DEVELOPMENT_PROCESS.md](docs/DEVELOPMENT_PROCESS.md) | 开发流程规范 |
-| [QUALITY_STANDARDS.md](docs/QUALITY_STANDARDS.md) | 质量保证标准 |
-| [API.md](docs/API.md) | API 接口文档 |
-| [MAINTENANCE.md](docs/MAINTENANCE.md) | 运维手册 |
-| [CHANGELOG.md](docs/CHANGELOG.md) | 变更日志 |
-| [ROADMAP.md](docs/ROADMAP.md) | 产品路线图 |
-| [RISK_MANAGEMENT.md](docs/RISK_MANAGEMENT.md) | 风险管理 |
-| [GLOSSARY.md](docs/GLOSSARY.md) | 术语表 |
-| [PROJECT_PLAN.md](docs/PROJECT_PLAN.md) | 项目计划 |
+| [TECH_STACK.md](docs/guides/TECH_STACK.md) | 技术选型依据 |
+| [CONFIG.md](docs/guides/CONFIG.md) | 配置参数说明 |
+| [DEVELOPMENT.md](docs/guides/DEVELOPMENT.md) | 开发指南 |
+| [API.md](docs/guides/API.md) | API 接口文档 |
+| [DEPLOYMENT.md](docs/guides/DEPLOYMENT.md) | 部署指南 |
+| [SECURITY.md](docs/guides/SECURITY.md) | 安全体系 |
+| [MONITORING.md](docs/guides/MONITORING.md) | 监控与可观测性 |
+| [CONTRIBUTING.md](docs/guides/CONTRIBUTING.md) | 贡献指南 |
+| [ROADMAP.md](docs/ROADMAP.md) | 优化路线图 |
+| [TESTING.md](docs/TESTING.md) | 测试指南 |
+| [TODO.md](docs/TODO.md) | 待办任务与质量门禁 |
+| [ENTERPRISE_IMPROVEMENTS.md](docs/reports/ENTERPRISE_IMPROVEMENTS.md) | 企业级改进报告 |
+| [CHANGELOG.md](CHANGELOG.md) | 版本变更记录 |
 
 ---
 

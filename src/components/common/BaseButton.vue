@@ -58,8 +58,6 @@
  * @emits {click} 点击事件
  */
 
-import { computed } from 'vue'
-
 const props = defineProps({
   variant: {
     type: String,

@@ -87,7 +87,7 @@
  * @emits {close} 弹窗关闭事件
  */
 
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -155,7 +155,7 @@ function close() {
  * 处理遮罩层点击
  * @param {MouseEvent} event - 点击事件
  */
-function handleOverlayClick(event) {
+function handleOverlayClick() {
   if (props.persistent) return
   close()
 }

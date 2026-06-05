@@ -4,7 +4,10 @@
  * @module services/wsService
  */
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('WsService')
+
 
 /**
  * WebSocket 连接状态枚举
@@ -24,6 +27,8 @@ class WebSocketService {
     /** @type {WebSocket|null} */
     this.ws = null
     this.state = ref(WS_STATE.DISCONNECTED)
+    /** @type {import('vue').ComputedRef<boolean>} 是否已连接 */
+    this.isConnected = computed(() => this.state.value === WS_STATE.CONNECTED)
     this.reconnectAttempts = 0
     this.maxReconnectAttempts = 5
     this.reconnectDelay = 1000
@@ -73,7 +78,7 @@ class WebSocketService {
           const message = JSON.parse(event.data)
           this._emit(message.type, message.data)
         } catch {
-          console.warn('[WS] 消息解析失败')
+          logger.warn('[WS] 消息解析失败')
         }
       }
 
@@ -94,7 +99,9 @@ class WebSocketService {
         this._emit('error')
       }
     } catch (err) {
-      console.error('[WS] 连接失败:', err)
+      // 将 unknown 类型的 err 断言为 Error，确保可以安全传递给 logger
+      const error = err instanceof Error ? err : new Error(String(err))
+      logger.error('[WS] 连接失败:', error)
       this.state.value = WS_STATE.DISCONNECTED
     }
   }
@@ -158,7 +165,7 @@ class WebSocketService {
       try {
         handler(data)
       } catch (err) {
-        console.error(`[WS] 事件处理器错误 (${event}):`, err)
+        logger.error(`[WS] 事件处理器错误 (${event}):`, err)
       }
     })
   }
@@ -198,7 +205,7 @@ class WebSocketService {
    */
   _scheduleReconnect(token) {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.warn('[WS] 达到最大重连次数，停止重连')
+      logger.warn('[WS] 达到最大重连次数，停止重连')
       return
     }
 

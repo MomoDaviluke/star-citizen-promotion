@@ -64,6 +64,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../../utils/logger.js'
+const logger = createLogger('MembersAdmin')
+
 /**
  * 成员管理页面逻辑
  * @description 管理团队成员的 CRUD 操作，包括列表展示、状态筛选、编辑和删除
@@ -104,7 +107,7 @@ async function loadMembers() {
       members.value = response.data
     }
   } catch (error) {
-    console.error('加载成员数据失败:', error)
+    logger.error('加载成员数据失败:', error)
   }
 }
 
@@ -136,7 +139,7 @@ async function deleteMember(id) {
       await dataService.deleteMember(id)
       members.value = members.value.filter(m => m.id !== id)
     } catch (error) {
-      console.error('删除成员失败:', error)
+      logger.error('删除成员失败:', error)
     }
   }
 }

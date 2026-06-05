@@ -108,6 +108,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../../utils/logger.js'
+const logger = createLogger('ProjectsAdmin')
+
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
@@ -130,7 +133,7 @@ async function loadProjects() {
       projects.value = response.data
     }
   } catch (error) {
-    console.error('加载项目数据失败:', error)
+    logger.error('加载项目数据失败:', error)
   }
 }
 
@@ -161,7 +164,7 @@ async function saveEdit() {
       closeEdit()
     }
   } catch (error) {
-    console.error('保存项目失败:', error)
+    logger.error('保存项目失败:', error)
   } finally {
     isSaving.value = false
   }
@@ -173,7 +176,7 @@ async function deleteProject(id) {
       await dataService.deleteProject(id)
       projects.value = projects.value.filter(p => p.id !== id)
     } catch (error) {
-      console.error('删除项目失败:', error)
+      logger.error('删除项目失败:', error)
     }
   }
 }

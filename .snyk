@@ -1,0 +1,27 @@
+# Snyk 安全策略
+# 用于管理已知漏洞的忽略规则
+# 文档：https://docs.snyk.io/manage-risk/policies/the-.snyk-file
+#
+# 用法：
+#   snyk ignore --id=<vuln-id> --reason="..." --expiry=YYYY-MM-DD
+#   snyk test  --policy-path=.snyk
+
+version: v1.24.1
+
+# 忽略规则：仅在充分评估风险后添加
+# ignore:
+#   SNYK-JS-EXAMPLE-12345:
+#     '*':
+#       reason: '已评估：该漏洞需物理访问且本项目不使用受影响功能'
+#       expires: 2026-06-28
+#       created: 2026-05-28
+
+# Snyk 扫描排除路径
+exclude:
+  global:
+    - 'node_modules'
+    - 'dist'
+    - 'coverage'
+    - '.worktrees'
+    - 'test-results'
+    - 'playwright-report'

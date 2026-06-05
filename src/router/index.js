@@ -2,37 +2,13 @@
  * @file 路由配置模块
  * @description Vue Router 路由配置，包含路由定义、导航守卫、组件预加载等功能
  *              实现单页面应用（SPA）的客户端路由管理
+ *              认证检查通过 Pinia auth store 实现，Token 由 httpOnly cookie 管理
  * @module router
  * @requires vue-router
  */
 
-// 从 vue-router 导入创建路由所需的函数
-// createRouter: 创建路由实例
-// createWebHistory: 使用 HTML5 History API 模式（无 # 号）
 import { createRouter, createWebHistory } from 'vue-router'
-// 导入 HTTP 客户端，用于检查用户认证状态
-import httpClient from '../services/http.js'
-
-/**
- * 检查用户是否已认证
- * @description 通过检查本地存储中是否存在有效的访问令牌来判断用户登录状态
- *              这是客户端认证状态的第一道检查，服务端会进行二次验证
- * @returns {boolean} 是否已登录
- */
-function isAuthenticated() {
-  return !!httpClient.getStoredToken()
-}
-
-/**
- * 检查用户是否为管理员
- * @description 从本地存储获取用户信息，检查角色是否为 admin
- *              注意：这只是前端界面控制，实际权限校验在服务端完成
- * @returns {boolean} 是否为管理员
- */
-function isAdmin() {
-  const user = httpClient.getStoredUser()
-  return user?.role === 'admin'
-}
+import { useAuthStore } from '../stores/auth.js'
 
 /**
  * 应用路由配置数组
@@ -44,11 +20,9 @@ const routes = [
   {
     path: '/',
     name: '首页',
-    // 使用动态导入（懒加载）减少首屏加载时间
-    // 用户访问首页时才加载该组件
     component: () => import('../views/Home.vue'),
-    meta: { 
-      preload: true,  // 标记为预加载路由，提升首屏体验
+    meta: {
+      preload: true,
       title: '星际公民团队站 - 首页'
     }
   },
@@ -56,7 +30,7 @@ const routes = [
     path: '/about',
     name: '团队介绍',
     component: () => import('../views/About.vue'),
-    meta: { 
+    meta: {
       preload: true,
       title: '团队介绍 - 星际公民团队站'
     }
@@ -70,25 +44,25 @@ const routes = [
   {
     path: '/projects',
     name: '活动项目',
-        component: () => import('../views/Projects.vue'),
-        meta: { title: '活动项目 - 星际公民团队站' }
-      },
-      {
-        path: '/fleet',
-        name: '舰队展示',
-        component: () => import('../views/Fleet.vue'),
-        meta: { title: '舰队展示 - 星际公民团队站', preload: false }
-      },
-      {
-        path: '/calendar',
-        name: '活动日历',
-        component: () => import('../views/Calendar.vue'),
-        meta: { title: '活动日历 - 星际公民团队站', preload: false }
-      },
-      {
-        path: '/join',
-        name: '加入我们',
-        component: () => import('../views/Join.vue'),
+    component: () => import('../views/Projects.vue'),
+    meta: { title: '活动项目 - 星际公民团队站' }
+  },
+  {
+    path: '/fleet',
+    name: '舰队展示',
+    component: () => import('../views/Fleet.vue'),
+    meta: { title: '舰队展示 - 星际公民团队站', preload: false }
+  },
+  {
+    path: '/calendar',
+    name: '活动日历',
+    component: () => import('../views/Calendar.vue'),
+    meta: { title: '活动日历 - 星际公民团队站', preload: false }
+  },
+  {
+    path: '/join',
+    name: '加入我们',
+    component: () => import('../views/Join.vue'),
     meta: { title: '加入我们 - 星际公民团队站' }
   },
   {
@@ -101,8 +75,8 @@ const routes = [
     path: '/login',
     name: '登录',
     component: () => import('../views/Login.vue'),
-    meta: { 
-      guestOnly: true,  // 仅未登录用户可访问
+    meta: {
+      guestOnly: true,
       title: '登录 - 星际公民团队站'
     }
   },
@@ -110,7 +84,7 @@ const routes = [
     path: '/register',
     name: '注册',
     component: () => import('../views/Register.vue'),
-    meta: { 
+    meta: {
       guestOnly: true,
       title: '注册 - 星际公民团队站'
     }
@@ -119,8 +93,8 @@ const routes = [
     path: '/profile',
     name: '个人中心',
     component: () => import('../views/Profile.vue'),
-    meta: { 
-      requiresAuth: true,  // 需要登录才能访问
+    meta: {
+      requiresAuth: true,
       title: '个人中心 - 星际公民团队站'
     }
   },
@@ -130,19 +104,17 @@ const routes = [
     component: () => import('../views/ApplicationStatus.vue'),
     meta: { title: '申请状态 - 星际公民团队站' }
   },
-  // 管理后台路由组
   {
     path: '/admin',
     component: () => import('../views/admin/AdminLayout.vue'),
-    meta: { 
+    meta: {
       requiresAuth: true,
-      requiresAdmin: true  // 需要管理员权限
+      requiresAdmin: true
     },
-    // 嵌套路由，共享 AdminLayout 布局
     children: [
       {
         path: '',
-        redirect: '/admin/dashboard'  // 重定向到仪表盘
+        redirect: '/admin/dashboard'
       },
       {
         path: 'dashboard',
@@ -182,7 +154,6 @@ const routes = [
       }
     ]
   },
-  // 404 页面 - 捕获所有未匹配的路由
   {
     path: '/:pathMatch(.*)*',
     name: '404',
@@ -199,17 +170,13 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // 滚动行为配置
-  scrollBehavior(to, from, savedPosition) {
-    // 如果有保存的位置（如浏览器后退），恢复到之前的位置
+  scrollBehavior(to, _from, savedPosition) {
     if (savedPosition) {
       return savedPosition
     }
-    // 如果有 hash 锚点，滚动到锚点位置
     if (to.hash) {
       return { el: to.hash, behavior: 'smooth' }
     }
-    // 默认滚动到页面顶部
     return { top: 0, behavior: 'smooth' }
   }
 })
@@ -217,43 +184,29 @@ const router = createRouter({
 /**
  * 全局前置导航守卫
  * @description 在每次路由切换前执行，用于权限检查和页面准备
- *              这是路由级别的安全控制，配合服务端鉴权形成双重保护
+ *              认证状态通过 Pinia auth store 获取，Token 由 httpOnly cookie 管理
  */
 router.beforeEach((to) => {
-  // 更新页面标题，提升 SEO 和用户体验
   if (to.meta.title) {
     document.title = to.meta.title
   }
 
+  const authStore = useAuthStore()
+
   // 检查路由是否需要认证
-  if (to.meta.requiresAuth && !isAuthenticated()) {
-    // 未登录用户访问需要认证的页面，重定向到登录页
-    // 保存目标路径，登录后可自动跳转回来
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 
   // 检查路由是否需要管理员权限
-  if (to.meta.requiresAdmin && !isAdmin()) {
-    // 非管理员访问管理后台，重定向到首页
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
     return { path: '/' }
   }
 
-  // 检查路由是否仅允许未登录用户访问（如登录页、注册页）
-  if (to.meta.guestOnly && isAuthenticated()) {
-    // 已登录用户访问登录页，重定向到个人中心
+  // 检查路由是否仅允许未登录用户访问
+  if (to.meta.guestOnly && authStore.isAuthenticated) {
     return { path: '/profile' }
   }
-
-  // 通过所有检查，允许导航（不返回任何值）
-})
-
-/**
- * 全局后置钩子
- * @description 在路由切换完成后执行，可用于页面统计、埋点等
- */
-router.afterEach((to) => {
-  // 可在此处添加页面访问统计代码
-  // 例如：analytics.trackPageView(to.path)
 })
 
 export default router

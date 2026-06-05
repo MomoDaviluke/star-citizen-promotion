@@ -1,237 +1,102 @@
 /**
- * WebSocket组合式函数
- * @description 管理WebSocket连接、消息收发、重连等
+ * WebSocket 组合式函数
+ * @description wsService 的 Vue composable 包装器，提供响应式状态和生命周期管理
+ *              实际 WebSocket 连接由 wsService 单例管理，本模块仅提供 Vue 组件集成
  * @module composables/useWebSocket
- * @author Full-stack Team
+ * @deprecated 建议直接使用 wsService 和 Vue 响应式 API 替代
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-
-// WebSocket状态枚举
-const WS_STATE = {
-  CONNECTING: 'connecting',
-  OPEN: 'open',
-  CLOSING: 'closing',
-  CLOSED: 'closed',
-  RECONNECTING: 'reconnecting'
-}
+import { onMounted, onUnmounted } from 'vue'
+import { wsService } from '../services/wsService.js'
 
 /**
- * 使用WebSocket
+ * 使用 WebSocket 连接
+ * @description 在 Vue 组件中使用 WebSocket 的便捷方法
+ *              自动在 onMounted 时连接，onUnmounted 时清理事件监听
+ *              不断开单例连接（其他组件可能仍在使用）
  * @param {Object} options - 配置选项
- * @param {string} options.url - WebSocket服务器URL
- * @param {number} [options.reconnectInterval=3000] - 重连间隔（毫秒）
- * @param {number} [options.maxReconnectAttempts=5] - 最大重连次数
- * @param {boolean} [options.autoConnect=true] - 是否自动连接
- * @param {boolean} [options.autoReconnect=true] - 是否自动重连
- * @returns {Object} 暴露的响应式状态和方法
+ * @param {string} [options.token] - 认证令牌（可选，用于 WebSocket 认证）
+ * @param {boolean} [options.autoConnect=true] - 是否在组件挂载时自动连接
+ * @returns {Object} 响应式 WebSocket 状态和操作方法
  */
 export function useWebSocket(options = {}) {
   const {
-    url,
-    reconnectInterval = 3000,
-    maxReconnectAttempts = 5,
-    autoConnect = true,
-    autoReconnect = true
+    token = null,
+    autoConnect = true
   } = options
 
-  // ========== 状态定义 ==========
-  const socket = ref(null)
-  const state = ref(WS_STATE.CLOSED)
-  const messages = ref([])
-  const error = ref(null)
-  const reconnectCount = ref(0)
-  let reconnectTimer = null
-
-  // ========== 计算属性 ==========
-  const isConnected = computed(() => state.value === WS_STATE.OPEN)
-  const isConnecting = computed(() => 
-    state.value === WS_STATE.CONNECTING || state.value === WS_STATE.RECONNECTING
-  )
-
-  // ========== 方法定义 ==========
+  // 收集事件处理器引用，用于组件卸载时清理
+  const cleanupFns = []
 
   /**
-   * 连接WebSocket
-   * @returns {Promise<void>}
+   * 建立 WebSocket 连接
+   * @param {string} [authToken] - 可选的认证令牌
    */
-  function connect() {
-    if (socket.value && socket.value.readyState === WebSocket.OPEN) {
-      console.warn('WebSocket already connected')
-      return Promise.resolve()
-    }
-
-    state.value = reconnectCount.value > 0 ? WS_STATE.RECONNECTING : WS_STATE.CONNECTING
-    error.value = null
-
-    return new Promise((resolve, reject) => {
-      try {
-        const ws = new WebSocket(url)
-        socket.value = ws
-
-        ws.onopen = () => {
-          state.value = WS_STATE.OPEN
-          reconnectCount.value = 0
-          resolve()
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            messages.value.push({
-              id: Date.now(),
-              data,
-              timestamp: new Date(),
-              type: 'received'
-            })
-            // 触发自定义事件，方便组件监听
-            window.dispatchEvent(new CustomEvent('ws-message', { detail: data }))
-          } catch (err) {
-            console.warn('Failed to parse WebSocket message:', err)
-          }
-        }
-
-        ws.onerror = (event) => {
-          error.value = 'WebSocket error occurred'
-          console.error('WebSocket error:', event)
-        }
-
-        ws.onclose = (event) => {
-          state.value = WS_STATE.CLOSED
-          socket.value = null
-
-          // 自动重连
-          if (autoReconnect && reconnectCount.value < maxReconnectAttempts) {
-            reconnectCount.value++
-            reconnectTimer = setTimeout(() => {
-              connect()
-            }, reconnectInterval)
-          }
-        }
-      } catch (err) {
-        error.value = err.message
-        state.value = WS_STATE.CLOSED
-        reject(err)
-      }
-    })
+  function connect(authToken) {
+    wsService.connect(authToken || token)
   }
 
   /**
-   * 断开连接
-   * @param {number} [code=1000] - 关闭代码
-   * @param {string} [reason=''] - 关闭原因
+   * 断开 WebSocket 连接
    */
-  function disconnect(code = 1000, reason = '') {
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer)
-      reconnectTimer = null
-    }
-
-    if (socket.value) {
-      state.value = WS_STATE.CLOSING
-      socket.value.close(code, reason)
-    }
+  function disconnect() {
+    wsService.disconnect()
   }
 
   /**
    * 发送消息
    * @param {Object|string} data - 要发送的数据
-   * @returns {boolean} 是否发送成功
    */
   function send(data) {
-    if (!socket.value || socket.value.readyState !== WebSocket.OPEN) {
-      error.value = 'WebSocket is not connected'
-      return false
-    }
-
-    try {
-      const message = typeof data === 'string' ? data : JSON.stringify(data)
-      socket.value.send(message)
-      
-      messages.value.push({
-        id: Date.now(),
-        data,
-        timestamp: new Date(),
-        type: 'sent'
-      })
-      
-      return true
-    } catch (err) {
-      error.value = err.message
-      return false
-    }
+    wsService.send(data)
   }
 
   /**
-   * 清除消息历史
+   * 注册事件监听
+   * @param {string} event - 事件名称
+   * @param {Function} handler - 事件处理函数
+   * @returns {Function} 取消监听函数
    */
-  function clearMessages() {
-    messages.value = []
+  function on(event, handler) {
+    const unsub = wsService.on(event, handler)
+    cleanupFns.push(unsub)
+    return unsub
   }
 
   /**
-   * 清除错误状态
+   * 移除事件监听
+   * @param {string} event - 事件名称
+   * @param {Function} handler - 事件处理函数
    */
-  function clearError() {
-    error.value = null
+  function off(event, handler) {
+    wsService.off(event, handler)
   }
-
-  // ========== 生命周期 ==========
 
   // 组件挂载时自动连接
   onMounted(() => {
     if (autoConnect) {
-      connect().catch(() => {})
+      connect()
     }
   })
 
-  // 组件卸载时断开连接
+  // 组件卸载时仅清理事件监听，不断开单例连接
   onUnmounted(() => {
-    disconnect()
+    cleanupFns.forEach((fn) => fn())
+    cleanupFns.length = 0
   })
 
-  // ========== 返回状态和方法 ==========
   return {
-    // 状态
-    socket,
-    state,
-    messages,
-    error,
-    reconnectCount,
+    // 响应式状态（来自 wsService 单例）
+    state: wsService.state,
+    isConnected: wsService.isConnected,
 
-    // 计算属性
-    isConnected,
-    isConnecting,
-
-    // 方法
+    // 操作方法
     connect,
     disconnect,
     send,
-    clearMessages,
-    clearError
+    on,
+    off
   }
 }
 
-/**
- * 创建WebSocket服务（单例模式）
- * @param {Object} options - 配置选项
- * @returns {Object} WebSocket服务实例
- */
-let wsInstance = null
-
-export function useWebSocketService(options = {}) {
-  if (!wsInstance) {
-    wsInstance = useWebSocket(options)
-  }
-  return wsInstance
-}
-
-/**
- * 关闭WebSocket服务（清除单例）
- */
-export function destroyWebSocketService() {
-  if (wsInstance) {
-    wsInstance.disconnect()
-    wsInstance = null
-  }
-}
+export default useWebSocket

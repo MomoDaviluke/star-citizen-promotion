@@ -6,6 +6,9 @@
 
 import httpClient from './http.js'
 import { navItems, teamStats, acePilots, members, projects } from '@/data/siteContent.js'
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('DataService')
+
 
 const USE_API = import.meta.env.VITE_USE_API === 'true'
 
@@ -36,7 +39,7 @@ export const dataService = {
           }
         }
       } catch (error) {
-        console.warn('从 API 获取统计数据失败，使用静态数据:', error)
+        logger.warn('从 API 获取统计数据失败，使用静态数据:', error)
       }
     }
     return { stats: teamStats, summary: null }
@@ -55,7 +58,7 @@ export const dataService = {
           return response
         }
       } catch (error) {
-        console.warn('从 API 获取飞行员数据失败，使用静态数据:', error)
+        logger.warn('从 API 获取飞行员数据失败，使用静态数据:', error)
       }
     }
     return {
@@ -75,7 +78,7 @@ export const dataService = {
       try {
         return await httpClient.get(`/pilots/${id}`)
       } catch (error) {
-        console.warn('从 API 获取飞行员详情失败:', error)
+        logger.warn('从 API 获取飞行员详情失败:', error)
       }
     }
     const pilot = acePilots.find(p => p.id === id)
@@ -95,7 +98,7 @@ export const dataService = {
           return response
         }
       } catch (error) {
-        console.warn('从 API 获取成员数据失败，使用静态数据:', error)
+        logger.warn('从 API 获取成员数据失败，使用静态数据:', error)
       }
     }
     return {
@@ -115,7 +118,7 @@ export const dataService = {
       try {
         return await httpClient.get(`/members/${id}`)
       } catch (error) {
-        console.warn('从 API 获取成员详情失败:', error)
+        logger.warn('从 API 获取成员详情失败:', error)
       }
     }
     const member = members.find(m => m.id === id)
@@ -135,7 +138,7 @@ export const dataService = {
           return response
         }
       } catch (error) {
-        console.warn('从 API 获取项目数据失败，使用静态数据:', error)
+        logger.warn('从 API 获取项目数据失败，使用静态数据:', error)
       }
     }
     return {
@@ -155,7 +158,7 @@ export const dataService = {
       try {
         return await httpClient.get(`/projects/${id}`)
       } catch (error) {
-        console.warn('从 API 获取项目详情失败:', error)
+        logger.warn('从 API 获取项目详情失败:', error)
       }
     }
     const project = projects.find(p => p.id === id)
@@ -275,7 +278,7 @@ export const dataService = {
           return response
         }
       } catch (error) {
-        console.warn('从 API 获取申请数据失败:', error)
+        logger.warn('从 API 获取申请数据失败:', error)
       }
     }
     return {

@@ -117,8 +117,10 @@ export function useAI() {
       result.value = response
       return response
     } catch (err) {
-      error.value = err
-      throw err
+      // 将 unknown 类型的 err 断言为 Error，确保可以安全赋值给 error ref
+      const errorObj = err instanceof Error ? err : new Error(String(err))
+      error.value = errorObj
+      throw errorObj
     } finally {
       isLoading.value = false
       currentTaskId.value = null

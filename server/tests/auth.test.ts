@@ -94,11 +94,40 @@ describe('authenticate', () => {
   it('有效令牌应设置 req.user', async () => {
     req.headers.authorization = 'Bearer valid-token'
     mockVerify.mockReturnValue({ userId: 1 })
+    mockQueryOne.mockResolvedValue({ id: '1', role: 'member' })
 
     await authenticate(req, res, next)
 
-    expect(req.user).toEqual({ id: 1 })
+    expect(req.user).toEqual({ id: '1', role: 'member' })
     expect(next).toHaveBeenCalledWith()
+  })
+
+  it('有效令牌但用户不存在应返回 401', async () => {
+    req.headers.authorization = 'Bearer valid-token'
+    mockVerify.mockReturnValue({ userId: 99 })
+    mockQueryOne.mockResolvedValue(null)
+
+    await authenticate(req, res, next)
+
+    expect(req.user).toBeUndefined()
+    expect(next).toHaveBeenCalledTimes(1)
+    const error = next.mock.calls[0][0]
+    expect(error.statusCode).toBe(401)
+    expect(error.message).toBe('用户不存在或已被禁用')
+  })
+
+  it('有效令牌但数据库查询异常应返回 500', async () => {
+    req.headers.authorization = 'Bearer valid-token'
+    mockVerify.mockReturnValue({ userId: 1 })
+    mockQueryOne.mockRejectedValue(new Error('Connection refused'))
+
+    await authenticate(req, res, next)
+
+    expect(req.user).toBeUndefined()
+    expect(next).toHaveBeenCalledTimes(1)
+    const error = next.mock.calls[0][0]
+    expect(error.statusCode).toBe(500)
+    expect(error.message).toBe('认证验证失败')
   })
 })
 
@@ -196,6 +225,19 @@ describe('requireRole', () => {
     await middleware(req, res, next)
 
     expect(next).toHaveBeenCalledWith()
+  })
+
+  it('DB 查询异常应返回 500', async () => {
+    req.user = { id: 1 }
+    mockQueryOne.mockRejectedValue(new Error('Connection refused'))
+    const middleware = requireRole('admin')
+
+    await middleware(req, res, next)
+
+    expect(next).toHaveBeenCalledTimes(1)
+    const error = next.mock.calls[0][0]
+    expect(error.statusCode).toBe(500)
+    expect(error.message).toBe('权限验证失败')
   })
 })
 

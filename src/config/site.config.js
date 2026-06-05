@@ -22,7 +22,7 @@ export const siteConfig = {
     author: '星际公民战队',
     email: 'contact@star-citizen-team.cn',
     discord: 'https://discord.gg/star-citizen-cn',
-    qqGroup: '请填入真实QQ群号',
+    qqGroup: '',  // 请填入真实QQ群号，如 '876543210'
     github: 'https://github.com/star-citizen-team',
     year: new Date().getFullYear()
   },
@@ -81,15 +81,15 @@ export const siteConfig = {
     sections: [
       {
         title: '我们是谁',
-        content: '替换为团队简介：组织定位、风格、主要玩法方向。'
+        content: '面向星际公民玩家的团队门户，展示组织定位、核心成员、活动任务与招募信息。'
       },
       {
         title: '我们的目标',
-        content: '替换为中长期目标：成员成长、行动规划、对外合作。'
+        content: '培养核心成员团队协作能力、规划定期星际探索与战斗任务、建立与其他组织的战略合作网络。'
       },
       {
         title: '文化与纪律',
-        content: '替换为行为准则：沟通方式、活动出勤、协作流程。'
+        content: '尊重团队成员、保持积极沟通、按时参加约定活动、遵守任务分配与协作流程。'
       }
     ],
     timeline: [
@@ -129,18 +129,18 @@ export const siteConfig = {
    */
   contact: {
     channels: [
-      { label: 'Discord', value: '待填', href: '#' },
-      { label: '邮箱', value: 'team@example.com', href: 'mailto:team@example.com' },
-      { label: 'QQ群', value: '待填', href: '#' }
+      { label: 'Discord', value: 'Star Citizen CN', href: 'https://discord.gg/star-citizen-cn' },
+      { label: '邮箱', value: 'contact@star-citizen-team.cn', href: 'mailto:contact@star-citizen-team.cn' },
+      { label: 'QQ群', value: '请填入QQ群号', href: '#' }
     ],
     cooperation: {
       description: '可放置合作方向、商务联系窗口与响应时间说明。我们欢迎与其他组织建立长期合作关系，共同探索星际公民的无限可能。',
       responseTime: '24-48 小时'
     },
     socialLinks: [
-      { platform: 'bilibili', url: '#', label: 'Bilibili' },
-      { platform: 'weibo', url: '#', label: '微博' },
-      { platform: 'twitter', url: '#', label: 'Twitter' }
+      { platform: 'bilibili', url: '', label: 'Bilibili' },
+      { platform: 'weibo', url: '', label: '微博' },
+      { platform: 'twitter', url: '', label: 'Twitter' }
     ]
   },
 

@@ -178,6 +178,9 @@
 </template>
 
 <script setup>
+import { createLogger } from '../../utils/logger.js'
+const logger = createLogger('ApplicationsAdmin')
+
 /**
  * 申请审核管理页面逻辑
  * @description 管理入队申请的审核流程，包括列表展示、状态筛选、搜索和审核操作
@@ -253,7 +256,7 @@ async function loadApplications(offset = 0) {
       pagination.value = response.pagination
     }
   } catch (error) {
-    console.error('加载申请列表失败:', error)
+    logger.error('加载申请列表失败:', error)
   }
 }
 
@@ -279,7 +282,7 @@ async function updateStatus(id, status) {
       }
     }
   } catch (error) {
-    console.error('更新状态失败:', error)
+    logger.error('更新状态失败:', error)
   }
 }
 

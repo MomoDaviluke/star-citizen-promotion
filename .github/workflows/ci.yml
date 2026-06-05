@@ -192,6 +192,8 @@ jobs:
   security-scan:
     name: 安全扫描
     runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - name: 检出代码
         uses: actions/checkout@v4

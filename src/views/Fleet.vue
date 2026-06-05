@@ -1,24 +1,31 @@
 <!--
-  @file 舰队展示视图组件
-  @description 展示战队拥有的所有飞船，支持筛选、搜索、查看详情
+  @file 舰队展示视图组件 - Stellar Nexus 星渊枢纽风格
+  @description 展示战队拥有的所有飞船，采用Stellar Nexus视觉系统
   @module views/Fleet
+  @version 3.0 - Stellar Nexus视觉系统
 -->
-
-<!-- 重复的脚本已被移除 -->
 
 <template>
   <div class="fleet-page">
+    <!-- 星云背景装饰 -->
+    <div class="page-nebulae">
+      <div class="nebula-blob nebula-blob--purple"></div>
+      <div class="nebula-blob nebula-blob--cyan"></div>
+    </div>
+
     <!-- 页面标题区域 -->
-    <PageTitle
+    <PageHeader
+      backgroundImage="/images/sc/sc-fleet.jpg"
       title="舰队展示"
-      subtitle="展示战队拥有的所有飞船，支持按类别筛选和搜索"
+      subtitle="战队飞船资产清单与部署状态监控"
+      systemId="SYS.FLEET // V.3.0"
     />
 
     <!-- 操作栏 -->
     <div class="fleet-controls">
       <!-- 筛选器 -->
       <div class="filter-group">
-        <BaseButton
+        <TechButton
           v-for="cat in categories"
           :key="cat.value"
           :variant="filter === cat.value ? 'primary' : 'outline'"
@@ -26,8 +33,8 @@
           @click="setFilter(cat.value)"
         >
           {{ cat.label }}
-          <BaseBadge v-if="cat.count > 0" :text="cat.count.toString()" variant="primary" size="sm" />
-        </BaseButton>
+          <span v-if="cat.count > 0" class="filter-count font-data">{{ cat.count }}</span>
+        </TechButton>
       </div>
 
       <!-- 搜索框 -->
@@ -39,109 +46,70 @@
           class="search-input"
           @input="setSearchQuery(searchQuery)"
         />
-        <span class="search-icon">🔍</span>
+        <span class="search-icon">◈</span>
       </div>
     </div>
 
-    <!-- 舰队统计 -->
-    <div class="fleet-stats grid">
-      <BaseCard variant="primary" hoverable>
-        <div class="stat-item">
-          <span class="stat-label">舰队总数</span>
-          <span class="stat-value">{{ totalShips }}</span>
+    <!-- 舰队统计 - MFD面板 -->
+    <div class="fleet-stats" v-scroll-reveal="{ animation: 'fadeUp', delay: 0.1 }">
+      <MFDPanel
+        v-for="(stat, index) in fleetStats"
+        :key="stat.label"
+        :variant="index === 0 ? 'primary' : 'secondary'"
+        :title="stat.label.toUpperCase()"
+        :subtitle="'METRIC-' + (index + 1)"
+        icon="◈"
+        :status="'LIVE'"
+        statusType="online"
+        class="stat-panel"
+      >
+        <div class="stat-content">
+          <span class="stat-value font-data">{{ stat.value }}</span>
+          <span class="stat-unit font-data">{{ stat.unit }}</span>
         </div>
-      </BaseCard>
-      <BaseCard variant="success" hoverable>
-        <div class="stat-item">
-          <span class="stat-label">总价值</span>
-          <span class="stat-value">{{ formatUEC(totalValue) }} UEC</span>
-        </div>
-      </BaseCard>
-      <BaseCard variant="warning" hoverable>
-        <div class="stat-item">
-          <span class="stat-label">可部署</span>
-          <span class="stat-value">{{ availableCount }}</span>
-        </div>
-      </BaseCard>
+      </MFDPanel>
     </div>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
-      <p>加载舰队数据中...</p>
+      <p class="font-data">加载舰队数据中...</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p class="error-message">{{ error }}</p>
-      <BaseButton variant="primary" @click="loadData">重试</BaseButton>
+      <TechButton variant="primary" @click="loadData">重试</TechButton>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="filteredShips.length === 0" class="empty-state">
       <p>暂无飞船数据</p>
-      <BaseButton v-if="isAdmin" variant="primary" @click="showAddDialog = true">
+      <TechButton v-if="isAdmin" variant="primary" @click="showAddDialog = true">
         添加飞船
-      </BaseButton>
+      </TechButton>
     </div>
 
-    <!-- 飞船网格 -->
-    <div v-else class="fleet-grid grid">
-      <BaseCard
+    <!-- 飞船网格 - ShipCard 风格 + 筛选动画过渡 -->
+    <TransitionGroup
+      v-else
+      name="fleet-shuffle"
+      tag="div"
+      class="fleet-grid"
+      v-scroll-reveal="{ animation: 'fadeUp', delay: 0.15 }"
+    >
+      <ShipCard
         v-for="ship in filteredShips"
         :key="ship.id"
-        hoverable
-        interactive
-        show-corners
+        :ship="{
+          ...ship,
+          category: ship.category || 'combat'
+        }"
+        :showStats="true"
+        class="fleet-ship-card"
         @click="selectShip(ship)"
-      >
-        <template #media>
-          <div class="ship-image">
-            <img :src="ship.image || '/placeholder-ship.jpg'" :alt="ship.name" />
-            <BaseBadge
-              :variant="getStatusVariant(ship.status)"
-              class="ship-status"
-            >
-              {{ getStatusText(ship.status) }}
-            </BaseBadge>
-          </div>
-        </template>
-
-        <h3 class="ship-name">{{ ship.name }}</h3>
-        <p class="ship-callsign">{{ ship.callsign }}</p>
-
-        <div class="ship-info">
-          <div class="info-item">
-            <span class="info-label">型号</span>
-            <span class="info-value">{{ ship.ship }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">类别</span>
-            <span class="info-value">{{ getCategoryText(ship.category) }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">价值</span>
-            <span class="info-value">{{ formatUEC(ship.value) }} UEC</span>
-          </div>
-        </div>
-
-        <template #footer>
-          <div class="card-actions">
-            <BaseButton variant="outline" size="sm" @click.stop="viewShipDetail(ship)">
-              查看详情
-            </BaseButton>
-            <BaseButton
-              v-if="isAdmin"
-              variant="primary"
-              size="sm"
-              @click.stop="editShip(ship)"
-            >
-              编辑
-            </BaseButton>
-          </div>
-        </template>
-      </BaseCard>
-    </div>
+      />
+    </TransitionGroup>
 
     <!-- 添加/编辑弹窗 -->
     <BaseModal
@@ -151,23 +119,23 @@
     >
       <form @submit.prevent="saveShip" class="ship-form">
         <div class="form-group">
-          <label>飞船名称 *</label>
+          <label class="font-data">飞船名称 *</label>
           <input v-model="shipForm.name" type="text" required class="form-input" />
         </div>
 
         <div class="form-group">
-          <label>呼号</label>
+          <label class="font-data">呼号</label>
           <input v-model="shipForm.callsign" type="text" class="form-input" />
         </div>
 
         <div class="form-group">
-          <label>飞船型号 *</label>
+          <label class="font-data">飞船型号 *</label>
           <input v-model="shipForm.ship" type="text" required class="form-input" />
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>类别</label>
+            <label class="font-data">类别</label>
             <select v-model="shipForm.category" class="form-input">
               <option value="combat">战斗</option>
               <option value="transport">运输</option>
@@ -177,7 +145,7 @@
           </div>
 
           <div class="form-group">
-            <label>状态</label>
+            <label class="font-data">状态</label>
             <select v-model="shipForm.status" class="form-input">
               <option value="available">可用</option>
               <option value="borrowed">出借中</option>
@@ -188,27 +156,27 @@
         </div>
 
         <div class="form-group">
-          <label>价值 (UEC)</label>
+          <label class="font-data">价值 (UEC)</label>
           <input v-model.number="shipForm.value" type="number" min="0" class="form-input" />
         </div>
 
         <div class="form-group">
-          <label>图片URL</label>
+          <label class="font-data">图片URL</label>
           <input v-model="shipForm.image" type="text" class="form-input" />
         </div>
 
         <div class="form-group">
-          <label>描述</label>
+          <label class="font-data">描述</label>
           <textarea v-model="shipForm.description" rows="3" class="form-input"></textarea>
         </div>
 
         <div class="form-actions">
-          <BaseButton type="button" variant="outline" @click="showAddDialog = false">
+          <TechButton type="button" variant="outline" @click="showAddDialog = false">
             取消
-          </BaseButton>
-          <BaseButton type="submit" variant="primary">
+          </TechButton>
+          <TechButton type="submit" variant="primary">
             {{ editingShip ? '更新' : '添加' }}
-          </BaseButton>
+          </TechButton>
         </div>
       </form>
     </BaseModal>
@@ -225,32 +193,34 @@
         </div>
 
         <div class="detail-info">
-          <h3>{{ selectedShip.name }}</h3>
-          <p class="callsign">{{ selectedShip.callsign }}</p>
+          <h3 class="font-tech">{{ selectedShip.name }}</h3>
+          <p class="callsign font-data">{{ selectedShip.callsign }}</p>
 
           <div class="detail-grid">
             <div class="detail-item">
-              <span class="label">型号</span>
+              <span class="label font-data">MODEL</span>
               <span class="value">{{ selectedShip.ship }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">类别</span>
+              <span class="label font-data">CLASS</span>
               <span class="value">{{ getCategoryText(selectedShip.category) }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">状态</span>
-              <BaseBadge :variant="getStatusVariant(selectedShip.status)">
-                {{ getStatusText(selectedShip.status) }}
-              </BaseBadge>
+              <span class="label font-data">STATUS</span>
+              <StatusIndicator
+                :type="getStatusType(selectedShip.status)"
+                :label="getStatusText(selectedShip.status)"
+                size="small"
+              />
             </div>
             <div class="detail-item">
-              <span class="label">价值</span>
-              <span class="value">{{ formatUEC(selectedShip.value) }} UEC</span>
+              <span class="label font-data">VALUE</span>
+              <span class="value font-data">{{ formatUEC(selectedShip.value) }} UEC</span>
             </div>
           </div>
 
           <div v-if="selectedShip.description" class="detail-description">
-            <h4>描述</h4>
+            <h4 class="font-data">DESCRIPTION</h4>
             <p>{{ selectedShip.description }}</p>
           </div>
         </div>
@@ -261,18 +231,23 @@
 
 <script setup>
 /**
- * 舰队展示视图组件
+ * 舰队展示视图组件 - MFD军事终端风格
  * @description 展示战队飞船列表，支持筛选、搜索、增删改查
+ * @version 2.0 - Starship Ark视觉系统
  */
 
 import { ref, computed, onMounted } from 'vue'
 import { useFleetStore } from '@/stores/fleet'
 import { useAuthStore } from '@/stores/auth'
-import PageTitle from '@/components/common/PageTitle.vue'
-import BaseButton from '@/components/common/BaseButton.vue'
-import BaseCard from '@/components/common/BaseCard.vue'
-import BaseBadge from '@/components/common/BaseBadge.vue'
+import { createLogger } from '../utils/logger.js'
+import MFDPanel from '@/components/ui/MFDPanel.vue'
+import TechButton from '@/components/ui/TechButton.vue'
+import StatusIndicator from '@/components/ui/StatusIndicator.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import ShipCard from '@/components/ui/ShipCard.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+
+const logger = createLogger('Fleet')
 
 const fleetStore = useFleetStore()
 const authStore = useAuthStore()
@@ -309,6 +284,12 @@ const availableCount = computed(() =>
   fleetStore.ships.filter(s => s.status === 'available').length
 )
 
+const fleetStats = computed(() => [
+  { label: '舰队总数', value: totalShips.value.toString(), unit: 'SHIPS' },
+  { label: '总价值', value: formatUEC(totalValue.value), unit: 'UEC' },
+  { label: '可部署', value: availableCount.value.toString(), unit: 'READY' }
+])
+
 const categories = computed(() => [
   { label: '全部', value: 'all', count: fleetStore.ships.length },
   { label: '战斗', value: 'combat', count: fleetStore.shipCategories.combat || 0 },
@@ -317,9 +298,18 @@ const categories = computed(() => [
   { label: '支援', value: 'support', count: fleetStore.shipCategories.support || 0 }
 ])
 
-// 方法
+/**
+ * 加载舰队数据
+ * @description 调用 store 获取飞船列表，错误由 store 内部捕获并设置到 error 状态
+ *              此处仅做静默兜底，防止异步错误冒泡到 ErrorBoundary 组件
+ */
 async function loadData() {
-  await fleetStore.fetchShips()
+  try {
+    await fleetStore.fetchShips()
+  } catch {
+    // store 已将错误信息写入 fleetStore.error，页面模板自动展示错误状态
+    // 此处不重新抛出，避免触发上层 ErrorBoundary 导致整页白屏
+  }
 }
 
 function setFilter(value) {
@@ -370,18 +360,28 @@ async function saveShip() {
     showAddDialog.value = false
     resetForm()
   } catch (err) {
-    console.error('保存失败:', err)
+    logger.error('保存失败:', err)
   }
 }
 
-function getStatusVariant(status) {
+function getStatusType(status) {
   const map = {
-    available: 'success',
+    available: 'online',
     borrowed: 'warning',
     inMission: 'primary',
-    maintenance: 'danger'
+    maintenance: 'offline'
   }
   return map[status] || 'info'
+}
+
+function getShipVariant(status) {
+  const map = {
+    available: 'primary',
+    borrowed: 'secondary',
+    inMission: 'primary',
+    maintenance: 'secondary'
+  }
+  return map[status] || 'secondary'
 }
 
 function getStatusText(status) {
@@ -416,13 +416,134 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ========== 页面容器 ========== */
 .fleet-page {
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
+  position: relative;
 }
 
-/* 操作栏 */
+/* 星云背景装饰 */
+.page-nebulae {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nebula-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  animation: nebula-drift 20s ease-in-out infinite;
+}
+
+.nebula-blob--purple {
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.08), transparent 70%);
+  top: -10%;
+  right: -10%;
+}
+
+.nebula-blob--cyan {
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.06), transparent 70%);
+  bottom: 10%;
+  left: -10%;
+  animation-delay: -7s;
+}
+
+/* ========== 页面标题区域 ========== */
+.page-header-mfd {
+  position: relative;
+  padding: 2rem;
+  margin: -2rem -1.5rem 3rem;
+  background: linear-gradient(135deg, rgba(12, 20, 36, 0.95), rgba(6, 11, 20, 0.98));
+  border: 1px solid var(--nebula-purple);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.page-header-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.page-header-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.15;
+  filter: saturate(0.5) brightness(0.4);
+  mix-blend-mode: screen;
+}
+
+.page-header-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(12, 20, 36, 0.9), rgba(6, 11, 20, 0.95));
+}
+
+.page-header-mfd::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--nebula-purple), transparent);
+  animation: scanLineHorizontal 3s linear infinite;
+  z-index: 1;
+}
+
+.page-header-content {
+  position: relative;
+  z-index: 1;
+}
+
+.page-id {
+  display: block;
+  color: var(--nebula-purple);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  margin-bottom: 0.5rem;
+}
+
+.page-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.page-header-decoration {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--nebula-purple), transparent);
+}
+
+/* ========== 操作栏 ========== */
 .fleet-controls {
   display: flex;
   flex-wrap: wrap;
@@ -437,6 +558,15 @@ onMounted(() => {
   gap: var(--space-sm);
 }
 
+.filter-count {
+  margin-left: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  background: rgba(124, 58, 237, 0.2);
+  border-radius: 2px;
+  font-size: 0.65rem;
+  color: var(--nebula-violet);
+}
+
 .search-box {
   position: relative;
   width: 300px;
@@ -445,18 +575,23 @@ onMounted(() => {
 .search-input {
   width: 100%;
   padding: 0.625rem 1rem 0.625rem 2.5rem;
-  background: var(--bg-medium);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  background: rgba(10, 20, 35, 0.8);
+  border: 1px solid var(--nebula-purple);
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: var(--text-sm);
+  font-family: var(--font-mono);
   transition: all var(--transition-normal);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--glow-primary);
+  border-color: var(--nebula-violet);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
 }
 
 .search-icon {
@@ -464,110 +599,84 @@ onMounted(() => {
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: var(--text-sm);
+  font-size: 0.8rem;
+  color: var(--nebula-purple);
 }
 
-/* 舰队统计 */
+/* ========== 舰队统计 ========== */
 .fleet-stats {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
 }
 
-.stat-item {
+.stat-panel {
+  transition: transform 0.3s ease;
+}
+
+.stat-panel:hover {
+  transform: translateY(-4px);
+}
+
+.stat-content {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.stat-label {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 1rem 0;
 }
 
 .stat-value {
-  font-size: var(--text-xl);
+  font-size: 2.5rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
-/* 飞船网格 */
-.fleet-grid {
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-}
-
-/* 飞船卡片 */
-.ship-image {
-  position: relative;
-  margin: -1.5rem -1.5rem 1rem;
-  overflow: hidden;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-}
-
-.ship-image img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  transition: transform var(--transition-slow);
-}
-
-.ship-image:hover img {
-  transform: scale(1.05);
-}
-
-.ship-status {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-
-.ship-name {
-  margin: 0 0 0.25rem;
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.ship-callsign {
-  margin: 0 0 1rem;
-  font-size: var(--text-sm);
-  color: var(--text-accent);
-  text-transform: uppercase;
+.stat-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
   letter-spacing: 0.1em;
 }
 
-.ship-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
+/* ========== 飞船网格 ========== */
+.fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.fleet-ship-card {
+  height: 100%;
 }
 
-.info-label {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/* ===== 筛选动画过渡 ===== */
+.fleet-shuffle-enter-active {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.info-value {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-  font-weight: 500;
+.fleet-shuffle-leave-active {
+  transition: all 0.3s cubic-bezier(0.7, 0, 0.84, 0);
+  position: absolute;
 }
 
-.card-actions {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: flex-end;
+.fleet-shuffle-enter-from {
+  opacity: 0;
+  transform: scale(0.85) translateY(20px);
+  filter: brightness(1.5) blur(4px);
 }
 
-/* 加载/错误/空状态 */
+.fleet-shuffle-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(-10px);
+  filter: brightness(0.5) blur(2px);
+}
+
+.fleet-shuffle-move {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ========== 加载/错误/空状态 ========== */
 .loading-state,
 .error-state,
 .empty-state {
@@ -584,7 +693,7 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border: 3px solid var(--border-subtle);
-  border-top-color: var(--color-primary);
+  border-top-color: var(--nebula-violet);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -596,10 +705,10 @@ onMounted(() => {
 }
 
 .error-message {
-  color: var(--color-danger);
+  color: var(--danger);
 }
 
-/* 表单样式 */
+/* ========== 表单样式 ========== */
 .ship-form {
   display: flex;
   flex-direction: column;
@@ -627,18 +736,23 @@ onMounted(() => {
 
 .form-input {
   padding: 0.625rem 1rem;
-  background: var(--bg-deep);
-  border: 1px solid var(--border-subtle);
+  background: rgba(10, 20, 35, 0.8);
+  border: 1px solid var(--nebula-purple);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: var(--text-sm);
+  font-family: var(--font-mono);
   transition: all var(--transition-fast);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(95, 169, 255, 0.2);
+  border-color: var(--nebula-violet);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
 }
 
 .form-input select,
@@ -655,17 +769,56 @@ onMounted(() => {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* 详情弹窗 */
+/* ========== 详情弹窗 — 全息投影风格 ========== */
 .ship-detail {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-xl);
+  position: relative;
+}
+
+.ship-detail::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(6, 182, 212, 0.03) 2px,
+      rgba(6, 182, 212, 0.03) 4px
+    );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.detail-media {
+  position: relative;
+  overflow: hidden;
+}
+
+.detail-media::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(6, 11, 20, 0.8), transparent);
+  pointer-events: none;
 }
 
 .detail-media img {
   width: 100%;
   height: auto;
   border-radius: var(--radius-md);
+  filter: saturate(0.7) brightness(0.85);
+  transition: filter 0.3s ease;
+}
+
+.detail-media:hover img {
+  filter: saturate(1) brightness(1);
 }
 
 .detail-info {
@@ -682,7 +835,7 @@ onMounted(() => {
 
 .callsign {
   margin: 0;
-  color: var(--text-accent);
+  color: var(--nebula-violet);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -724,7 +877,22 @@ onMounted(() => {
   line-height: 1.6;
 }
 
-/* 响应式 */
+/* ========== 动画 ========== */
+@keyframes scanLineHorizontal {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* ========== 响应式 ========== */
 @media (max-width: 1024px) {
   .ship-detail {
     grid-template-columns: 1fr;
@@ -732,6 +900,15 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .page-header-mfd {
+    margin: -1rem -1rem 2rem;
+    padding: 1.5rem;
+  }
+
+  .page-header-decoration {
+    display: none;
+  }
+
   .fleet-controls {
     flex-direction: column;
     align-items: stretch;
@@ -741,12 +918,26 @@ onMounted(() => {
     width: 100%;
   }
 
+  .fleet-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .fleet-grid {
     grid-template-columns: 1fr;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .fleet-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-value {
+    font-size: 2rem;
   }
 }
 </style>
