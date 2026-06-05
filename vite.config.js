@@ -11,6 +11,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { VitePWA } from 'vite-plugin-pwa'
 
 /**
  * Vite 配置导出
@@ -36,7 +37,75 @@ export default defineConfig(({ mode }) => {
      */
     plugins: [
       vue(),
-      ...(mode !== 'production' ? [vueDevTools()] : [])
+      ...(mode !== 'production' ? [vueDevTools()] : []),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'favicon.svg', 'pwa-icon.svg', 'og-cover.svg'],
+        manifest: {
+          name: '星际公民战队 · Star Citizen Squadron',
+          short_name: 'SC Squadron',
+          description: '面向星际公民玩家的专业团队门户',
+          theme_color: '#0c1424',
+          background_color: '#060b14',
+          display: 'standalone',
+          orientation: 'portrait-primary',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            {
+              src: '/pwa-icon.svg',
+              sizes: '192x192',
+              type: 'image/svg+xml'
+            },
+            {
+              src: '/pwa-icon.svg',
+              sizes: '512x512',
+              type: 'image/svg+xml'
+            },
+            {
+              src: '/pwa-icon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any maskable'
+            }
+          ],
+          categories: ['games', 'community'],
+          lang: 'zh-CN',
+          dir: 'ltr'
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https?:\/\/.*\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+                networkTimeoutSeconds: 5
+              }
+            },
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|webp|gif)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+                expiration: { maxEntries: 100, maxAgeSeconds: 86400 * 30 }
+              }
+            },
+            {
+              urlPattern: /\.(?:woff2?|ttf|otf|eot)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'font-cache',
+                expiration: { maxEntries: 20, maxAgeSeconds: 86400 * 180 }
+              }
+            }
+          ],
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//]
+        }
+      })
     ],
 
     /**
@@ -112,7 +181,8 @@ export default defineConfig(({ mode }) => {
            * @description 将 Vue 核心库单独打包，利用浏览器缓存
            */
           manualChunks: {
-            vue: ['vue', 'vue-router']
+            vue: ['vue', 'vue-router'],
+            gsap: ['gsap', 'gsap/ScrollTrigger']
           }
         }
       }
