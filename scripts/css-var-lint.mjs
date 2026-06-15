@@ -31,7 +31,7 @@ const CANDIDATE_PATHS = [
 function findVariablesFile() {
   for (const rel of CANDIDATE_PATHS) {
     const full = join(projectRoot, rel);
-    try { statSync(full); return full; } catch {}
+    try { statSync(full); return full; } catch { /* not found, continue */ }
   }
   const queue = [projectRoot];
   while (queue.length) {
@@ -43,7 +43,7 @@ function findVariablesFile() {
         if (entry.isDirectory()) { queue.push(full); continue; }
         if (entry.name === 'variables.css' || entry.name === '_variables.css') return full;
       }
-    } catch {}
+    } catch { /* permission or symlink error, skip */ }
   }
   return null;
 }
@@ -89,7 +89,7 @@ function collectFiles(dir) {
       if (entry.isDirectory()) { files.push(...collectFiles(full)); continue; }
       if (EXTS.has(extname(entry.name).toLowerCase())) files.push(full);
     }
-  } catch {}
+  } catch { /* permission or symlink error, skip */ }
   return files;
 }
 
