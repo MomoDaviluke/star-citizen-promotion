@@ -12,7 +12,20 @@ vi.mock('vue-router', () => ({
     name: 'RouterLink',
     template: '<a class="mock-router-link"><slot /></a>',
     props: ['to']
-  }
+  },
+  RouterView: {
+    name: 'RouterView',
+    template: '<div><slot /></div>'
+  },
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    currentRoute: { value: { path: '/' } }
+  })),
+  useRoute: vi.fn(() => ({
+    path: '/',
+    params: {},
+    query: {}
+  }))
 }))
 
 import Home from '@/views/Home.vue'

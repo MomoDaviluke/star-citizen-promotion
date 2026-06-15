@@ -2,14 +2,33 @@ import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
+// Workaround for vite 8 + Windows: public asset paths like /images/sc/... get resolved
+// to invalid file:/// URLs without drive letters. This plugin rewrites them.
+const publicAssetPlugin = () => ({
+  name: 'public-asset-fix',
+  enforce: 'pre',
+  resolveId(id) {
+    if (id.startsWith('/images/') || id.startsWith('/favicon') || id.startsWith('/pwa-')) {
+      return { id: 'C:/' + id.slice(1), external: false }
+    }
+  }
+})
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), publicAssetPlugin()],
   test: {
-    environment: 'happy-dom',
+    environment: 'jsdom',
+    publicDir: 'public',
     globals: true,
     pool: 'threads',
     fileParallelism: false,
     include: ['tests/**/*.{test,spec}.{js,ts}'],
+    setupFiles: ['tests/setup.js'],
+    server: {
+      deps: {
+        inline: ['vite-plugin-pwa']
+      }
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
