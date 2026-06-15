@@ -155,14 +155,14 @@ function handleClick(event) {
 /* 主要按钮 */
 .base-button--primary {
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-bright));
-  color: var(--raw-void-1);
+  color: var(--color-bg);
   border-color: var(--color-accent);
-  box-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-accent);
 }
 
 .base-button--primary:hover:not(.is-disabled):not(.is-loading) {
   transform: translateY(-2px);
-  box-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-accent);
 }
 
 .base-button--primary:active:not(.is-disabled):not(.is-loading) {
@@ -214,19 +214,19 @@ function handleClick(event) {
 
 .base-button--danger:hover:not(.is-disabled):not(.is-loading) {
   background: #ff5252;
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--glow-status-danger);
 }
 
 /* 成功按钮 */
 .base-button--success {
   background: var(--color-status-online);
-  color: var(--raw-void-1);
+  color: var(--color-bg);
   border-color: var(--color-status-online);
 }
 
 .base-button--success:hover:not(.is-disabled):not(.is-loading) {
   background: #3dd9c4;
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.3);
+  box-shadow: var(--glow-status-success);
 }
 
 /* ========== 禁用状态 ========== */

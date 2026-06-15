@@ -207,7 +207,7 @@ function handleMouseLeave(event) {
 /* ========== 悬停效果 ========== */
 .base-card.is-hoverable:hover {
   transform: translateY(-4px);
-  box-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-accent);
   border-color: var(--color-border);
 }
 

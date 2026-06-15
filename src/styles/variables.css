@@ -147,11 +147,11 @@
   --transition-fast: var(--duration-fast);
   --transition-normal: var(--duration-normal);
   --transition-slow: var(--duration-slow);
-  --glow-primary: var(--glow-cyan);
-  --glow-accent: var(--glow-cyan);
-  --glow-strong: var(--glow-cyan);
-  --glow-danger: 0 0 16px rgba(239, 68, 68, 0.3);
-  --glow-success: 0 0 16px rgba(34, 197, 94, 0.3);
+  --glow-primary: var(--glow-accent);
+  --glow-cyan: var(--glow-accent);
+  --glow-strong: var(--glow-accent);
+  --glow-danger: var(--glow-status-danger);
+  --glow-success: var(--glow-status-success);
   --glow-nebula: 0 0 16px rgba(167, 139, 250, 0.3);
   --nebula-glow: 0 0 16px rgba(167, 139, 250, 0.3);
   --nebula-violet: var(--nebula-purple);
@@ -190,10 +190,12 @@
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
   /* Glow */
-  --glow-cyan: 0 0 20px rgba(74, 158, 255, 0.3), 0 0 60px rgba(74, 158, 255, 0.1);
+  --glow-accent: 0 0 20px rgba(74, 158, 255, 0.3), 0 0 60px rgba(74, 158, 255, 0.1);
   --glow-amber: 0 0 20px rgba(255, 179, 0, 0.3), 0 0 60px rgba(255, 179, 0, 0.1);
   --glow-card-hover: 0 0 30px rgba(74, 158, 255, 0.08);
   --shadow-accent: 0 0 20px rgba(74, 158, 255, 0.15);
+  --glow-status-danger: 0 0 16px rgba(239, 68, 68, 0.3);
+  --glow-status-success: 0 0 16px rgba(34, 197, 94, 0.3);
 
   /* Animation Duration */
   --float-duration: 4s;

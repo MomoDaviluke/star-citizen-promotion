@@ -187,7 +187,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
   backdrop-filter: blur(8px);
-  box-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-accent);
   white-space: nowrap;
   pointer-events: none;
   transition: all var(--duration-fast);
@@ -200,12 +200,12 @@ onUnmounted(() => {
 
 .tooltip--primary {
   border-color: rgba(95, 169, 255, 0.4);
-  box-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-accent);
 }
 
 .tooltip--success {
   border-color: rgba(78, 205, 196, 0.4);
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.3);
+  box-shadow: var(--glow-status-success);
 }
 
 .tooltip--warning {
@@ -214,7 +214,7 @@ onUnmounted(() => {
 
 .tooltip--danger {
   border-color: rgba(255, 107, 107, 0.4);
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--glow-status-danger);
 }
 
 /* ========== 箭头 ========== */
