@@ -97,33 +97,20 @@ export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: Ne
  * @returns Express 中间件函数
  */
 export function requireRole(...allowedRoles: string[]) {
-  return async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
     if (!req.user || !req.user.id) {
       next(ApiError.unauthorized('请先登录'))
       return
     }
 
-    try {
-      const user = await queryOne<{ role: string }>(
-        'SELECT role FROM users WHERE id = ?',
-        [req.user.id]
-      )
-
-      if (!user) {
-        next(ApiError.unauthorized('用户不存在'))
-        return
-      }
-
-      if (!allowedRoles.includes(user.role)) {
-        next(ApiError.forbidden('权限不足，无权访问此资源'))
-        return
-      }
-
-      req.user.role = user.role
-      next()
-    } catch {
-      next(ApiError.internal('权限验证失败'))
+    // authenticate 已将 role 注入 req.user，无需重复查库
+    const userRole = req.user.role
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      next(ApiError.forbidden('权限不足，无权访问此资源'))
+      return
     }
+
+    next()
   }
 }
 

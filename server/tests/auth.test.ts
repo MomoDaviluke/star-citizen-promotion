@@ -207,37 +207,33 @@ describe('requireRole', () => {
   })
 
   it('角色匹配应通过', async () => {
-    req.user = { id: 1 }
-    mockQueryOne.mockResolvedValue({ role: 'admin' })
+    req.user = { id: 1, role: 'admin' }
     const middleware = requireRole('admin')
 
-    await middleware(req, res, next)
+    middleware(req, res, next)
 
     expect(next).toHaveBeenCalledWith()
-    expect(req.user.role).toBe('admin')
   })
 
   it('应支持多个角色', async () => {
-    req.user = { id: 1 }
-    mockQueryOne.mockResolvedValue({ role: 'editor' })
+    req.user = { id: 1, role: 'editor' }
     const middleware = requireRole('admin', 'editor')
 
-    await middleware(req, res, next)
+    middleware(req, res, next)
 
     expect(next).toHaveBeenCalledWith()
   })
 
-  it('DB 查询异常应返回 500', async () => {
+  it('缺少角色信息应返回 403', async () => {
     req.user = { id: 1 }
-    mockQueryOne.mockRejectedValue(new Error('Connection refused'))
     const middleware = requireRole('admin')
 
-    await middleware(req, res, next)
+    middleware(req, res, next)
 
     expect(next).toHaveBeenCalledTimes(1)
     const error = next.mock.calls[0][0]
-    expect(error.statusCode).toBe(500)
-    expect(error.message).toBe('权限验证失败')
+    expect(error.statusCode).toBe(403)
+    expect(error.message).toBe('权限不足，无权访问此资源')
   })
 })
 
@@ -252,19 +248,17 @@ describe('requireAdmin', () => {
   })
 
   it('管理员应通过', async () => {
-    req.user = { id: 1 }
-    mockQueryOne.mockResolvedValue({ role: 'admin' })
+    req.user = { id: 1, role: 'admin' }
 
-    await requireAdmin(req, res, next)
+    requireAdmin(req, res, next)
 
     expect(next).toHaveBeenCalledWith()
   })
 
   it('非管理员应返回 403', async () => {
-    req.user = { id: 1 }
-    mockQueryOne.mockResolvedValue({ role: 'user' })
+    req.user = { id: 1, role: 'user' }
 
-    await requireAdmin(req, res, next)
+    requireAdmin(req, res, next)
 
     expect(next).toHaveBeenCalledTimes(1)
     const error = next.mock.calls[0][0]

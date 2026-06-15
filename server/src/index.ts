@@ -157,15 +157,8 @@ app.use(cacheInvalidationMiddleware)
  */
 const apiLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
-  max: (req: Request) => {
-    const user = (req as Request & { user?: { role: string } }).user
-    if (user?.role === 'admin') return 1000
-    return config.rateLimit.max
-  },
-  keyGenerator: (req: Request) => {
-    const user = (req as Request & { user?: { id: string } }).user
-    return user?.id || req.ip || 'unknown'
-  },
+  max: config.rateLimit.max,
+  keyGenerator: (req: Request) => req.ip || 'unknown',
   message: { error: '请求过于频繁，请稍后再试' },
   standardHeaders: true,
   legacyHeaders: false
@@ -353,8 +346,19 @@ function gracefulShutdown(server: Server) {
 
     logger.info(`收到 ${signal} 信号，正在优雅关闭...`)
 
-    server.close(() => {
-      logger.info('HTTP 服务器已停止接受新连接')
+    // 设置超时强制退出，unref 允许正常退出时不被阻塞
+    const forceExit = setTimeout(() => {
+      logger.error('⚠️ 优雅关闭超时，强制退出')
+      process.exit(1)
+    }, 30000)
+    forceExit.unref()
+
+    // 等待 HTTP 服务器停止接受新连接
+    await new Promise<void>((resolve) => {
+      server.close(() => {
+        logger.info('HTTP 服务器已停止接受新连接')
+        resolve()
+      })
     })
 
     closeWebSocket()
@@ -365,11 +369,6 @@ function gracefulShutdown(server: Server) {
       const error = err as Error
       logger.error('关闭数据库连接池失败', { error: error.message })
     }
-
-    setTimeout(() => {
-      logger.error('⚠️ 优雅关闭超时，强制退出')
-      process.exit(1)
-    }, 30000)
 
     logger.info('✅ 服务器已优雅关闭')
     process.exit(0)

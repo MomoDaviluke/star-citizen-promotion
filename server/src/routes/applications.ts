@@ -67,6 +67,7 @@ router.get('/:id', [param('id').notEmpty().withMessage('申请 ID 不能为空')
 
 router.post(
   '/',
+  optionalAuth,
   [
     body('name').trim().notEmpty().withMessage('姓名不能为空').isLength({ max: 50 }).withMessage('姓名长度不能超过 50 个字符'),
     body('email').trim().isEmail().withMessage('请输入有效的邮箱地址').normalizeEmail(),
@@ -75,7 +76,7 @@ router.post(
     body('availability').optional().trim().isLength({ max: 200 }),
     body('reason').optional().trim().isLength({ max: 500 }).withMessage('加入原因不能超过 500 个字符')
   ],
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req)
       if (!errors.isEmpty()) {

@@ -164,7 +164,12 @@ export function metricsEndpoint(req: Request, res: Response): void {
   dbConnectionLimit.set(poolStatus.connectionLimit)
 
   res.set('Content-Type', register.contentType)
-  register.metrics().then((metrics: string) => res.end(metrics))
+  register.metrics()
+    .then((metrics: string) => res.end(metrics))
+    .catch((err: Error) => {
+      logger.error('指标收集失败', { error: err.message })
+      res.status(500).end('Internal Server Error')
+    })
 }
 
 export default register

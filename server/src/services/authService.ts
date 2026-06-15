@@ -77,7 +77,7 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
     role: string
     avatar: string | null
     password_hash: string
-  }>('SELECT * FROM users WHERE email = ?', [email])
+  }>('SELECT id, username, email, role, avatar, password_hash FROM users WHERE email = ?', [email])
 
   if (!user) {
     throw ApiError.unauthorized('邮箱或密码错误')

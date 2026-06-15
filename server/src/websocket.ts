@@ -24,6 +24,8 @@ interface ConnectionAttempt {
 
 let wss: WebSocketServer | null = null
 const clients = new Map<string, ClientInfo>()
+/** WebSocket 实例到 clientId 的反向映射，用于 O(1) 心跳检测 */
+const wsToClientId = new Map<WebSocket, string>()
 
 // 连接速率限制：每个 IP 每分钟最多 10 次连接
 const connectionAttempts = new Map<string, ConnectionAttempt>()
@@ -119,6 +121,7 @@ export function startWebSocket(server: HttpServer): void {
     }
 
     clients.set(clientId, client)
+    wsToClientId.set(ws, clientId)
 
     ws.on('pong', () => {
       client.isAlive = true
@@ -142,11 +145,13 @@ export function startWebSocket(server: HttpServer): void {
     ws.on('close', () => {
       logger.info('WebSocket 客户端断开', { clientId, userId: client.userId })
       clients.delete(clientId)
+      wsToClientId.delete(ws)
     })
 
     ws.on('error', (err) => {
       logger.error('WebSocket 错误', { error: err.message, clientId })
       clients.delete(clientId)
+      wsToClientId.delete(ws)
     })
 
     ws.send(JSON.stringify({
@@ -157,20 +162,21 @@ export function startWebSocket(server: HttpServer): void {
 
   const heartbeat = setInterval(() => {
     if (!wss) return
-    wss.clients.forEach((ws) => {
-      for (const [clientId, client] of clients) {
-        if (client.ws === ws) {
-          if (!client.isAlive) {
-            logger.info('WebSocket 心跳超时，断开连接', { clientId })
-            client.ws.terminate()
-            clients.delete(clientId)
-            return
-          }
-          client.isAlive = false
-          client.ws.ping()
-        }
+    for (const ws of wss.clients) {
+      const clientId = wsToClientId.get(ws)
+      if (!clientId) continue
+      const client = clients.get(clientId)
+      if (!client) continue
+      if (!client.isAlive) {
+        logger.info('WebSocket 心跳超时，断开连接', { clientId })
+        ws.terminate()
+        clients.delete(clientId)
+        wsToClientId.delete(ws)
+        continue
       }
-    })
+      client.isAlive = false
+      ws.ping()
+    }
   }, 30000)
 
   wss.on('close', () => {
@@ -180,6 +186,7 @@ export function startWebSocket(server: HttpServer): void {
       client.ws.close(1001, '服务器关闭')
     }
     clients.clear()
+    wsToClientId.clear()
     connectionAttempts.clear()
   })
 

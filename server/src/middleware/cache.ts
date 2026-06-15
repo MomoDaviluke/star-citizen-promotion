@@ -162,10 +162,16 @@ function matchRule(method: string, path: string): CacheRule | null {
   return null
 }
 
-/** 构建缓存键 */
+/** 构建缓存键（包含排序后的查询参数，防止分页/筛选数据串台） */
 function buildCacheKey(req: Request): string {
-  // GET 请求忽略查询参数（分页参数变化时命中同一缓存不够精确，但简化了实现）
-  return `GET:${req.path}`
+  const url = req.url || req.path || ''
+  const queryString = url.split('?')[1] || ''
+  if (!queryString) return `GET:${req.path}`
+  const sorted = [...new URLSearchParams(queryString)]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&')
+  return `GET:${req.path}?${sorted}`
 }
 
 /** 计算 ETag */
