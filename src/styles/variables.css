@@ -110,6 +110,7 @@
   --color-text-body: var(--raw-text-2);
   --color-text-label: var(--raw-text-3);
   --color-text-dim: var(--raw-text-4);
+  --color-text-hint: rgba(255, 255, 255, 0.35);
   --color-text-accent: var(--raw-cyan);
   --color-text-highlight: var(--raw-amber);
 
@@ -238,6 +239,7 @@
   --color-text-body: #374151;
   --color-text-label: #6b7280;
   --color-text-dim: #9ca3af;
+  --color-text-hint: rgba(0, 0, 0, 0.45);
 
   --color-border: rgba(0, 0, 0, 0.08);
   --color-border-hover: rgba(0, 0, 0, 0.15);

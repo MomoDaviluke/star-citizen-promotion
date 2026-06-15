@@ -1,6 +1,6 @@
 /**
  * @file 首页视图测试
- * @description 覆盖组件渲染、英雄区域、舰队概览、王牌飞行员
+ * @description 覆盖组件渲染、英雄区域、核心数据、舰队预览
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -54,56 +54,62 @@ describe('Home.vue', () => {
       expect(wrapper.html()).toContain('NEXUS')
     })
 
-    it('应该渲染 CTA 按钮', () => {
+    it('应该渲染 tagline', () => {
       const wrapper = mount(Home)
-      const actions = wrapper.find('.hero__actions')
-      expect(actions.exists()).toBe(true)
-      expect(actions.html()).toContain('加入战队')
-      expect(actions.html()).toContain('浏览舰队')
+      expect(wrapper.find('.hero__tagline').exists()).toBe(true)
+      expect(wrapper.html()).toContain('EXPLORE')
     })
   })
 
-  describe('统计卡片', () => {
-    it('应该渲染统计网格', () => {
+  describe('核心数据', () => {
+    it('应该渲染核心数据区域', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.stats-strip__grid').exists()).toBe(true)
+      expect(wrapper.find('.key-numbers').exists()).toBe(true)
     })
 
-    it('应该渲染 4 个统计卡片', () => {
+    it('应该渲染 2 个数据项', () => {
       const wrapper = mount(Home)
-      const stats = wrapper.findAll('.stats-strip__item')
-      expect(stats.length).toBe(4)
+      const numbers = wrapper.findAll('.key-number')
+      expect(numbers.length).toBe(2)
+    })
+
+    it('应该显示活跃成员数', () => {
+      const wrapper = mount(Home)
+      expect(wrapper.html()).toContain('128')
+      expect(wrapper.html()).toContain('ACTIVE PILOTS')
+    })
+
+    it('应该显示飞行小时数', () => {
+      const wrapper = mount(Home)
+      expect(wrapper.html()).toContain('2,400+')
+      expect(wrapper.html()).toContain('FLIGHT HOURS')
     })
   })
 
-  describe('舰队概览', () => {
-    it('应该渲染舰队区域', () => {
+  describe('舰队预览', () => {
+    it('应该渲染舰队预览区域', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.fleet-showcase').exists()).toBe(true)
+      expect(wrapper.find('.fleet-preview').exists()).toBe(true)
     })
 
-    it('应该渲染舰队卡片', () => {
+    it('应该渲染 3 张舰队卡片', () => {
       const wrapper = mount(Home)
-      const cards = wrapper.findAll('.bento-card')
-      expect(cards.length).toBe(2)
-    })
-  })
-
-  describe('王牌飞行员', () => {
-    it('应该渲染飞行员区域', () => {
-      const wrapper = mount(Home)
-      expect(wrapper.find('.pilot-section').exists()).toBe(true)
+      const cards = wrapper.findAll('.fleet-card')
+      expect(cards.length).toBe(3)
     })
 
-    it('应该渲染飞行员肖像', () => {
+    it('应该渲染舰船名称', () => {
       const wrapper = mount(Home)
-      const portrait = wrapper.find('.pilot-portrait')
-      expect(portrait.exists()).toBe(true)
+      expect(wrapper.html()).toContain('Aegis Hammerhead')
+      expect(wrapper.html()).toContain('RSI Constellation')
+      expect(wrapper.html()).toContain('Anvil Arrow')
     })
 
-    it('应该显示飞行员详情', () => {
+    it('应该包含查看全部舰队链接', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.pilot-detail').exists()).toBe(true)
+      const link = wrapper.find('.link-arrow')
+      expect(link.exists()).toBe(true)
+      expect(link.html()).toContain('查看全部舰队')
     })
   })
 
@@ -116,6 +122,13 @@ describe('Home.vue', () => {
     it('应该包含招募文案', () => {
       const wrapper = mount(Home)
       expect(wrapper.html()).toContain('READY TO JOIN')
+    })
+
+    it('应该包含申请按钮', () => {
+      const wrapper = mount(Home)
+      const actions = wrapper.find('.cta-actions')
+      expect(actions.exists()).toBe(true)
+      expect(actions.html()).toContain('START APPLICATION')
     })
   })
 })
