@@ -167,7 +167,10 @@ function buildCacheKey(req: Request): string {
 
 ### TD-13 CSS变量迁移计划
 
-**执行方式**：每组改完跑 `node scripts/css-var-lint.mjs . --strict`，deprecated 从 warning 升级 error，全过才算完成。
+**执行方式**：
+- 每组开 feature branch（`refactor/css-vars-group-1` ~ `group-4`），改完 lint --strict + dev 视觉确认后 merge 到 main
+- 每组改完跑 `node scripts/css-var-lint.mjs . --strict`，deprecated 从 warning 升级 error，全过才算完成
+- 第一组额外检查：`--text-secondary`（label级）和 `--text-muted`（dim级）在组件里是否有混用，确认每个组件确实需要两个层级
 
 | 组 | 组件 | 引用数 | 风险 | 状态 |
 |:---|:---|:---|:---|:---|
