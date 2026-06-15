@@ -112,7 +112,7 @@
   --raw-steel-dim: var(--raw-cyan-dim);
   --color-border-steel: rgba(var(--raw-cyan-rgb), 0.15);
 
-  /* Backward Compatibility Aliases — short names (旧版变量名) */
+  /* @deprecated-aliases — 旧版变量名，新代码请用上方语义化变量 */
   --text: var(--color-text-body);
   --text-primary: var(--color-text-heading);
   --text-secondary: var(--color-text-label);
@@ -160,6 +160,7 @@
   --link-index: 10;
   --duration-launch: 600ms;
   --data-flow: var(--raw-cyan);
+  /* @end-deprecated */
 
   /* Text */
   --color-text-heading: var(--raw-text-1);

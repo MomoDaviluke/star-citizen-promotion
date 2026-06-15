@@ -2,15 +2,21 @@
 
 /**
  * CSS Variable Integrity Lint
- * Scans all var() references in src/ and cross-checks against :root definitions.
- * Exit 0 = clean, Exit 1 = broken refs found.
- * Usage: node scripts/css-var-lint.mjs [project-root]
+ *
+ * Modes:
+ *   Default:  Checks for broken var() references (exit 1 if found)
+ *   --strict: Also fails on deprecated alias usage (exit 1)
+ *
+ * Exit codes: 0 = clean, 1 = issues found, 2 = config error
+ * Usage: node scripts/css-var-lint.mjs [--strict] [project-root]
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve, extname } from 'node:path';
 
-const projectRoot = resolve(process.argv[2] || '.');
+const args = process.argv.slice(2);
+const strict = args.includes('--strict');
+const projectRoot = resolve(args.find(a => !a.startsWith('--')) || '.');
 const SRC_DIR = join(projectRoot, 'src');
 
 // ── locate variables.css ──────────────────────────────────────────
@@ -27,7 +33,6 @@ function findVariablesFile() {
     const full = join(projectRoot, rel);
     try { statSync(full); return full; } catch {}
   }
-  // fallback: global search
   const queue = [projectRoot];
   while (queue.length) {
     const dir = queue.pop();
@@ -43,20 +48,32 @@ function findVariablesFile() {
   return null;
 }
 
-// ── extract :root definitions ─────────────────────────────────────
-function extractDefs(filePath) {
+// ── extract definitions and deprecated aliases ────────────────────
+function extractDefsAndDeprecated(filePath) {
   const src = readFileSync(filePath, 'utf-8');
   const defs = new Set();
-  // Match both :root and [data-theme] blocks
+  const deprecated = new Set();
+
+  // Find all :root and [data-theme] blocks
   const blockRe = /(:root|\[data-theme[^\]]*\])\s*\{([^}]*)\}/g;
   let m;
   while ((m = blockRe.exec(src))) {
     const body = m[2];
+    // Extract @deprecated-aliases ... @end-deprecated range
+    const depRe = /\/\*\s*@deprecated-aliases[^*]*\*\/([\s\S]*?)\/\*\s*@end-deprecated\s*\*\//;
+    const depMatch = body.match(depRe);
+    const deprecatedPart = depMatch ? depMatch[1] : '';
+    // Normal = everything outside that range
+    const normalPart = depMatch
+      ? body.slice(0, depMatch.index) + body.slice(depMatch.index + depMatch[0].length)
+      : body;
+
     const varRe = /(--[\w-]+)\s*:/g;
     let v;
-    while ((v = varRe.exec(body))) defs.add(v[1]);
+    while ((v = varRe.exec(normalPart))) defs.add(v[1]);
+    while ((v = varRe.exec(deprecatedPart))) deprecated.add(v[1]);
   }
-  return defs;
+  return { defs, deprecated };
 }
 
 // ── collect source files ──────────────────────────────────────────
@@ -77,21 +94,32 @@ function collectFiles(dir) {
 }
 
 // ── scan var() references ─────────────────────────────────────────
-function scanFile(filePath, defs) {
+function scanFile(filePath, defs, deprecated) {
   const src = readFileSync(filePath, 'utf-8');
   const broken = [];
-  // Also check CSS custom property references like var(--name, fallback)
+  const warnings = [];
   const varRe = /var\(\s*(--[\w-]+)/g;
   let m;
   while ((m = varRe.exec(src))) {
     const name = m[1];
-    if (!defs.has(name)) {
-      // find line number
-      const line = src.slice(0, m.index).split('\n').length;
+    const line = src.slice(0, m.index).split('\n').length;
+    const rel = filePath.replace(projectRoot, '.');
+    if (!defs.has(name) && !deprecated.has(name)) {
       broken.push({ file: filePath, line, name });
+    } else if (deprecated.has(name)) {
+      warnings.push({ file: filePath, line, name, rel });
     }
   }
-  return broken;
+  return { broken, warnings };
+}
+
+// ── group and print ───────────────────────────────────────────────
+function groupByName(items) {
+  const groups = {};
+  for (const item of items) {
+    (groups[item.name] ??= []).push(item);
+  }
+  return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
 }
 
 // ── main ──────────────────────────────────────────────────────────
@@ -101,45 +129,68 @@ if (!varFile) {
   process.exit(2);
 }
 
-const defs = extractDefs(varFile);
-console.log(`📋 Found ${defs.size} CSS variable definitions in ${varFile.replace(projectRoot, '.')}`);
+const { defs, deprecated } = extractDefsAndDeprecated(varFile);
+console.log(`📋 ${defs.size} definitions, ${deprecated.size} deprecated aliases in ${varFile.replace(projectRoot, '.')}`);
 
 const files = collectFiles(SRC_DIR);
 console.log(`📂 Scanning ${files.length} source files...\n`);
 
 const allBroken = [];
+const allWarnings = [];
 for (const f of files) {
-  allBroken.push(...scanFile(f, defs));
+  const { broken, warnings } = scanFile(f, defs, deprecated);
+  allBroken.push(...broken);
+  allWarnings.push(...warnings);
 }
 
-if (allBroken.length === 0) {
-  console.log('✅ No broken CSS variable references found.');
-  process.exit(0);
+// dedupe by file+name
+function dedupe(items) {
+  const seen = new Set();
+  return items.filter(b => {
+    const key = `${b.file}:${b.name}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
-// dedupe by file+name (one report per unique pair)
-const seen = new Set();
-const unique = [];
-for (const b of allBroken) {
-  const key = `${b.file}:${b.name}`;
-  if (seen.has(key)) continue;
-  seen.add(key);
-  unique.push(b);
-}
+const uniqueBroken = dedupe(allBroken);
+const uniqueWarnings = dedupe(allWarnings);
 
-// group by variable name for cleaner output
-const byName = {};
-for (const b of unique) {
-  (byName[b.name] ??= []).push(b);
-}
-
-console.error(`❌ Found ${unique.length} broken CSS variable reference(s):\n`);
-for (const [name, refs] of Object.entries(byName).sort((a, b) => b[1].length - a[1].length)) {
-  console.error(`  ${name}  (${refs.length} ref${refs.length > 1 ? 's' : ''})`);
-  for (const r of refs) {
-    const rel = r.file.replace(projectRoot, '.');
-    console.error(`    ${rel}:${r.line}`);
+// ── report deprecated warnings ────────────────────────────────────
+if (uniqueWarnings.length > 0) {
+  console.warn(`⚠️  ${uniqueWarnings.length} deprecated alias usage(s):\n`);
+  for (const [name, refs] of groupByName(uniqueWarnings)) {
+    console.warn(`  ${name}  (${refs.length} ref${refs.length > 1 ? 's' : ''})`);
+    for (const r of refs) {
+      console.warn(`    ${r.rel}:${r.line}`);
+    }
   }
+  console.warn('');
 }
-console.error('');
-process.exit(1);
+
+// ── report broken errors ──────────────────────────────────────────
+if (uniqueBroken.length > 0) {
+  console.error(`❌ ${uniqueBroken.length} broken CSS variable reference(s):\n`);
+  for (const [name, refs] of groupByName(uniqueBroken)) {
+    console.error(`  ${name}  (${refs.length} ref${refs.length > 1 ? 's' : ''})`);
+    for (const r of refs) {
+      const rel = r.file.replace(projectRoot, '.');
+      console.error(`    ${rel}:${r.line}`);
+    }
+  }
+  console.error('');
+  process.exit(1);
+}
+
+if (uniqueWarnings.length > 0 && strict) {
+  console.error('❌ Strict mode: deprecated alias usage treated as error.');
+  process.exit(1);
+}
+
+if (uniqueWarnings.length > 0) {
+  console.log(`✅ No broken references. ${uniqueWarnings.length} deprecated alias(es) flagged for future migration.`);
+} else {
+  console.log('✅ No broken references, no deprecated usage.');
+}
+process.exit(0);
