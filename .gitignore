@@ -107,3 +107,13 @@ server/.jest-cache/
 
 # CodeBuddy local data
 .codebuddy/
+
+# CodeGraph local data
+.codegraph/
+
+# Reasonix local data
+.reasonix/
+reasonix.toml
+
+# Trae local data
+.trae/
