@@ -37,7 +37,7 @@ describe('Contact.vue', () => {
 
     it('应该渲染联系信息面板', () => {
       const wrapper = mount(Contact)
-      expect(wrapper.find('.contact-info').exists()).toBe(true)
+      expect(wrapper.find('.contact-info-area').exists()).toBe(true)
     })
   })
 

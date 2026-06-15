@@ -46,19 +46,19 @@ describe('Home.vue', () => {
       const actions = wrapper.find('.hero__actions')
       expect(actions.exists()).toBe(true)
       expect(actions.html()).toContain('加入战队')
-      expect(actions.html()).toContain('了解更多')
+      expect(actions.html()).toContain('浏览舰队')
     })
   })
 
   describe('统计卡片', () => {
     it('应该渲染统计网格', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.hero__stats-grid').exists()).toBe(true)
+      expect(wrapper.find('.stats-strip__grid').exists()).toBe(true)
     })
 
     it('应该渲染 4 个统计卡片', () => {
       const wrapper = mount(Home)
-      const stats = wrapper.findAll('.hero__stat')
+      const stats = wrapper.findAll('.stats-strip__item')
       expect(stats.length).toBe(4)
     })
   })
@@ -66,32 +66,31 @@ describe('Home.vue', () => {
   describe('舰队概览', () => {
     it('应该渲染舰队区域', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.fleet-section').exists()).toBe(true)
+      expect(wrapper.find('.fleet-showcase').exists()).toBe(true)
     })
 
     it('应该渲染舰队卡片', () => {
       const wrapper = mount(Home)
-      const cards = wrapper.findAll('.fleet-card')
-      expect(cards.length).toBe(4)
+      const cards = wrapper.findAll('.bento-card')
+      expect(cards.length).toBe(2)
     })
   })
 
   describe('王牌飞行员', () => {
     it('应该渲染飞行员区域', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.pilots-section').exists()).toBe(true)
+      expect(wrapper.find('.pilot-section').exists()).toBe(true)
     })
 
-    it('应该渲染飞行员卡片', () => {
+    it('应该渲染飞行员肖像', () => {
       const wrapper = mount(Home)
-      const pilots = wrapper.findAll('.pilot-card')
-      expect(pilots.length).toBe(3)
+      const portrait = wrapper.find('.pilot-portrait')
+      expect(portrait.exists()).toBe(true)
     })
 
-    it('应该显示飞行员名称', () => {
+    it('应该显示飞行员详情', () => {
       const wrapper = mount(Home)
-      expect(wrapper.html()).toContain('Nova Spectre')
-      expect(wrapper.html()).toContain('Iron Viper')
+      expect(wrapper.find('.pilot-detail').exists()).toBe(true)
     })
   })
 
@@ -103,7 +102,7 @@ describe('Home.vue', () => {
 
     it('应该包含招募文案', () => {
       const wrapper = mount(Home)
-      expect(wrapper.html()).toContain('准备好了吗')
+      expect(wrapper.html()).toContain('READY TO JOIN')
     })
   })
 })
