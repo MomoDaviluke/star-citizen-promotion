@@ -94,7 +94,7 @@
   --color-border-accent: rgba(74, 158, 255, 0.2);
   --color-border-amber: rgba(255, 179, 0, 0.2);
 
-  /* Backward Compatibility Aliases */
+  /* Backward Compatibility Aliases — raw */
   --raw-gold-rgb: var(--raw-amber-rgb);
   --raw-gold: var(--raw-amber);
   --raw-gold-bright: var(--raw-amber-bright);
@@ -111,6 +111,55 @@
   --raw-steel-bright: var(--raw-cyan-bright);
   --raw-steel-dim: var(--raw-cyan-dim);
   --color-border-steel: rgba(var(--raw-cyan-rgb), 0.15);
+
+  /* Backward Compatibility Aliases — short names (旧版变量名) */
+  --text: var(--color-text-body);
+  --text-primary: var(--color-text-heading);
+  --text-secondary: var(--color-text-label);
+  --text-muted: var(--color-text-dim);
+  --accent: var(--color-accent);
+  --accent-2: var(--color-highlight);
+  --color-primary: var(--color-accent);
+  --danger: var(--color-status-danger);
+  --warning: var(--color-status-warning);
+  --success: var(--color-status-online);
+  --color-danger: var(--color-status-danger);
+  --color-warning: var(--color-status-warning);
+  --color-success: var(--color-status-online);
+  --status-danger: var(--color-status-danger);
+  --status-warning: var(--color-status-warning);
+  --status-online: var(--color-status-online);
+  --status-offline: var(--color-status-offline);
+  --line: var(--color-border);
+  --border-medium: var(--color-border);
+  --border-subtle: var(--color-border-subtle);
+  --border-strong: var(--color-border-strong);
+  --border-light: var(--color-border-subtle);
+  --bg: var(--color-bg);
+  --bg-medium: var(--color-bg-mid);
+  --bg-deepest: var(--raw-void-1);
+  --bg-light: var(--color-bg-elevated);
+  --bg-card: var(--color-bg-card);
+  --bg-overlay: var(--color-bg-overlay);
+  --panel: var(--color-bg-surface);
+  --void-deepest: var(--raw-void-1);
+  --void-surface: var(--raw-void-4);
+  --transition-fast: var(--duration-fast);
+  --transition-normal: var(--duration-normal);
+  --transition-slow: var(--duration-slow);
+  --glow-primary: var(--glow-cyan);
+  --glow-accent: var(--glow-cyan);
+  --glow-strong: var(--glow-cyan);
+  --glow-danger: 0 0 16px rgba(239, 68, 68, 0.3);
+  --glow-success: 0 0 16px rgba(34, 197, 94, 0.3);
+  --glow-nebula: 0 0 16px rgba(167, 139, 250, 0.3);
+  --nebula-glow: 0 0 16px rgba(167, 139, 250, 0.3);
+  --nebula-violet: var(--nebula-purple);
+  --glow-color: var(--nebula-purple);
+  --z-tooltip: 500;
+  --link-index: 10;
+  --duration-launch: 600ms;
+  --data-flow: var(--raw-cyan);
 
   /* Text */
   --color-text-heading: var(--raw-text-1);
