@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
+import { createPinia, setActivePinia } from 'pinia'
 
 const mockRouter = createRouter({
   history: createWebHistory(),
@@ -13,12 +14,14 @@ const mockRouter = createRouter({
 vi.mock('@/services/authService.js', () => ({
   authService: {
     register: vi.fn(() => Promise.resolve({ success: true })),
+    getProfile: vi.fn(() => Promise.resolve({ data: null })),
     isAuthenticated: vi.fn(() => false)
   }
 }))
 
 describe('Register 视图', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
   })
 
