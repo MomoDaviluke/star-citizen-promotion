@@ -1,8 +1,8 @@
 # 项目待办任务清单
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-06-05（基于最新实测）
-> **版本**: v1.3.1
+> **更新日期**: 2026-06-15
+> **版本**: v1.3.4
 
 ---
 
@@ -119,7 +119,7 @@ function buildCacheKey(req: Request): string {
 | P1-11 | **vite loadEnv 空前缀暴露敏感变量** | `vite.config.js:30` | ✅ 已修复 | 改为 `loadEnv(mode, process.cwd(), 'VITE_')` |
 | P1-12 | **manualChunks 配置可能不生效** | `vite.config.js:183` | ✅ 已修复 | 改为函数形式按路径匹配 |
 | P1-13 | **App.vue provide 无人消费** | `src/App.vue:276` | ✅ 已修复 | 删除 provide 语句 |
-| P1-14 | **Home.vue 数据硬编码与 API 脱节** | `src/views/Home.vue:263` | ⚠️ 待修复 | `stripStats`/`fleetShips` 硬编码，API 获取的 `teamStats` 未被模板使用 |
+| ~~P1-14~~ | ~~Home.vue 数据硬编码与 API 脱节~~ | `src/views/Home.vue:263` | ✅ 已修复 | v1.3.4 设计改版重写 Home.vue，数据结构已重构 |
 | P1-15 | **metrics 端点缺少 Promise 错误处理** | `server/src/middleware/metrics.ts:167` | ✅ 已修复 | 添加 .catch() 错误处理 |
 | P1-16 | **DDL 在 init.ts 和 migrate.ts 完全重复** | `server/src/database/init.ts` + `migrate.ts` | ⚠️ 待修复 | ~200 行重复 DDL，应抽取为共享 schema 模块 |
 
@@ -129,8 +129,8 @@ function buildCacheKey(req: Request): string {
 
 | 编号 | 任务 | 影响范围 | 状态 | 备注 |
 |:---|:---|:---|:---|:---|
-| URG-1 | Git 工作区清理 | 全项目 ~140 文件 | ⚠️ 未完成 | 按功能拆分 commit，防止数据丢失 |
-| URG-2 | 修复前端测试失败 | 3 文件 28 个用例 | ⚠️ 未完成 | http(15) + Home(5) + wsService(1)，详见 TECHNICAL_ARCHIVE 12.4 |
+| ~~URG-1~~ | ~~Git 工作区清理~~ | 全项目 ~140 文件 | ✅ 已完成 | v1.3.3 已清理并推送到 GitHub |
+| ~~URG-2~~ | ~~修复前端测试失败~~ | 3 文件 28 个用例 | ✅ 已完成 | 408 测试通过/1 跳过，选择器和文案已适配重构后组件 |
 | URG-3 | 验证生产构建 | vite-plugin-pwa | ⚠️ 未完成 | 沙箱 EPERM 需在本地验证 |
 
 ---
@@ -156,13 +156,14 @@ function buildCacheKey(req: Request): string {
 | TD-3 | ~~前端 console.log 未清理~~ | v1.2.0 | ✅ 已解决 | v1.3.0 确认零残留 |
 | TD-4 | ~~数据库查询未使用连接池监控~~ | v1.0.0 | ✅ 已解决 | v1.3.0 `queryWithTiming` + `getPoolStatus` |
 | TD-5 | ~~缺少 API 版本控制~~ | v1.0.0 | ✅ 已解决 | v1.1.0 已实施 `/api/v1/` 版本路由 |
-| TD-6 | 缓存键未包含查询参数 | v1.3.1 | ⚠️ 待修复 | `cache.ts` 的 `buildCacheKey` 忽略 `?query`，导致分页/筛选数据串台 |
+| ~~TD-6~~ | ~~缓存键未包含查询参数~~ | v1.3.1 | ✅ 已修复 | `buildCacheKey` 加入排序后的 query string |
 | TD-7 | Service update 函数冗余 SELECT | v1.0.0 | ⚠️ 待修复 | 先 SELECT 检查存在性再 UPDATE，可合并为一次查询 |
 | TD-8 | sanitizeBody 在两个文件中重复实现 | v1.1.0 | ⚠️ 待修复 | `auditLogger.ts` 和 `requestLogger.ts` 各自实现脱敏逻辑 |
 | TD-9 | 两套重复滚动揭示动画系统 | v1.2.0 | ⚠️ 待修复 | `useScrollReveal.js`（IntersectionObserver）与 `useGSAPReveal.js`（GSAP）功能重叠 |
 | TD-10 | Sentry 动态导入重复 4 次 | v1.3.1 | ⚠️ 待修复 | `errorReporting.js` 每个函数独立 `import('@sentry/vue')` |
 | TD-11 | Knex 配置共享同一对象引用 | v1.0.0 | ⚠️ 待修复 | `knexfile.js` 中 development/production/test 共用 `dbConfig` |
 | TD-12 | Event ICS 导出未转义特殊字符 | v1.1.0 | ⚠️ 待修复 | 分号、逗号、反斜杠未转义，可能导致 ICS 格式损坏 |
+| TD-13 | 183 处旧变量名引用待迁移 | v1.3.4 | ⚠️ 本周完成 | 别名已止血（47个别名映射），逐个全文替换迁移到语义化长名，跑lint --strict验证 |
 
 ---
 
@@ -179,6 +180,8 @@ function buildCacheKey(req: Request): string {
 | ESLint 错误数 | 0 | 0 | ✅ 已达标 |
 | TypeScript 编译错误 | 0 | 0 | ✅ 已达标 |
 | 高危安全漏洞 | 0 | 0 | ✅ 已达标 |
+| CSS 变量断裂引用 | 0 | 0 | ✅ 已达标（lint 脚本 CI 集成） |
+| CSS 变量 deprecated 引用 | 183 | 0 | ⚠️ 别名止血，本周迁移 |
 
 ### v1.4.0 质量目标（详见 [ROADMAP.md](ROADMAP.md)）
 
@@ -202,7 +205,8 @@ function buildCacheKey(req: Request): string {
 | v1.2.1 补丁 | 2026-06-01 | P0 任务全部完成 | ✅ 已完成 (2026-05-28) |
 | v1.3.0 版本 | 2026-05-28 | P0 + P1 全部完成，295/295 测试通过 | ✅ 已完成 |
 | v1.3.1 版本 | 2026-05-31 | 文档体系完善、安全扫描清零 | ✅ 已完成 |
-| v1.4.0 版本 | 2026-06-14 | 后端 ≥70%、日志轮转、数据库备份、SSL 自动化 | 🔄 进行中 |
+| v1.3.4 版本 | 2026-06-15 | 设计改版（SpaceX极简）、设计系统收口、CSS变量lint、CI/CD修复 | ✅ 已完成 |
+| v1.4.0 版本 | 2026-06-21 | 后端 ≥70%、日志轮转、数据库备份、SSL 自动化、183处变量迁移 | 🔄 进行中 |
 | v1.5.0 版本 | 2026-06-28 | 前端 ≥70%、E2E 7 spec、API v1 迁移 | 📋 计划中 |
 | v1.6.0 版本 | 2026-07-05 | httpOnly Cookie JWT、安全架构完善 | 📋 计划中 |
 
@@ -214,6 +218,7 @@ function buildCacheKey(req: Request): string {
 
 | 日期 | 完成任务 | 完成人 |
 |:---|:---|:---|
+| 2026-06-15 | v1.3.4：设计改版（SpaceX极简风格 Home.vue 重写）、设计系统收口（accent色统一#4a9eff）、断裂CSS变量修复、CSS变量lint脚本集成CI、CI/CD覆盖率阈值修复、vite/vitest安全升级 | AI Assistant (Hanako) + senior-revie |
 | 2026-05-31 | 第二阶段运维加固：日志轮转（winston-daily-rotate-file）、数据库自动备份（Docker backup 服务）、SSL 证书自动化（certbot 容器）、文档同步更新 | AI Assistant (Hanako) |
 | 2026-05-31 | 第一阶段测试补全：websocket.ts（17 测试）、metrics.ts（10 测试）、swagger.ts（8 测试）、ROADMAP.md 优化路线图、文档体系扩充至 14 份 | AI Assistant (Hanako) |
 | 2026-05-31 | 文档体系重建：修正 8 份文档与代码偏差、新增 DEPLOYMENT/SECURITY/MONITORING/CONTRIBUTING 4 份文档、package.json 版本号修正 | AI Assistant (Hanako) |

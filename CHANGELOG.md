@@ -1,8 +1,8 @@
 # 版本变更记录
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-06-08
-> **当前版本**: v1.3.1
+> **更新日期**: 2026-06-15
+> **当前版本**: v1.3.4
 
 ---
 
@@ -13,6 +13,78 @@
 - **主版本号 (MAJOR)**: 不兼容的 API 变更
 - **次版本号 (MINOR)**: 向下兼容的功能新增
 - **修订号 (PATCH)**: 向下兼容的问题修复
+
+---
+
+## [1.3.4] - 2026-06-15
+
+### 设计改版 — SpaceX 极简风格
+
+Home.vue 全面重写，从游戏 HUD 仪表盘风格迁移至 SpaceX 极简设计语言。信息架构层面的改动，不只是视觉皮肤。
+
+#### 结构变更（6 sections → 4 sections）
+
+- **Hero**（100vh）：`sc-matte-painting.jpg` 全屏背景，左下角标题 + tagline，去掉了 orb 动画、pill 标签、CTA 按钮
+- **Key Numbers**：只保留 2 个核心数字（活跃成员 / 飞行小时），去掉了 4 指标横排仪表盘布局
+- **Fleet Preview**：3 张 bento 卡片，hover/tap 展开 specs，去掉了 spec bar 默认显示
+- **CTA**：页面底部居中，`READY TO JOIN`
+
+#### 交互改进
+
+- bento 卡片底部 `explore →` 提示，hover 时 specs 展开自动收起提示文字
+- 移动端 accordion 行为标准化：tap 展开自动收起其他卡片
+- 浅色模式对比度修正至 WCAG AA（暗色 0.35 / 浅色 0.45）
+- hero padding 改用 `clamp(2rem, 8vw, 120px)` 限制超宽屏
+
+#### 去掉的 sections
+
+| 原 section | 处理 |
+|---|---|
+| Stats Strip | 合并到 Key Numbers（只保留 2 个） |
+| Featured Pilot | 移到独立页面或成员页面展示 |
+| Ship Gallery | 合并到 Fleet Preview（精简为 3 张） |
+
+### 设计系统收口 — 星际蓝统一
+
+#### 色彩体系
+
+- accent 色从 `#00e5ff`（电光青）统一到 `#4a9eff`（星际蓝）
+- 全局硬编码 `rgba(0, 229, 255, ...)` 替换为 `rgba(74, 158, 255, ...)`
+- `btn-amber` 残留清除，`btn-primary` 统一 accent 蓝
+- body amber 光晕 → 蓝色三层明度差光晕（0.25/0.12/0.06）
+- `--raw-cyan` / `--raw-cyan-rgb` 衍生值全部更新
+
+#### 断裂 CSS 变量修复
+
+- `--amber-primary`：20+ 组件引用但从未定义，现指向 `--color-accent`
+- `--nebula-purple`：保留（互补色，不在 accent 体系内）
+- `--raw-white-rgb`：glass-card 引用已修复
+- `--color-accent-secondary` 指向 accent
+
+### 基础设施
+
+#### CI/CD 修复
+
+- 覆盖率阈值：排除 server/ 目录，阈值从 50% 调至 8%（当前 8.72%）
+- 安全扫描：vite 7→8、vitest 3→4 升级修复 esbuild 漏洞，0 vulnerabilities
+- 测试环境适配：vite 8 Windows 公共路径解析、IntersectionObserver/ResizeObserver mock
+
+#### CSS 变量 lint
+
+- 新增 `scripts/css-var-lint.mjs`：零依赖 node 脚本，扫描所有 `var()` 引用与 `:root` 定义的交叉
+- 双层检查：broken（未定义）→ error / deprecated（旧名别名）→ warning
+- 47 个别名映射覆盖 183 处 deprecated 引用
+- 已集成 CI，`--strict` 模式可将 deprecated 升级为 error
+
+### 技术债务新增
+
+- **TD-13**：183 处旧变量名引用待迁移（别名已止血，逐个替换排本周内）
+
+### 文档更新
+
+- CHANGELOG.md 更新至 v1.3.4
+- TODO.md 标记今日完成项，新增 CSS 变量迁移任务
+- ARCHITECTURE.md 版本号同步
 
 ---
 

@@ -1,8 +1,8 @@
 # 系统架构文档
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-05-28
-> **版本**: v1.3.1
+> **更新日期**: 2026-06-15
+> **版本**: v1.3.4
 > **架构风格**: 分层架构 + 模块化前端
 
 ---
@@ -48,13 +48,13 @@
 | 层级 | 技术 | 版本 | 用途 |
 |:---|:---|:---|:---|
 | 框架 | Vue | 3.5 | 响应式 UI |
-| 构建 | Vite | 7.x | 开发服务器 + 打包 |
+| 构建 | Vite | 8.x | 开发服务器 + 打包 |
 | 路由 | Vue Router | 5.0 | SPA 导航 |
 | 状态 | Pinia | 2.x | 全局状态管理 |
 | HTTP | Axios | 1.x | API 请求 |
 | 样式 | TailwindCSS | 3.x | 原子化 CSS |
 | 动画 | GSAP | 3.x | 滚动动画 |
-| 测试 | Vitest | 3.0 | 单元测试 |
+| 测试 | Vitest | 4.x | 单元测试 |
 | E2E | Playwright | 1.58 | 端到端测试（5 个 spec） |
 
 ### 目录结构
@@ -116,10 +116,26 @@ src/
 │   └── cdn.js          # CDN 路径转换
 └── styles/             # 全局样式
     ├── base.css        # 基础样式
-    ├── variables.css   # CSS 变量
+    ├── variables.css   # CSS 变量（设计 tokens）
     ├── animations.css  # 动画定义
     └── utilities.css   # 工具类
 ```
+
+### 设计系统（v1.3.4 更新）
+
+**色彩体系**：统一为星际蓝 `#4a9eff` 单色 accent 系统，废弃旧版 cyan+amber 双色体系。
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--color-accent` | `#4a9eff` | 主 accent 色 |
+| `--raw-cyan` | `#4a9eff`（别名） | 兼容旧引用，待迁移 |
+| `--amber-primary` | → `--color-accent`（别名） | 兼容旧引用，待迁移 |
+| `--nebula-purple` | 独立互补色 | HoloCard、exploration 标签 |
+| `--color-status-warning` | amber 系 | 语义化警告色 |
+
+**CSS 变量完整性**：`scripts/css-var-lint.mjs` 集成 CI，双层检查（broken→error / deprecated→warning）。当前 143 个定义、47 个别名、183 处 deprecated 引用待迁移。
+
+**设计方向**：SpaceX 极简风格。Hero 全屏沉浸、一屏一焦点、留白为武器。详见 `docs/home-redesign-plan.md`。
 
 ### 状态管理
 
