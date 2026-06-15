@@ -30,7 +30,7 @@
   --raw-amber-bright: #ffc733;
   --raw-amber-dim: #cc8f00;
   --raw-amber-muted: rgba(255, 179, 0, 0.12);
-  --amber-primary: var(--raw-amber);
+  --amber-primary: var(--color-accent);
 
   /* Nebula Purple — 星云紫 */
   --nebula-purple: #a78bfa;

@@ -149,7 +149,7 @@ const year = new Date().getFullYear()
 
 .site-footer__divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--raw-amber-rgb), 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--raw-cyan-rgb), 0.3), transparent);
   margin-bottom: var(--space-4);
 }
 
