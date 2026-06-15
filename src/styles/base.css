@@ -234,7 +234,7 @@ img {
               0 0 20px rgba(var(--raw-cyan-rgb), 0.15);
 }
 
-/* Primary button — full-width pill, amber background, dark text, hover glow */
+/* Primary button — accent blue pill */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -247,8 +247,8 @@ img {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: var(--color-accent-secondary);
-  color: var(--raw-void-1);
+  background: var(--color-accent);
+  color: #ffffff;
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -256,9 +256,9 @@ img {
 }
 
 .btn-primary:hover {
-  background: var(--raw-amber);
+  background: var(--color-accent-bright);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md), var(--glow-amber);
+  box-shadow: var(--shadow-md), var(--glow-cyan);
 }
 
 .btn-primary:active {

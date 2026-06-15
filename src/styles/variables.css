@@ -24,12 +24,19 @@
   --raw-cyan-dim: #2d7fd9;
   --raw-cyan-muted: rgba(74, 158, 255, 0.12);
 
-  /* Amber Gold — 琥珀金 */
+  /* Amber Gold — 琥珀金（保留用于状态色/警告色） */
   --raw-amber: #ffb300;
   --raw-amber-rgb: 255, 179, 0;
   --raw-amber-bright: #ffc733;
   --raw-amber-dim: #cc8f00;
   --raw-amber-muted: rgba(255, 179, 0, 0.12);
+  --amber-primary: var(--raw-amber);
+
+  /* Nebula Purple — 星云紫 */
+  --nebula-purple: #a78bfa;
+
+  /* White — 用于 glass-card 等 */
+  --raw-white-rgb: 255, 255, 255;
 
   /* Neutral Grays — 中性灰 */
   --raw-gray-1: #f0f0f5;
@@ -72,12 +79,12 @@
   --color-accent-dim: var(--raw-cyan-dim);
   --color-accent-muted: var(--raw-cyan-muted);
 
-  /* Highlight — Amber Gold */
+  /* Highlight — Amber Gold（状态/警告用途） */
   --color-highlight: var(--raw-amber);
   --color-highlight-bright: var(--raw-amber-bright);
   --color-highlight-dim: var(--raw-amber-dim);
   --color-highlight-muted: var(--raw-amber-muted);
-  --color-accent-secondary: var(--raw-amber);
+  --color-accent-secondary: var(--color-accent);
 
   /* Border */
   --color-border: rgba(255, 255, 255, 0.08);
