@@ -124,7 +124,7 @@ function handleClick(event) {
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all var(--duration-normal);
   overflow: hidden;
   user-select: none;
   white-space: nowrap;
@@ -154,15 +154,15 @@ function handleClick(event) {
 /* ========== 样式变体 ========== */
 /* 主要按钮 */
 .base-button--primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  color: var(--bg-deepest);
-  border-color: var(--color-primary);
-  box-shadow: var(--glow-primary);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-bright));
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+  box-shadow: var(--glow-accent);
 }
 
 .base-button--primary:hover:not(.is-disabled):not(.is-loading) {
   transform: translateY(-2px);
-  box-shadow: var(--glow-strong);
+  box-shadow: var(--glow-accent);
 }
 
 .base-button--primary:active:not(.is-disabled):not(.is-loading) {
@@ -171,62 +171,62 @@ function handleClick(event) {
 
 /* 次要按钮 */
 .base-button--secondary {
-  background: var(--bg-medium);
-  color: var(--text-primary);
-  border-color: var(--border-medium);
+  background: var(--color-bg-mid);
+  color: var(--color-text-heading);
+  border-color: var(--color-border);
 }
 
 .base-button--secondary:hover:not(.is-disabled):not(.is-loading) {
-  background: var(--bg-light);
-  border-color: var(--color-primary);
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent);
 }
 
 /* 轮廓按钮 */
 .base-button--outline {
   background: transparent;
-  color: var(--color-primary);
-  border-color: var(--border-medium);
+  color: var(--color-accent);
+  border-color: var(--color-border);
 }
 
 .base-button--outline:hover:not(.is-disabled):not(.is-loading) {
   background: rgba(95, 169, 255, 0.1);
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 /* 幽灵按钮 */
 .base-button--ghost {
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-label);
   border-color: transparent;
 }
 
 .base-button--ghost:hover:not(.is-disabled):not(.is-loading) {
   background: rgba(95, 169, 255, 0.05);
-  color: var(--text-primary);
+  color: var(--color-text-heading);
 }
 
 /* 危险按钮 */
 .base-button--danger {
-  background: var(--color-danger);
+  background: var(--color-status-danger);
   color: white;
-  border-color: var(--color-danger);
+  border-color: var(--color-status-danger);
 }
 
 .base-button--danger:hover:not(.is-disabled):not(.is-loading) {
   background: #ff5252;
-  box-shadow: var(--glow-danger);
+  box-shadow: var(--glow-status-danger);
 }
 
 /* 成功按钮 */
 .base-button--success {
-  background: var(--color-success);
-  color: var(--bg-deepest);
-  border-color: var(--color-success);
+  background: var(--color-status-online);
+  color: var(--color-bg);
+  border-color: var(--color-status-online);
 }
 
 .base-button--success:hover:not(.is-disabled):not(.is-loading) {
   background: #3dd9c4;
-  box-shadow: var(--glow-success);
+  box-shadow: var(--glow-status-success);
 }
 
 /* ========== 禁用状态 ========== */
@@ -281,9 +281,9 @@ function handleClick(event) {
 .button-border-effect {
   position: absolute;
   inset: -1px;
-  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
   opacity: 0;
-  transition: opacity var(--transition-normal);
+  transition: opacity var(--duration-normal);
   mask-image: linear-gradient(90deg, transparent 0%, black 50%, transparent 100%);
   pointer-events: none;
   z-index: -1;

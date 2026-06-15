@@ -160,16 +160,16 @@ function handleMouseLeave(event) {
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: all var(--transition-normal);
+  transition: all var(--duration-normal);
 }
 
 /* ========== 变体样式 ========== */
 .base-card--default {
-  background: var(--bg-card);
+  background: var(--color-bg-card);
 }
 
 .base-card--primary {
@@ -177,7 +177,7 @@ function handleMouseLeave(event) {
 }
 
 .base-card--primary:hover {
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 .base-card--success {
@@ -185,7 +185,7 @@ function handleMouseLeave(event) {
 }
 
 .base-card--success:hover {
-  border-color: var(--color-success);
+  border-color: var(--color-status-online);
 }
 
 .base-card--warning {
@@ -193,7 +193,7 @@ function handleMouseLeave(event) {
 }
 
 .base-card--warning:hover {
-  border-color: var(--color-warning);
+  border-color: var(--color-status-warning);
 }
 
 .base-card--danger {
@@ -201,14 +201,14 @@ function handleMouseLeave(event) {
 }
 
 .base-card--danger:hover {
-  border-color: var(--color-danger);
+  border-color: var(--color-status-danger);
 }
 
 /* ========== 悬停效果 ========== */
 .base-card.is-hoverable:hover {
   transform: translateY(-4px);
-  box-shadow: var(--glow-primary);
-  border-color: var(--border-medium);
+  box-shadow: var(--glow-accent);
+  border-color: var(--color-border);
 }
 
 .base-card.is-hoverable:hover .card-border-effect {
@@ -237,9 +237,9 @@ function handleMouseLeave(event) {
 .card-border-effect {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
   opacity: 0;
-  transition: opacity var(--transition-normal);
+  transition: opacity var(--duration-normal);
   mask-image: linear-gradient(90deg, transparent 0%, black 50%, transparent 100%);
   pointer-events: none;
   z-index: 0;
@@ -264,21 +264,21 @@ function handleMouseLeave(event) {
 .card-header {
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .card-title {
   margin: 0 0 0.25rem;
   font-size: var(--text-lg);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-heading);
   letter-spacing: 0.05em;
 }
 
 .card-subtitle {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--text-muted);
+  color: var(--color-text-dim);
   letter-spacing: 0.02em;
 }
 
@@ -293,7 +293,7 @@ function handleMouseLeave(event) {
   display: block;
   width: 100%;
   height: auto;
-  transition: transform var(--transition-slow);
+  transition: transform var(--duration-slow);
 }
 
 .base-card:hover .card-media img {
@@ -311,7 +311,7 @@ function handleMouseLeave(event) {
 .card-footer {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -323,10 +323,10 @@ function handleMouseLeave(event) {
   position: absolute;
   width: 12px;
   height: 12px;
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
   border-style: solid;
   opacity: 0.5;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--duration-fast);
   z-index: 3;
 }
 
@@ -373,8 +373,8 @@ function handleMouseLeave(event) {
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid var(--border-subtle);
-  border-top-color: var(--color-primary);
+  border: 3px solid var(--color-border-subtle);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
