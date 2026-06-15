@@ -57,6 +57,46 @@
 
 ---
 
+## 紧急阶段: 代码审查修复（2026-06-08 深度审查发现）
+
+**目标**: 修复 4 个 P0 严重问题 + 11 个 P1 高优先级问题
+**耗时**: ~1 周
+**为什么最优先**: P0 问题直接影响数据正确性和安全性，必须在其他工作之前修复。
+
+### 0.1 P0 严重问题（必须立即修复）
+
+| # | 问题 | 文件 | 修复方案 | 预计 |
+|:---|:---|:---|:---|:---|
+| 1 | 缓存键忽略查询参数 | `cache.ts:166` | `buildCacheKey` 加入排序后的 query string | 半天 |
+| 2 | 申请路由缺少认证 | `routes/applications.ts:59` | `optionalAuth` → `authenticate` | 半天 |
+| 3 | auth store 变量遮蔽 | `stores/auth.js:70,92,131,157` | catch 块改用 `errObj` 避免遮蔽 ref | 半天 |
+| 4 | Login.vue 绕过 authStore | `views/Login.vue:185` | 改为调用 `authStore.login()` | 半天 |
+
+### 0.2 P1 高优先级问题
+
+| # | 问题 | 文件 | 修复方案 | 预计 |
+|:---|:---|:---|:---|:---|
+| 5 | 速率限制对已登录用户无效 | `index.ts:196` | 移除无效的 admin 提额逻辑，简化为 IP 限流 | 半天 |
+| 6 | requireRole 重复查库 | `middleware/auth.ts:99` | 直接使用 `req.user.role`，不再查库 | 半天 |
+| 7 | 登录 SELECT * 泄露密码哈希 | `authService.ts:80` | 明确列出字段，排除 password_hash | 半天 |
+| 8 | WebSocket 心跳 O(n²) | `websocket.ts:158` | 添加 ws→clientId 反向映射 | 半天 |
+| 9 | gracefulShutdown 逻辑缺陷 | `index.ts:347` | await server.close + setTimeout.unref | 半天 |
+| 10 | vite loadEnv 空前缀 | `vite.config.js:30` | 改为 `'VITE_'` 前缀 | 10 分钟 |
+| 11 | manualChunks 配置 | `vite.config.js:183` | 改为函数形式 | 10 分钟 |
+| 12 | App.vue 无人消费的 provide | `App.vue:276` | 删除 provide 语句 | 10 分钟 |
+| 13 | Home.vue 数据硬编码 | `Home.vue:263` | 统一数据源 | 半天 |
+| 14 | metrics 端点无 catch | `metrics.ts:167` | 添加 .catch() 错误处理 | 10 分钟 |
+| 15 | DDL 重复 | `init.ts` + `migrate.ts` | 抽取共享 schema 模块 | 半天 |
+
+### 紧急阶段验收标准
+
+- [ ] 4 个 P0 问题全部修复并通过测试
+- [ ] 11 个 P1 问题全部修复
+- [ ] 所有现有测试仍然通过（310 后端 + 前端 + E2E）
+- [ ] 生产构建验证通过
+
+---
+
 ## 第一阶段: 快速补漏
 
 **目标**: 后端覆盖率从 63.86% → 70%+
@@ -387,13 +427,14 @@ const API_BASE_URL = import.meta.env.VITE_API_PREFIX || '/api/v1'  // 原来是 
 
 | 阶段 | 内容 | 耗时 | 累计 |
 |:---|:---|:---|:---|
-| 第一阶段 | 后端 0% 模块补测试 | ~1 周 | 1 周 |
-| 第二阶段 | 日志轮转 + 数据库备份 + SSL | ~3 天 | 1.5 周 |
-| 第三阶段 | 前端测试加固 + E2E 扩展 | ~2 周 | 3.5 周 |
-| 第四阶段 | API v1 迁移 + httpOnly Cookie | ~3 天 | 4 周 |
+| **紧急阶段** | **代码审查修复（4 P0 + 11 P1）** | **~1 周** | **1 周** |
+| 第一阶段 | 后端 0% 模块补测试 | ~1 周 | 2 周 |
+| 第二阶段 | 日志轮转 + 数据库备份 + SSL | ~3 天 | 2.5 周 |
+| 第三阶段 | 前端测试加固 + E2E 扩展 | ~2 周 | 4.5 周 |
+| 第四阶段 | API v1 迁移 + httpOnly Cookie | ~3 天 | 5 周 |
 | 第五阶段 | 按需推进 | — | — |
 
-**总计约 4 周**完成前四个阶段，项目达到可上线状态。第五阶段根据实际业务需求择机启动。
+**总计约 5 周**完成前五个阶段，项目达到可上线状态。第五阶段根据实际业务需求择机启动。
 
 ---
 
@@ -402,6 +443,7 @@ const API_BASE_URL = import.meta.env.VITE_API_PREFIX || '/api/v1'  // 原来是 
 | 版本 | 关键交付 | 预计时间 |
 |:---|:---|:---|
 | v1.3.1（当前） | 文档体系完善、安全扫描清零 | ✅ 已完成 |
+| v1.3.2 | **代码审查修复（P0 缓存/认证/状态 + P1 架构/安全）** | +1 周 |
 | v1.4.0 | 后端覆盖率 ≥70%、日志轮转、数据库备份、SSL 自动化 | +2 周 |
 | v1.5.0 | 前端覆盖率 ≥70%、E2E 7 spec、API v1 迁移 | +4 周 |
 | v1.6.0 | httpOnly Cookie JWT、安全架构完善 | +5 周 |

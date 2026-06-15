@@ -63,6 +63,68 @@ export async function authenticate(req, _res, next): Promise<void> {
 
 ---
 
+## P0 — 代码审查发现的严重问题（2026-06-08 深度审查）
+
+| 编号 | 任务 | 影响文件 | 状态 | 备注 |
+|:---|:---|:---|:---|:---|
+| P0-5 | **缓存键忽略查询参数，导致数据串台** | `server/src/middleware/cache.ts:166` | ✅ 已修复 | `buildCacheKey` 加入排序后的 query string |
+| P0-6 | **申请提交路由缺少认证，任意用户可刷申请** | `server/src/routes/applications.ts:59` | ✅ 已修复 | 添加 `optionalAuth` 中间件，可选追踪提交者 |
+| P0-7 | **前端 auth store 变量遮蔽，错误信息永远不显示** | `src/stores/auth.js:70,92,131,157` | ✅ 已修复 | catch 块改用 `errObj` 避免遮蔽 ref |
+| P0-8 | **Login.vue 绕过 authStore 直接调用 authService** | `src/views/Login.vue:185` | ✅ 已修复 | 改为调用 `authStore.login()`，测试同步更新 |
+
+### P0-5 修复详情
+
+**根因**: `buildCacheKey` 只使用 `req.path`，完全忽略查询参数。分页、筛选、排序请求会复用同一个缓存条目。
+
+**修复**:
+```typescript
+function buildCacheKey(req: Request): string {
+  const sorted = [...new URLSearchParams(req.url.split('?')[1] || '')]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&')
+  return `GET:${req.path}${sorted ? '?' + sorted : ''}`
+}
+```
+
+### P0-6 修复详情
+
+**根因**: `POST /api/applications` 使用 `optionalAuth` 而非 `authenticate`，且服务层缺少 `userId` 校验。
+
+**修复**: 将路由中间件改为 `authenticate`，在 service 中绑定 `userId`。
+
+### P0-7 修复详情
+
+**根因**: `login`/`register`/`fetchUser`/`updateProfile` 的 catch 块中 `const error = err instanceof Error ...` 遮蔽了 store 顶层的 `const error = ref(null)`。
+
+**修复**: 改用不同变量名 `const errObj = ...`，避免遮蔽。
+
+### P0-8 修复详情
+
+**根因**: 登录页直接 `import { authService }` 并调用 `authService.login()`，绕过了 `authStore.login()`。
+
+**修复**: 改为调用 `authStore.login()`，统一状态管理。
+
+---
+
+## P1 — 代码审查发现的高优先级问题（2026-06-08 深度审查）
+
+| 编号 | 任务 | 影响文件 | 状态 | 备注 |
+|:---|:---|:---|:---|:---|
+| P1-6 | **速率限制对已登录用户无效** | `server/src/index.ts:196` | ✅ 已修复 | 移除无效的 admin 提额逻辑，简化为 IP 限流 |
+| P1-7 | **requireRole 重复查询数据库** | `server/src/middleware/auth.ts:99` | ✅ 已修复 | 直接使用 `req.user.role`，不再查库，测试同步更新 |
+| P1-8 | **登录 SELECT * 泄露 password_hash** | `server/src/services/authService.ts:80` | ✅ 已修复 | 明确列出字段，排除 password_hash |
+| P1-9 | **WebSocket 心跳 O(n²) 复杂度** | `server/src/websocket.ts:158` | ✅ 已修复 | 添加 ws→clientId 反向映射，O(1) 查找 |
+| P1-10 | **gracefulShutdown 逻辑缺陷** | `server/src/index.ts:347` | ✅ 已修复 | await server.close + setTimeout.unref |
+| P1-11 | **vite loadEnv 空前缀暴露敏感变量** | `vite.config.js:30` | ✅ 已修复 | 改为 `loadEnv(mode, process.cwd(), 'VITE_')` |
+| P1-12 | **manualChunks 配置可能不生效** | `vite.config.js:183` | ✅ 已修复 | 改为函数形式按路径匹配 |
+| P1-13 | **App.vue provide 无人消费** | `src/App.vue:276` | ✅ 已修复 | 删除 provide 语句 |
+| P1-14 | **Home.vue 数据硬编码与 API 脱节** | `src/views/Home.vue:263` | ⚠️ 待修复 | `stripStats`/`fleetShips` 硬编码，API 获取的 `teamStats` 未被模板使用 |
+| P1-15 | **metrics 端点缺少 Promise 错误处理** | `server/src/middleware/metrics.ts:167` | ✅ 已修复 | 添加 .catch() 错误处理 |
+| P1-16 | **DDL 在 init.ts 和 migrate.ts 完全重复** | `server/src/database/init.ts` + `migrate.ts` | ⚠️ 待修复 | ~200 行重复 DDL，应抽取为共享 schema 模块 |
+
+---
+
 ## 紧急 — 本周内完成
 
 | 编号 | 任务 | 影响范围 | 状态 | 备注 |
@@ -94,6 +156,13 @@ export async function authenticate(req, _res, next): Promise<void> {
 | TD-3 | ~~前端 console.log 未清理~~ | v1.2.0 | ✅ 已解决 | v1.3.0 确认零残留 |
 | TD-4 | ~~数据库查询未使用连接池监控~~ | v1.0.0 | ✅ 已解决 | v1.3.0 `queryWithTiming` + `getPoolStatus` |
 | TD-5 | ~~缺少 API 版本控制~~ | v1.0.0 | ✅ 已解决 | v1.1.0 已实施 `/api/v1/` 版本路由 |
+| TD-6 | 缓存键未包含查询参数 | v1.3.1 | ⚠️ 待修复 | `cache.ts` 的 `buildCacheKey` 忽略 `?query`，导致分页/筛选数据串台 |
+| TD-7 | Service update 函数冗余 SELECT | v1.0.0 | ⚠️ 待修复 | 先 SELECT 检查存在性再 UPDATE，可合并为一次查询 |
+| TD-8 | sanitizeBody 在两个文件中重复实现 | v1.1.0 | ⚠️ 待修复 | `auditLogger.ts` 和 `requestLogger.ts` 各自实现脱敏逻辑 |
+| TD-9 | 两套重复滚动揭示动画系统 | v1.2.0 | ⚠️ 待修复 | `useScrollReveal.js`（IntersectionObserver）与 `useGSAPReveal.js`（GSAP）功能重叠 |
+| TD-10 | Sentry 动态导入重复 4 次 | v1.3.1 | ⚠️ 待修复 | `errorReporting.js` 每个函数独立 `import('@sentry/vue')` |
+| TD-11 | Knex 配置共享同一对象引用 | v1.0.0 | ⚠️ 待修复 | `knexfile.js` 中 development/production/test 共用 `dbConfig` |
+| TD-12 | Event ICS 导出未转义特殊字符 | v1.1.0 | ⚠️ 待修复 | 分号、逗号、反斜杠未转义，可能导致 ICS 格式损坏 |
 
 ---
 

@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
    * @description 从项目根目录的 .env 文件中加载环境变量
    *              空字符串前缀表示加载所有环境变量（不限于 VITE_ 前缀）
    */
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, process.cwd(), 'VITE_')
 
   return {
     /**
@@ -74,6 +74,7 @@ export default defineConfig(({ mode }) => {
           dir: 'ltr'
         },
         workbox: {
+          maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
           runtimeCaching: [
             {
@@ -180,9 +181,16 @@ export default defineConfig(({ mode }) => {
            * 手动代码分割
            * @description 将 Vue 核心库单独打包，利用浏览器缓存
            */
-          manualChunks: {
-            vue: ['vue', 'vue-router'],
-            gsap: ['gsap', 'gsap/ScrollTrigger']
+          manualChunks(id) {
+            if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router')) {
+              return 'vendor-vue'
+            }
+            if (id.includes('node_modules/gsap')) {
+              return 'vendor-gsap'
+            }
+            if (id.includes('node_modules/chart.js') || id.includes('node_modules/swiper')) {
+              return 'vendor-misc'
+            }
           }
         }
       }

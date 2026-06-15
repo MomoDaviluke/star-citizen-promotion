@@ -1,7 +1,7 @@
 # 版本变更记录
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-05-28
+> **更新日期**: 2026-06-08
 > **当前版本**: v1.3.1
 
 ---
@@ -13,6 +13,49 @@
 - **主版本号 (MAJOR)**: 不兼容的 API 变更
 - **次版本号 (MINOR)**: 向下兼容的功能新增
 - **修订号 (PATCH)**: 向下兼容的问题修复
+
+---
+
+## [Unreleased] - 2026-06-08
+
+### 代码审查 — 深度扫描
+
+对全栈代码进行了系统性深度审查，发现 4 个 P0 严重问题、11 个 P1 高优先级问题、8 个技术债务项。
+
+#### 前端发现
+
+- **P0**: `stores/auth.js` 变量遮蔽导致错误信息永远不显示
+- **P0**: `Login.vue` 绕过 authStore 直接调用 authService，登录后状态不一致
+- **P1**: `App.vue` provide 的 authService/aiService 全项目零消费
+- **P1**: `vite.config.js` manualChunks 配置可能不生效
+- **P1**: `vite.config.js` loadEnv 空前缀暴露敏感环境变量
+- **P1**: `Home.vue` 数据硬编码与 API 调用脱节
+- **P1**: `composables/` 两套重复滚动揭示动画系统
+- **P2**: `main.js` import 位置不规范、`errorReporting.js` Sentry 动态导入重复 4 次
+
+#### 后端发现
+
+- **P0**: `cache.ts` 缓存键忽略查询参数，分页/筛选数据串台
+- **P0**: `applications.ts` 申请提交路由缺少认证中间件
+- **P1**: `index.ts` 速率限制对已登录用户无效（req.user 永远 undefined）
+- **P1**: `auth.ts` requireRole 重复查询数据库
+- **P1**: `authService.ts` 登录 SELECT * 泄露 password_hash 到内存
+- **P1**: `websocket.ts` 心跳检测 O(n²) 复杂度
+- **P1**: `index.ts` gracefulShutdown 逻辑缺陷（未 await + setTimeout 未清理）
+- **P1**: `metrics.ts` 指标端点缺少 Promise 错误处理
+- **P1**: `init.ts` + `migrate.ts` ~200 行 DDL 完全重复
+- **P2**: ICS 导出未转义特殊字符、sanitizeBody 重复实现、Knex 配置共享引用
+
+#### 文档更新
+
+- TODO.md 新增 P0-5 ~ P0-8、P1-6 ~ P1-16 任务项
+- ROADMAP.md 新增「紧急阶段: 代码审查修复」，版本规划新增 v1.3.2
+- 技术债务追踪新增 TD-6 ~ TD-12
+
+### Skill 清理
+
+- 清理 117 个不相关的 ECC skill（无关语言框架、行业领域、工具）
+- 保留 121 个与项目技术栈相关的 skill（Vue/Express/MySQL + AI Agent）
 
 ---
 
