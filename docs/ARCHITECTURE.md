@@ -125,13 +125,74 @@ src/
 
 **色彩体系**：统一为星际蓝 `#4a9eff` 单色 accent 系统，废弃旧版 cyan+amber 双色体系。
 
+#### 文字色（4级亮度）
+
 | Token | 值 | 用途 |
 |---|---|---|
-| `--color-accent` | `#4a9eff` | 主 accent 色 |
-| `--raw-cyan` | `#4a9eff`（别名） | 兼容旧引用，待迁移 |
-| `--amber-primary` | → `--color-accent`（别名） | 兼容旧引用，待迁移 |
+| `--color-text-heading` | `#ffffff` | 标题、最亮文字 |
+| `--color-text-body` | `#b8b8cc` | 正文 |
+| `--color-text-label` | `#7a7a94` | 标签、辅助说明 |
+| `--color-text-dim` | `#4a4a64` | 最暗文字、占位符 |
+| `--color-text-hint` | `rgba(255,255,255,0.35)` | 极淡提示（如 explore →） |
+| `--color-text-accent` | `#4a9eff` | 强调文字 |
+
+#### Accent 色
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--color-accent` | `#4a9eff` | 主 accent（星际蓝） |
+| `--color-accent-bright` | `#6bb3ff` | hover/active 状态 |
+| `--color-accent-dim` | `#2d7cd4` | pressed 状态 |
+| `--color-accent-muted` | `rgba(74,158,255,0.5)` | 半透明 accent |
+| `--color-highlight` | `#ffb300` | 琥珀金（状态/警告用途） |
 | `--nebula-purple` | 独立互补色 | HoloCard、exploration 标签 |
-| `--color-status-warning` | amber 系 | 语义化警告色 |
+
+#### 状态色
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--color-status-online` | `#22c55e` | 在线/成功 |
+| `--color-status-warning` | `#ffb300` | 警告 |
+| `--color-status-danger` | `#ef4444` | 错误/危险 |
+| `--color-status-offline` | `#6b7280` | 离线/禁用 |
+
+#### 背景色
+
+| Token | 用途 |
+|---|---|
+| `--color-bg` | 最深背景 |
+| `--color-bg-deep` | 深层背景 |
+| `--color-bg-mid` | 中层背景 |
+| `--color-bg-surface` | 表面 |
+| `--color-bg-elevated` | 悬浮层 |
+| `--color-bg-card` / `--color-bg-card-hover` | 卡片背景（含透明度） |
+| `--color-bg-glass` | 毛玻璃效果 |
+
+#### 边框色
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--color-border` | `rgba(255,255,255,0.08)` | 默认边框 |
+| `--color-border-hover` | `rgba(255,255,255,0.15)` | hover 边框 |
+| `--color-border-subtle` | `rgba(255,255,255,0.05)` | 极淡边框 |
+| `--color-border-strong` | `rgba(74,158,255,0.3)` | 强调边框 |
+
+#### 效果 / 间距 / 排版
+
+| 类别 | Token 示例 |
+|---|---|
+| 阴影 | `--shadow-sm` / `--shadow-md` / `--shadow-lg` / `--shadow-card` |
+| 光晕 | `--glow-cyan` / `--glow-card-hover` / `--shadow-accent` |
+| 模糊 | `--blur-card: 16px` / `--blur-header: 20px` |
+| 动画缓动 | `--ease-out` / `--ease-spring` / `--ease-smooth` |
+| 间距 | `--space-1`（0.25rem）~ `--space-20`（10rem） |
+| 圆角 | `--radius-sm: 4px` ~ `--radius-2xl: 20px` |
+| 字号 | `--text-xs: 0.75rem` ~ `--text-hero: clamp(2.5rem,6vw,5rem)` |
+| 字体 | `--font-display`（Space Grotesk）/ `--font-body`（Noto Sans SC）/ `--font-data`（JetBrains Mono） |
+
+#### 主题切换
+
+亮色主题通过 `[data-theme="light"]` 覆盖上述 token，所有组件自动适配，无需额外处理。
 
 **CSS 变量完整性**：`scripts/css-var-lint.mjs` 集成 CI，双层检查（broken→error / deprecated→warning）。当前 143 个定义、47 个别名、183 处 deprecated 引用待迁移。
 
