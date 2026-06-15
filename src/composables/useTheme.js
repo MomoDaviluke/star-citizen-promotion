@@ -14,12 +14,9 @@ const STORAGE_KEY = 'star-citizen-theme'
 /** 当前主题（全局单例） */
 const currentTheme = ref(THEME_DARK)
 
-/** 获取系统偏好 */
+/** 获取系统偏好（已禁用：科幻主题站默认暗色） */
 function getSystemPreference() {
-  if (typeof window === 'undefined') return THEME_DARK
-  return window.matchMedia('(prefers-color-scheme: light)').matches
-    ? THEME_LIGHT
-    : THEME_DARK
+  return THEME_DARK
 }
 
 /** 从 localStorage 恢复 */

@@ -1,116 +1,138 @@
 <!--
-  @file 登录视图组件
-  @description 用户登录页面
-  @module views/Login
+  @file 登录视图组件 - Cinematic Sci-Fi Spectacle
+  @description 全息访问终端，用户登录页面
+  @version 10.0 - Cinematic Sci-Fi Spectacle
 -->
 
 <template>
   <div class="login-page">
-    <div class="login-card card">
-      <div class="login-header">
-        <span class="login-icon">◆</span>
-        <h1>登录</h1>
-        <p>登录您的账户以访问管理功能</p>
-      </div>
+    <div class="login-stage">
+      <div class="bezel-card login-card">
+        <div class="bezel-card__inner">
+          <!-- Terminal Status -->
+          <div class="terminal-status">
+            <span class="terminal-status__dot"></span>
+            <span class="terminal-status__text font-data">SECURE LINK</span>
+          </div>
 
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label class="form-label">邮箱</label>
-          <input
-            v-model="form.email"
-            type="email"
-            class="form-input"
-            :class="{ 'is-error': errors.email }"
-            placeholder="请输入邮箱"
-            required
-          />
-          <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
+          <!-- Terminal Identity -->
+          <div class="login-id">
+            <svg class="login-id__shield" width="32" height="32" viewBox="0 0 28 28" fill="none">
+              <path
+                d="M14 3L4 7.5V13C4 19.075 8.16 24.69 14 26C19.84 24.69 24 19.075 24 13V7.5L14 3Z"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M14 3L4 7.5V13C4 19.075 8.16 24.69 14 26C19.84 24.69 24 19.075 24 13V7.5L14 3Z"
+                fill="currentColor"
+                fill-opacity="0.08"
+              />
+              <path
+                d="M11 14L13.5 16.5L18 11"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="login-id__text font-data">ACCESS TERMINAL v6.0</span>
+          </div>
+
+          <form @submit.prevent="handleLogin" class="login-form">
+            <div class="login-form__group">
+              <label for="email" class="login-form__label font-data">EMAIL</label>
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                class="holo-input"
+                :class="{ 'holo-input--error': errors.email }"
+                placeholder="请输入邮箱"
+                required
+              />
+              <span v-if="errors.email" class="login-form__error">{{ errors.email }}</span>
+            </div>
+
+            <div class="login-form__group">
+              <label for="password" class="login-form__label font-data">PASSWORD</label>
+              <input
+                id="password"
+                v-model="form.password"
+                type="password"
+                class="holo-input"
+                :class="{ 'holo-input--error': errors.password }"
+                placeholder="请输入密码"
+                required
+              />
+              <span v-if="errors.password" class="login-form__error">{{ errors.password }}</span>
+            </div>
+
+            <!-- Global Error -->
+            <Transition name="holo-fade">
+              <div v-if="loginError" class="login-alert">
+                <svg class="login-alert__icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 4.5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <circle cx="8" cy="11.5" r="0.75" fill="currentColor"/>
+                </svg>
+                <span class="login-alert__text">{{ loginError }}</span>
+              </div>
+            </Transition>
+
+            <button
+              type="submit"
+              class="login-submit"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting" class="btn-loading">
+                <span class="spinner"></span>
+                <span class="font-data">验证中...</span>
+              </span>
+              <span v-else class="btn-content">
+                <span class="font-data">登录</span>
+                <span class="btn-arrow">&#8594;</span>
+              </span>
+            </button>
+          </form>
+
+          <div class="login-footer">
+            <span class="login-footer__text">还没有账户？</span>
+            <RouterLink to="/register" class="login-footer__link">立即注册</RouterLink>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">密码</label>
-          <input
-            v-model="form.password"
-            type="password"
-            class="form-input"
-            :class="{ 'is-error': errors.password }"
-            placeholder="请输入密码"
-            required
-          />
-          <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
-        </div>
-
-        <div class="form-error" v-if="loginError">{{ loginError }}</div>
-
-        <button type="submit" class="btn btn-primary btn-block" :disabled="isSubmitting">
-          <span v-if="isSubmitting" class="btn-loading">
-            <span class="spinner"></span>
-            登录中...
-          </span>
-          <span v-else>登录</span>
-        </button>
-      </form>
-
-      <div class="login-footer">
-        <p>还没有账户？</p>
-        <RouterLink to="/register" class="link">立即注册</RouterLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-/**
- * 登录视图组件逻辑
- * @description 处理用户登录表单验证、提交和状态管理
- */
-
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { authService } from '@/services'
+import { useAuthStore } from '@/stores/auth'
 
-/** Vue Router 实例，用于页面导航 */
 const router = useRouter()
-/** 当前路由对象，用于获取查询参数 */
 const route = useRoute()
+const authStore = useAuthStore()
 
-/**
- * 登录表单数据
- * @property {string} email - 用户邮箱
- * @property {string} password - 用户密码
- */
 const form = reactive({
   email: '',
   password: ''
 })
 
-/**
- * 表单错误信息
- * @property {string} email - 邮箱字段错误提示
- * @property {string} password - 密码字段错误提示
- */
 const errors = reactive({
   email: '',
   password: ''
 })
 
-/** 是否正在提交登录请求 */
 const isSubmitting = ref(false)
-/** 登录错误提示信息 */
 const loginError = ref('')
 
-/**
- * 处理登录表单提交
- * @description 验证表单数据，调用认证服务进行登录，成功后跳转到目标页面
- * @async
- */
 async function handleLogin() {
-  // 重置错误信息
   errors.email = ''
   errors.password = ''
   loginError.value = ''
 
-  // 前端基础验证：检查必填字段
   if (!form.email) {
     errors.email = '请输入邮箱'
     return
@@ -123,25 +145,16 @@ async function handleLogin() {
   isSubmitting.value = true
 
   try {
-    // 调用认证服务登录接口
-    const response = await authService.login({
+    await authStore.login({
       email: form.email,
       password: form.password
     })
 
-    // 登录成功处理：获取重定向地址并跳转
-    if (response.success) {
-      const redirect = route.query.redirect || '/'
-      router.push(redirect)
-    } else {
-      // 登录失败：显示服务端返回的错误信息
-      loginError.value = response.error || '登录失败，请检查邮箱和密码'
-    }
+    const redirect = route.query.redirect || '/'
+    router.push(redirect)
   } catch (error) {
-    // 网络或服务器异常处理
     loginError.value = error.message || '登录失败，请稍后重试'
   } finally {
-    // 无论成功失败，重置提交状态
     isSubmitting.value = false
   }
 }
@@ -149,142 +162,281 @@ async function handleLogin() {
 
 <style scoped>
 .login-page {
-  min-height: calc(100vh - 200px);
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 0;
+  padding: var(--space-8) var(--space-4);
+}
+
+.login-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Double-Bezel Glass Card */
+.bezel-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-2xl);
+  padding: 6px;
+}
+
+.bezel-card__inner {
+  background: var(--color-bg-deep);
+  border-radius: calc(var(--radius-2xl) - 4px);
+  padding: var(--space-8);
+  position: relative;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  animation: fadeInUp 0.5s ease both;
+  max-width: 480px;
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 2rem;
+/* Terminal Status */
+.terminal-status {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  z-index: 5;
 }
 
-.login-icon {
-  display: inline-block;
-  font-size: 2rem;
-  color: var(--accent-2);
-  margin-bottom: 0.5rem;
+.terminal-status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-status-online);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  animation: breathe 2s ease-in-out infinite;
 }
 
-.login-header h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
+.terminal-status__text {
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  color: var(--color-status-online);
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
-.login-header p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
+@keyframes breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
+  50% { opacity: 0.5; box-shadow: 0 0 4px rgba(34, 197, 94, 0.3); }
 }
 
+/* Terminal Identity */
+.login-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.login-id__shield {
+  color: var(--color-accent);
+  filter: drop-shadow(0 0 6px rgba(var(--raw-cyan-rgb), 0.3));
+  flex-shrink: 0;
+}
+
+.login-id__text {
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+/* Form */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
-.form-group {
+.login-form__group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
-.form-label {
-  font-size: 0.85rem;
-  font-weight: 500;
+.login-form__label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.form-input {
-  padding: 0.75rem 1rem;
-  background: rgba(3, 8, 16, 0.6);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--text);
-  font-size: 0.95rem;
-  transition: border-color var(--transition-fast);
+.login-form__error {
+  font-size: var(--text-xs);
+  color: var(--color-status-danger);
+  padding-left: 2px;
 }
 
-.form-input:focus {
-  outline: none;
-  border-color: var(--accent);
+/* Holo Input Error State */
+.holo-input--error {
+  border-bottom-color: var(--color-status-danger) !important;
+  box-shadow: 0 1px 0 0 var(--color-status-danger), 0 0 12px rgba(239, 68, 68, 0.1) !important;
 }
 
-.form-input.is-error {
-  border-color: var(--danger);
+/* Error Alert — Amber */
+.login-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(var(--raw-amber-rgb), 0.08);
+  border: 1px solid rgba(var(--raw-amber-rgb), 0.2);
+  border-left: 2px solid rgba(var(--raw-amber-rgb), 0.6);
+  border-radius: var(--radius-sm);
 }
 
-.form-error {
-  font-size: 0.8rem;
-  color: var(--danger);
+.login-alert__icon {
+  flex-shrink: 0;
+  color: var(--color-highlight);
+  margin-top: 1px;
 }
 
-.btn-block {
+.login-alert__text {
+  font-size: var(--text-sm);
+  color: var(--color-highlight);
+  line-height: 1.5;
+}
+
+/* Submit Button — Amber Pill */
+.login-submit {
   width: 100%;
-  padding: 0.85rem;
-  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2.5rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-highlight);
+  color: #050508;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  margin-top: var(--space-2);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.login-submit:hover {
+  background: var(--color-highlight-bright);
+  transform: translateY(-1px);
+  box-shadow: var(--glow-amber);
+}
+
+.login-submit:active {
+  transform: translateY(0);
+}
+
+.login-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(5, 5, 8, 0.25);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.btn-arrow {
+  transition: transform var(--duration-fast);
+}
+
+.login-submit:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Footer */
 .login-footer {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--line);
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
-.login-footer p {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+.login-footer__text {
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
 }
 
-.link {
-  color: var(--accent-2);
+.login-footer__link {
+  font-size: var(--text-sm);
   font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.02em;
+  transition: color var(--duration-fast), text-shadow var(--duration-normal);
 }
 
-.link:hover {
-  text-decoration: underline;
+.login-footer__link:hover {
+  color: var(--color-accent-bright);
+  text-shadow: 0 0 12px rgba(var(--raw-cyan-rgb), 0.35);
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Transitions */
+.holo-fade-enter-active,
+.holo-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.holo-fade-enter-from,
+.holo-fade-leave-to {
+  opacity: 0;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .terminal-status__text {
+    display: none;
+  }
+
+  .bezel-card__inner {
+    padding: var(--space-6);
+  }
+}
+
+@media (max-width: 480px) {
+  .bezel-card__inner {
+    padding: var(--space-5);
   }
 }
 </style>

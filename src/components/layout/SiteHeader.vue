@@ -1,546 +1,312 @@
-<!--
- * @fileoverview MFD风格导航栏组件
- * @description 科幻军事终端风格的响应式导航栏
- * @module components/layout/SiteHeader
- * @version 3.0 - 星舰方舟版本
--->
-
 <template>
-  <header class="site-header" :class="{ 'header-scrolled': isScrolled }">
-    <!-- 背景层 -->
-    <div class="header-bg"></div>
+  <header class="site-header" :class="{ 'site-header--scrolled': isScrolled }">
+    <div class="site-header__pill">
+      <!-- Logo -->
+      <router-link to="/" class="site-header__logo" aria-label="返回首页">
+        <span class="site-header__logo-white">STELLAR</span>
+        <span class="site-header__logo-cyan">NEXUS</span>
+      </router-link>
 
-    <!-- 顶部装饰线 -->
-    <div class="header-accent-line"></div>
-
-    <div class="container header-inner">
-      <!-- 品牌标识 -->
-      <RouterLink class="brand" to="/">
-        <span class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
-        </span>
-        <div class="brand-text">
-          <span class="brand-title font-tech">星际公民战队</span>
-          <span class="brand-subtitle font-data">STAR CITIZEN SQUADRON</span>
-        </div>
-      </RouterLink>
-
-      <!-- 系统状态显示 -->
-      <div class="header-status hide-mobile">
-        <StatusIndicator type="online" label="系统在线" :pulse="false" size="small" />
-        <span class="header-time font-data">{{ currentTime }}</span>
-        <ThemeToggle />
-      </div>
-
-      <!-- 移动端菜单切换按钮 -->
-      <button
-        class="menu-toggle"
-        type="button"
-        @click="menuOpen = !menuOpen"
-        :aria-expanded="menuOpen"
-        aria-label="切换导航菜单"
-      >
-        <span class="toggle-bar"></span>
-        <span class="toggle-bar"></span>
-        <span class="toggle-bar"></span>
-      </button>
-
-      <!-- 导航菜单 -->
-      <nav class="nav" :class="{ open: menuOpen }">
-        <!-- 导航链接列表 -->
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="nav-link font-tech"
-          @click="menuOpen = false"
+      <!-- Navigation -->
+      <nav class="site-header__nav" :class="{ 'site-header__nav--open': isMobileMenuOpen }">
+        <router-link
+          v-for="(link, index) in navLinks"
+          :key="link.path"
+          :to="link.path"
+          class="site-header__link"
+          :class="{ 'site-header__link--active': isActive(link.path) }"
+          :style="{ '--link-index': index }"
+          @click="isMobileMenuOpen = false"
         >
-          <span class="link-indicator"></span>
-          <span class="link-text">{{ item.label }}</span>
-          <span class="link-id font-data">{{ item.id }}</span>
-        </RouterLink>
+          {{ link.label }}
+        </router-link>
       </nav>
+
+      <!-- Actions -->
+      <div class="site-header__actions">
+        <button class="site-header__theme-btn" @click="toggleTheme" :aria-label="isDark ? '切换亮色主题' : '切换暗色主题'">
+          <svg v-if="isDark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <button class="site-header__menu-btn" @click="isMobileMenuOpen = !isMobileMenuOpen" aria-label="菜单">
+          <span class="hamburger" :class="{ 'hamburger--open': isMobileMenuOpen }">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+      </div>
     </div>
-
-    <!-- 底部分隔线 -->
-    <div class="header-line"></div>
-
-    <!-- 装饰边角 -->
-    <div class="header-corner header-corner--tl"></div>
-    <div class="header-corner header-corner--tr"></div>
   </header>
 </template>
 
 <script setup>
-/**
- * MFD风格网站头部导航组件
- * @description 提供科幻军事终端风格的响应式导航栏
- */
-
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { navItems } from '@/data/siteContent'
-import StatusIndicator from '@/components/ui/StatusIndicator.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
+import { useTheme } from '../../composables/useTheme'
 
-/** 当前路由对象 */
 const route = useRoute()
-
-/** 移动端菜单展开状态 */
-const menuOpen = ref(false)
-
-/** 滚动状态 */
+const { isDark: isDarkFn, toggle } = useTheme()
+const isDark = computed(isDarkFn)
+const isMobileMenuOpen = ref(false)
 const isScrolled = ref(false)
 
-/** 当前时间 */
-const currentTime = ref('')
+const navLinks = [
+  { path: '/', label: '首页' },
+  { path: '/about', label: '关于' },
+  { path: '/fleet', label: '舰队' },
+  { path: '/members', label: '成员' },
+  { path: '/join', label: '加入' },
+  { path: '/contact', label: '联系' },
+]
 
-/**
- * 更新时间
- */
-function updateTime() {
-  const now = new Date()
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
-  currentTime.value = `${hours}:${minutes}:${seconds}`
+function isActive(path) {
+  if (path === '/') return route.path === '/'
+  return route.path.startsWith(path)
 }
 
-/** 时间更新定时器 */
-let timeInterval = null
-
-/**
- * 监听路由变化
- * @description 路由切换时自动关闭移动端菜单
- */
-watch(
-  () => route.fullPath,
-  () => {
-    menuOpen.value = false
-  }
-)
-
-/**
- * 处理滚动事件
- * @description 检测页面滚动位置，添加滚动状态类
- */
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 20
+function toggleTheme() {
+  toggle()
 }
 
-/** 组件挂载时添加监听 */
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  handleScroll()
-  updateTime()
-  timeInterval = setInterval(updateTime, 1000)
-})
+function onScroll() {
+  isScrolled.value = window.scrollY > 10
+}
 
-/** 组件卸载时移除监听 */
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-  if (timeInterval) {
-    clearInterval(timeInterval)
-  }
-})
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>
-/*
- * ============================================
- * MFD风格头部容器
- * ============================================
- */
 .site-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: var(--z-header);
-  border-bottom: 1px solid var(--border-subtle);
-  overflow: hidden;
-  transition: border-color var(--duration-normal);
+  padding: 16px 0 0;
+  pointer-events: none;
 }
 
-.site-header.header-scrolled {
-  border-color: var(--border-medium);
+.site-header__pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: fit-content;
+  margin: 0 auto;
+  height: 56px;
+  padding: 0 1.5rem;
+  gap: var(--space-6);
+  background: rgba(5, 5, 8, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  transition: background var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
 }
 
-.site-header.header-scrolled .header-bg {
-  background: linear-gradient(90deg, rgba(10, 14, 23, 0.98), rgba(17, 24, 39, 0.96));
-  backdrop-filter: blur(24px);
+.site-header--scrolled .site-header__pill {
+  background: rgba(5, 5, 8, 0.95);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(var(--raw-cyan-rgb), 0.05);
 }
 
-.site-header.header-scrolled .header-accent-line {
-  opacity: 1;
-  animation: accent-pulse 2s ease-in-out infinite;
+/* Logo */
+.site-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
-@keyframes accent-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+.site-header__logo-white {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #ffffff;
 }
 
-/*
- * --------------------------------------------
- * 背景层样式
- * --------------------------------------------
- */
-.header-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(10, 14, 23, 0.95), rgba(17, 24, 39, 0.92));
-  backdrop-filter: blur(16px);
-  z-index: -1;
+.site-header__logo-cyan {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--color-accent);
+  text-shadow: 0 0 12px rgba(var(--raw-cyan-rgb), 0.4);
 }
 
-.header-bg::before {
+/* Navigation */
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.site-header__link {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  position: relative;
+  transition: color var(--duration-fast) var(--ease-out),
+              text-shadow var(--duration-fast) var(--ease-out);
+}
+
+.site-header__link:hover {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(var(--raw-cyan-rgb), 0.5);
+}
+
+.site-header__link--active {
+  color: #ffffff;
+}
+
+.site-header__link--active::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(245, 158, 11, 0.04) 0%, transparent 100%),
-    radial-gradient(ellipse 50% 100% at 50% 0%, rgba(6, 182, 212, 0.08), transparent);
-}
-
-/*
- * --------------------------------------------
- * 顶部装饰线
- * --------------------------------------------
- */
-.header-accent-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
   height: 2px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--amber-primary) 20%,
-    var(--nebula-purple) 50%,
-    var(--amber-primary) 80%,
-    transparent 100%
-  );
-  opacity: 0.6;
-}
-
-/*
- * --------------------------------------------
- * 底部分隔线
- * --------------------------------------------
- */
-.header-line {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--amber-primary), transparent);
-  opacity: 0.4;
-}
-
-/*
- * --------------------------------------------
- * 装饰边角
- * --------------------------------------------
- */
-.header-corner {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-color: var(--amber-primary);
-  border-style: solid;
-  opacity: 0.5;
-}
-
-.header-corner--tl {
-  top: 4px;
-  left: 4px;
-  border-width: 2px 0 0 2px;
-}
-
-.header-corner--tr {
-  top: 4px;
-  right: 4px;
-  border-width: 2px 2px 0 0;
-}
-
-/*
- * --------------------------------------------
- * 头部内部布局
- * --------------------------------------------
- */
-.header-inner {
-  min-height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: 0 var(--space-4);
-}
-
-/*
- * --------------------------------------------
- * 品牌标识样式
- * --------------------------------------------
- */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  text-decoration: none;
-  position: relative;
-}
-
-.brand:hover {
-  opacity: 0.9;
-}
-
-.brand-icon {
-  color: var(--amber-primary);
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: breathe 3s ease-in-out infinite;
-}
-
-.brand-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.brand-title {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--text-primary);
-}
-
-.brand-subtitle {
-  font-size: var(--text-xs);
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  opacity: 0.7;
-}
-
-/*
- * --------------------------------------------
- * 系统状态显示
- * --------------------------------------------
- */
-.header-status {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin-left: auto;
-  margin-right: var(--space-4);
-}
-
-.header-time {
-  font-size: var(--text-xs);
-  color: var(--nebula-violet);
-  letter-spacing: 0.1em;
-  min-width: 70px;
-  text-align: right;
-}
-
-/*
- * --------------------------------------------
- * 导航菜单样式
- * --------------------------------------------
- */
-.nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  position: relative;
-}
-
-/*
- * --------------------------------------------
- * 导航链接样式 - MFD风格
- * --------------------------------------------
- */
-.nav-link {
-  position: relative;
-  padding: var(--space-2) var(--space-3);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  font-size: var(--text-xs);
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  transition: all var(--duration-fast);
-  overflow: hidden;
-  border: 1px solid transparent;
-  text-decoration: none;
-}
-
-.link-indicator {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2px;
-  height: 0;
-  background: var(--amber-primary);
-  transition: height var(--duration-fast);
-  box-shadow: 0 0 8px var(--amber-glow);
-}
-
-.link-text {
-  position: relative;
-  z-index: 1;
-}
-
-.link-id {
-  position: absolute;
-  right: 4px;
-  top: 2px;
-  font-size: 0.5rem;
-  color: var(--text-dim);
-  opacity: 0.5;
-}
-
-.nav-link:hover {
-  color: var(--amber-primary);
-  background: rgba(245, 158, 11, 0.05);
-  border-color: rgba(245, 158, 11, 0.2);
-}
-
-.nav-link:hover .link-indicator {
-  height: 60%;
-}
-
-/*
- * --------------------------------------------
- * 当前激活链接样式
- * --------------------------------------------
- */
-.nav-link.router-link-active {
-  color: var(--amber-primary);
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.nav-link.router-link-active .link-indicator {
-  height: 60%;
-}
-
-/*
- * --------------------------------------------
- * 移动端菜单切换按钮
- * --------------------------------------------
- */
-.menu-toggle {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  width: 40px;
-  height: 40px;
-  padding: 10px;
-  border: 1px solid var(--border-subtle);
-  background: rgba(245, 158, 11, 0.05);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.menu-toggle:hover {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: var(--amber-primary);
-}
-
-.toggle-bar {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: var(--text-primary);
+  background: var(--color-accent);
   border-radius: 1px;
-  transition: transform var(--duration-fast), opacity var(--duration-fast);
+  box-shadow: 0 0 8px rgba(var(--raw-cyan-rgb), 0.6);
 }
 
-/*
- * --------------------------------------------
- * 汉堡菜单展开动画
- * --------------------------------------------
- */
-.menu-toggle[aria-expanded="true"] .toggle-bar:nth-child(1) {
-  transform: translateY(6px) rotate(45deg);
+/* Actions */
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
-.menu-toggle[aria-expanded="true"] .toggle-bar:nth-child(2) {
+.site-header__theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.site-header__theme-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Hamburger */
+.site-header__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 16px;
+}
+
+.hamburger span {
+  display: block;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.hamburger--open span:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
+}
+
+.hamburger--open span:nth-child(2) {
   opacity: 0;
 }
 
-.menu-toggle[aria-expanded="true"] .toggle-bar:nth-child(3) {
-  transform: translateY(-6px) rotate(-45deg);
+.hamburger--open span:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
 }
 
-/*
- * --------------------------------------------
- * 响应式布局：移动端样式
- * --------------------------------------------
- */
-@media (max-width: 860px) {
-  .menu-toggle {
-    display: flex;
+/* Mobile */
+@media (max-width: 768px) {
+  .site-header__pill {
+    width: calc(100% - 2rem);
+    max-width: none;
+    justify-content: space-between;
+    border-radius: var(--radius-xl);
+    margin: 0 auto;
   }
 
-  .header-inner {
-    min-height: 64px;
-    position: relative;
+  .site-header__menu-btn {
+    display: inline-flex;
   }
 
-  .nav {
-    position: absolute;
+  .site-header__nav {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    top: 100%;
+    bottom: 0;
+    background: rgba(5, 5, 8, 0.97);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
     flex-direction: column;
-    gap: var(--space-1);
-    padding: var(--space-4);
-    background: rgba(10, 14, 23, 0.98);
-    border: 1px solid var(--border-subtle);
-    border-top: none;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
     opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all var(--duration-fast);
+    pointer-events: none;
+    transition: opacity var(--duration-normal) var(--ease-out);
+    z-index: 200;
   }
 
-  .nav.open {
+  .site-header__nav--open {
     opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+    pointer-events: auto;
   }
 
-  .nav-link {
-    width: 100%;
-    padding: var(--space-3) var(--space-4);
+  .site-header__nav--open .site-header__link {
+    animation: linkReveal 0.4s var(--ease-out) both;
+    animation-delay: calc(var(--link-index) * 80ms + 0.15s);
+  }
+
+  .site-header__link {
+    font-size: 1.5rem;
+    letter-spacing: 0.25em;
+    padding: 1rem 2rem;
   }
 }
 
-@media (max-width: 480px) {
-  .brand-title {
-    font-size: var(--text-xs);
+@keyframes linkReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-
-  .brand-subtitle {
-    display: none;
-  }
-
-  .brand-icon {
-    width: 24px;
-    height: 24px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

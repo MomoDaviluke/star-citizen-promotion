@@ -1,155 +1,151 @@
 /**
- * 「星渊枢纽 · Stellar Nexus」全局基础样式
- * @description 融合星云紫雾、青蓝数据流、琥珀光痕的科幻界面风格
- * @version 5.0 - Stellar Nexus 版本
+ * Star Citizen Promotion — Base Styles
+ * @description Cinematic Sci-Fi Spectacle — Ethereal Glass + Deep Dark
+ * @version 10.0 - Cinematic Sci-Fi
  */
 
-/* ========== 全局重置 ========== */
+/* Reset */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ========== 滚动条样式 ========== */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--void-deep);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--void-elevated);
-  border-radius: var(--radius-sm);
+  background: var(--raw-void-4);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--nebula-purple);
+  background: var(--raw-void-5);
 }
 
-/* ========== 选中样式 ========== */
+/* Selection */
 ::selection {
-  background: var(--nebula-glow);
-  color: var(--text-primary);
+  background: rgba(var(--raw-cyan-rgb), 0.25);
+  color: var(--color-text-heading);
 }
 
-/* ========== 焦点样式 ========== */
+/* Focus */
 *:focus-visible {
-  outline: 1px solid var(--nebula-purple);
+  outline: 1.5px solid var(--color-accent);
   outline-offset: 2px;
+  box-shadow: 0 0 8px rgba(var(--raw-cyan-rgb), 0.3);
 }
 
-/* ========== 表单聚焦光效 ========== */
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: var(--nebula-violet);
-  box-shadow:
-    0 0 0 2px rgba(124, 58, 237, 0.2),
-    0 0 20px rgba(124, 58, 237, 0.1);
-  transition: border-color 0.2s ease, box-shadow 0.3s ease;
-}
-
-/* ========== 按钮涟漪效果 ========== */
-.btn-glow,
-.btn-primary {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-glow::after,
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.2) 0%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.btn-glow:active::after,
-.btn-primary:active::after {
-  opacity: 1;
-  transition: opacity 0s;
-}
-
-/* ========== 平滑滚动 ========== */
+/* Smooth scroll */
 html {
   scroll-behavior: smooth;
 }
 
-/* ========== 页面主体 ========== */
+/* Body — OLED black with radial gradient orbs */
 html, body, #app {
   min-height: 100vh;
-  background: var(--void-deepest);
-  color: var(--text-primary);
+  background: var(--color-bg);
+  color: var(--color-text-body);
 }
 
 body {
   font-family: var(--font-body);
-  font-size: var(--text-md);
-  line-height: 1.6;
+  font-size: var(--text-base);
+  line-height: 1.7;
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(var(--raw-cyan-rgb), 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(var(--raw-amber-rgb), 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(var(--raw-cyan-rgb), 0.06) 0%, transparent 50%);
+  background-attachment: fixed;
 }
 
-/* ========== 全局噪点纹理 overlay ========== */
+/* Noise overlay */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.025;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ========== 字体工具类 ========== */
-.font-display {
-  font-family: var(--font-display);
+/* Scan line overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 4px
+  );
 }
 
-.font-data {
-  font-family: var(--font-data);
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 2rem;
 }
 
-.font-tech {
-  font-family: var(--font-tech);
+.container-wide {
+  max-width: 1400px;
 }
 
-/* ========== 标题样式 ========== */
+@media (max-width: 768px) {
+  .container { padding-inline: 1.25rem; }
+}
+
+/* Typography — larger sizes, tighter tracking */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--color-text-heading);
 }
 
-h1 { font-size: var(--text-3xl); }
-h2 { font-size: var(--text-2xl); }
-h3 { font-size: var(--text-xl); }
-h4 { font-size: var(--text-lg); }
+h1 { font-size: var(--text-4xl); margin-bottom: var(--space-6); }
+h2 { font-size: var(--text-3xl); margin-bottom: var(--space-5); }
+h3 { font-size: var(--text-2xl); margin-bottom: var(--space-4); }
+h4 { font-size: var(--text-xl); margin-bottom: var(--space-3); }
 
-/* ========== 链接样式 ========== */
+p {
+  max-width: 65ch;
+  line-height: 1.75;
+}
+
+/* Links */
 a {
-  color: var(--cyan-primary);
+  color: var(--color-accent);
   text-decoration: none;
-  transition: color var(--duration-fast);
+  transition: color var(--duration-fast) var(--ease-out),
+              text-shadow var(--duration-fast) var(--ease-out);
 }
 
 a:hover {
-  color: var(--cyan-bright);
+  color: var(--color-accent-bright);
+  text-shadow: 0 0 8px rgba(var(--raw-cyan-rgb), 0.4);
 }
 
-/* ========== 按钮重置 ========== */
+/* Button reset */
 button {
   font-family: inherit;
   cursor: pointer;
@@ -158,35 +154,245 @@ button {
   color: inherit;
 }
 
-/* ========== 图片重置 ========== */
+/* Image reset */
 img {
   max-width: 100%;
   height: auto;
   display: block;
 }
 
-/* ========== 减少动画 ========== */
+/* Font utilities */
+.font-display { font-family: var(--font-display); }
+.font-data { font-family: var(--font-data); }
+.font-mono { font-family: var(--font-mono); }
+
+/* Section spacing */
+.section {
+  padding: var(--space-16) 0;
+}
+
+@media (max-width: 768px) {
+  .section { padding: var(--space-10) 0; }
+}
+
+/* Accent text */
+.accent-text {
+  color: var(--color-accent);
+}
+
+/* Label style — small caps technical labels */
+.tech-label {
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+/* Form inputs — bottom-border style with cyan accent + glow */
+.form-input,
+.holo-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-text-body);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.form-input:focus,
+.holo-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(var(--raw-cyan-rgb), 0.12),
+              0 0 16px rgba(var(--raw-cyan-rgb), 0.1);
+}
+
+.form-input::placeholder,
+.holo-input::placeholder {
+  color: var(--color-text-dim);
+}
+
+/* Holo input — bottom-border variant */
+.holo-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--color-border);
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.holo-input:focus {
+  border-bottom-color: var(--color-accent);
+  box-shadow: 0 2px 0 0 var(--color-accent),
+              0 0 20px rgba(var(--raw-cyan-rgb), 0.15);
+}
+
+/* Primary button — full-width pill, amber background, dark text, hover glow */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 2rem;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-accent-secondary);
+  color: var(--raw-void-1);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-primary:hover {
+  background: var(--raw-amber);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), var(--glow-amber);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary button — ghost outline with cyan border */
+.btn-secondary,
+.holo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--color-text-body);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-secondary:hover,
+.holo-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 12px rgba(var(--raw-cyan-rgb), 0.15);
+}
+
+.holo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+ * Double-Bezel Glass Card
+ * ============================================================ */
+.glass-card {
+  background: rgba(var(--raw-white-rgb), 0.05);
+  border: 1px solid rgba(var(--raw-white-rgb), 0.1);
+  border-radius: var(--radius-2xl);
+  padding: 6px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+}
+
+.glass-card:hover {
+  border-color: rgba(var(--raw-cyan-rgb), 0.2);
+  box-shadow: var(--shadow-card-hover), var(--glow-card-hover);
+}
+
+.glass-card > .glass-card__inner,
+.glass-card__inner {
+  background: var(--color-bg-mid);
+  border-radius: calc(var(--radius-2xl) - 6px);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-inset);
+}
+
+/* ============================================================
+ * Scroll Reveal Animation
+ * ============================================================ */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+              transform var(--duration-slow) var(--ease-out);
+}
+
+.section-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+ * Glow Text Utilities
+ * ============================================================ */
+.glow-text-cyan {
+  color: var(--raw-cyan);
+  text-shadow: 0 0 12px rgba(var(--raw-cyan-rgb), 0.5),
+               0 0 40px rgba(var(--raw-cyan-rgb), 0.2);
+}
+
+.glow-text-amber {
+  color: var(--raw-amber);
+  text-shadow: 0 0 12px rgba(var(--raw-amber-rgb), 0.5),
+               0 0 40px rgba(var(--raw-amber-rgb), 0.2);
+}
+
+/* ============================================================
+ * Tag / Badge Utilities
+ * ============================================================ */
+.tag-cyan {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--raw-cyan);
+  background: rgba(var(--raw-cyan-rgb), 0.12);
+  border: 1px solid rgba(var(--raw-cyan-rgb), 0.2);
+  border-radius: 999px;
+}
+
+.tag-amber {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--raw-amber);
+  background: rgba(var(--raw-amber-rgb), 0.12);
+  border: 1px solid rgba(var(--raw-amber-rgb), 0.2);
+  border-radius: 999px;
+}
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  html {
-    scroll-behavior: auto;
-  }
-}
-
-/* ========== 高对比度 ========== */
-@media (prefers-contrast: high) {
-  :root {
-    --void-mid: #000000;
-    --void-surface: #1a1a1a;
-    --nebula-purple: #9b59b6;
-    --amber-primary: #ffaa00;
-    --cyan-primary: #00ddff;
-    --text-primary: #ffffff;
-    --text-secondary: #e0e0e0;
-  }
+  html { scroll-behavior: auto; }
 }

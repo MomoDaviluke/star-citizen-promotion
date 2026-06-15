@@ -6,21 +6,11 @@
 
 <template>
   <div class="app-shell">
-    <!-- 全局星空粒子背景 -->
-    <StarfieldBg quality="high" :speed="0.8" :parallax="true" />
-
-    <!-- 技术风格背景装饰层 -->
-    <div class="tech-overlay" aria-hidden="true">
-      <div class="tech-grid"></div>
-      <div class="tech-glow tech-glow-1"></div>
-      <div class="tech-glow tech-glow-2"></div>
-    </div>
-
     <!-- 站点头部导航 -->
     <SiteHeader />
 
     <!-- 主内容区域 -->
-    <main class="container page-main">
+    <main class="page-main">
       <ErrorBoundary @error="handleGlobalError">
         <router-view v-slot="{ Component, route }">
           <PageTransition :key="route.path">
@@ -76,9 +66,7 @@ import SiteFooter from './components/layout/SiteFooter.vue'
 import PageTransition from './components/common/PageTransition.vue'
 import LoadingIndicator from './components/common/LoadingIndicator.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
-import StarfieldBg from './components/effects/StarfieldBg.vue'
 import PwaUpdateToast from './components/PwaUpdateToast.vue'
-import { aiService, authService } from './services'
 import { createLogger } from './utils/logger.js'
 
 const logger = createLogger('App')
@@ -271,105 +259,17 @@ const hideLoading = () => {
 
 /** 向子组件提供加载控制方法 */
 provide('loading', { showLoading, hideLoading })
-
-/** 向子组件提供 AI 服务实例 */
-provide('aiService', aiService)
-
-/** 向子组件提供认证服务 */
-provide('authService', authService)
 </script>
 
 <style scoped>
-/**
- * 技术风格背景层
- * @description 固定定位的装饰性背景，包含网格和光晕效果
- */
-.tech-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  overflow: hidden;
-}
-
-/**
- * 网格背景
- * @description 半透明的科技感网格图案
- */
-.tech-grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.08;
-  background-image:
-    linear-gradient(rgba(143, 215, 255, 0.15) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(143, 215, 255, 0.15) 1px, transparent 1px);
-  background-size: 50px 50px;
-  mask-image: linear-gradient(180deg, black 0%, transparent 80%);
-}
-
-/**
- * 光晕效果基础样式
- * @description 模糊的渐变圆形装饰
- */
-.tech-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  will-change: transform;
-}
-
-/**
- * 左上角光晕
- */
-.tech-glow-1 {
-  width: 500px;
-  height: 500px;
-  left: -150px;
-  top: -150px;
-  background: radial-gradient(circle, rgba(95, 169, 255, 0.12), transparent 70%);
-}
-
-/**
- * 右下角光晕
- */
-.tech-glow-2 {
-  width: 400px;
-  height: 400px;
-  right: -100px;
-  bottom: -100px;
-  background: radial-gradient(circle, rgba(143, 215, 255, 0.08), transparent 70%);
-}
-
-/**
- * 粒子效果（已禁用）
- */
-.tech-particles {
-  display: none;
-}
-
-/**
- * 主内容区域
- * @description 页面主体容器，包含路由视图
- */
+/* Main content area */
 .page-main {
-  padding-block: 2rem 4rem;
+  padding-top: 64px;
+  min-height: 100vh;
   position: relative;
-  overflow: hidden;
 }
 
-/**
- * 减少动画偏好支持
- */
-@media (prefers-reduced-motion: reduce) {
-  .tech-glow,
-  .tech-particles {
-    animation: none;
-  }
-}
-
-/**
- * 全局通知容器
- */
+/* Notification container */
 .notification-container {
   position: fixed;
   top: 1rem;
@@ -386,28 +286,17 @@ provide('authService', authService)
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-  background: rgba(3, 8, 16, 0.95);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--color-bg-overlay);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
 }
 
-.notification-success {
-  border-color: var(--success);
-}
-
-.notification-error {
-  border-color: var(--danger);
-}
-
-.notification-warning {
-  border-color: #f0ad4e;
-}
-
-.notification-info {
-  border-color: var(--accent);
-}
+.notification-success { border-left: 3px solid var(--color-status-online); }
+.notification-error { border-left: 3px solid var(--color-status-danger); }
+.notification-warning { border-left: 3px solid var(--color-status-warning); }
+.notification-info { border-left: 3px solid var(--color-accent); }
 
 .notification-icon {
   display: flex;
@@ -420,30 +309,15 @@ provide('authService', authService)
   flex-shrink: 0;
 }
 
-.notification-success .notification-icon {
-  background: rgba(78, 205, 196, 0.2);
-  color: var(--success);
-}
-
-.notification-error .notification-icon {
-  background: rgba(255, 107, 107, 0.2);
-  color: var(--danger);
-}
-
-.notification-warning .notification-icon {
-  background: rgba(240, 173, 78, 0.2);
-  color: #f0ad4e;
-}
-
-.notification-info .notification-icon {
-  background: rgba(95, 169, 255, 0.2);
-  color: var(--accent);
-}
+.notification-success .notification-icon { color: var(--color-status-online); }
+.notification-error .notification-icon { color: var(--color-status-danger); }
+.notification-warning .notification-icon { color: var(--color-status-warning); }
+.notification-info .notification-icon { color: var(--color-accent); }
 
 .notification-message {
   flex: 1;
-  font-size: 0.9rem;
-  color: var(--text);
+  font-size: var(--text-sm);
+  color: var(--color-text-body);
 }
 
 .notification-close {
@@ -454,21 +328,20 @@ provide('authService', authService)
   height: 24px;
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--color-text-dim);
   font-size: 1.25rem;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast);
 }
 
 .notification-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text);
+  color: var(--color-text-heading);
 }
 
 .notification-enter-active,
 .notification-leave-active {
-  transition: all 0.3s ease;
+  transition: all var(--duration-normal) var(--ease-out);
 }
 
 .notification-enter-from {

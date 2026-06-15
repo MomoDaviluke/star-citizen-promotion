@@ -1,943 +1,463 @@
 <!--
-  @file 舰队展示视图组件 - Stellar Nexus 星渊枢纽风格
-  @description 展示战队拥有的所有飞船，采用Stellar Nexus视觉系统
-  @module views/Fleet
-  @version 3.0 - Stellar Nexus视觉系统
+  @file 舰队展示视图组件
+  @description Cinematic Sci-Fi — 展示战队所有飞船
+  @version 10.0 - Cinematic Sci-Fi
 -->
 
 <template>
   <div class="fleet-page">
-    <!-- 星云背景装饰 -->
-    <div class="page-nebulae">
-      <div class="nebula-blob nebula-blob--purple"></div>
-      <div class="nebula-blob nebula-blob--cyan"></div>
-    </div>
 
-    <!-- 页面标题区域 -->
-    <PageHeader
-      backgroundImage="/images/sc/sc-fleet.jpg"
-      title="舰队展示"
-      subtitle="战队飞船资产清单与部署状态监控"
-      systemId="SYS.FLEET // V.3.0"
-    />
-
-    <!-- 操作栏 -->
-    <div class="fleet-controls">
-      <!-- 筛选器 -->
-      <div class="filter-group">
-        <TechButton
-          v-for="cat in categories"
-          :key="cat.value"
-          :variant="filter === cat.value ? 'primary' : 'outline'"
-          size="sm"
-          @click="setFilter(cat.value)"
-        >
-          {{ cat.label }}
-          <span v-if="cat.count > 0" class="filter-count font-data">{{ cat.count }}</span>
-        </TechButton>
+    <!-- Hero banner: 40vh -->
+    <section class="hero">
+      <div class="hero__bg"></div>
+      <div class="hero__overlay"></div>
+      <div class="hero__content container">
+        <span class="pill-badge">// FLEET REGISTRY</span>
+        <h1>舰队展厅</h1>
       </div>
+    </section>
 
-      <!-- 搜索框 -->
-      <div class="search-box">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索飞船..."
-          class="search-input"
-          @input="setSearchQuery(searchQuery)"
-        />
-        <span class="search-icon">◈</span>
-      </div>
-    </div>
-
-    <!-- 舰队统计 - MFD面板 -->
-    <div class="fleet-stats" v-scroll-reveal="{ animation: 'fadeUp', delay: 0.1 }">
-      <MFDPanel
-        v-for="(stat, index) in fleetStats"
-        :key="stat.label"
-        :variant="index === 0 ? 'primary' : 'secondary'"
-        :title="stat.label.toUpperCase()"
-        :subtitle="'METRIC-' + (index + 1)"
-        icon="◈"
-        :status="'LIVE'"
-        statusType="online"
-        class="stat-panel"
-      >
-        <div class="stat-content">
-          <span class="stat-value font-data">{{ stat.value }}</span>
-          <span class="stat-unit font-data">{{ stat.unit }}</span>
-        </div>
-      </MFDPanel>
-    </div>
-
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p class="font-data">加载舰队数据中...</p>
-    </div>
-
-    <!-- 错误状态 -->
-    <div v-else-if="error" class="error-state">
-      <p class="error-message">{{ error }}</p>
-      <TechButton variant="primary" @click="loadData">重试</TechButton>
-    </div>
-
-    <!-- 空状态 -->
-    <div v-else-if="filteredShips.length === 0" class="empty-state">
-      <p>暂无飞船数据</p>
-      <TechButton v-if="isAdmin" variant="primary" @click="showAddDialog = true">
-        添加飞船
-      </TechButton>
-    </div>
-
-    <!-- 飞船网格 - ShipCard 风格 + 筛选动画过渡 -->
-    <TransitionGroup
-      v-else
-      name="fleet-shuffle"
-      tag="div"
-      class="fleet-grid"
-      v-scroll-reveal="{ animation: 'fadeUp', delay: 0.15 }"
-    >
-      <ShipCard
-        v-for="ship in filteredShips"
-        :key="ship.id"
-        :ship="{
-          ...ship,
-          category: ship.category || 'combat'
-        }"
-        :showStats="true"
-        class="fleet-ship-card"
-        @click="selectShip(ship)"
-      />
-    </TransitionGroup>
-
-    <!-- 添加/编辑弹窗 -->
-    <BaseModal
-      v-model="showAddDialog"
-      :title="editingShip ? '编辑飞船' : '添加飞船'"
-      size="lg"
-    >
-      <form @submit.prevent="saveShip" class="ship-form">
-        <div class="form-group">
-          <label class="font-data">飞船名称 *</label>
-          <input v-model="shipForm.name" type="text" required class="form-input" />
-        </div>
-
-        <div class="form-group">
-          <label class="font-data">呼号</label>
-          <input v-model="shipForm.callsign" type="text" class="form-input" />
-        </div>
-
-        <div class="form-group">
-          <label class="font-data">飞船型号 *</label>
-          <input v-model="shipForm.ship" type="text" required class="form-input" />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="font-data">类别</label>
-            <select v-model="shipForm.category" class="form-input">
-              <option value="combat">战斗</option>
-              <option value="transport">运输</option>
-              <option value="explore">探索</option>
-              <option value="support">支援</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="font-data">状态</label>
-            <select v-model="shipForm.status" class="form-input">
-              <option value="available">可用</option>
-              <option value="borrowed">出借中</option>
-              <option value="inMission">任务中</option>
-              <option value="maintenance">维护中</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="font-data">价值 (UEC)</label>
-          <input v-model.number="shipForm.value" type="number" min="0" class="form-input" />
-        </div>
-
-        <div class="form-group">
-          <label class="font-data">图片URL</label>
-          <input v-model="shipForm.image" type="text" class="form-input" />
-        </div>
-
-        <div class="form-group">
-          <label class="font-data">描述</label>
-          <textarea v-model="shipForm.description" rows="3" class="form-input"></textarea>
-        </div>
-
-        <div class="form-actions">
-          <TechButton type="button" variant="outline" @click="showAddDialog = false">
-            取消
-          </TechButton>
-          <TechButton type="submit" variant="primary">
-            {{ editingShip ? '更新' : '添加' }}
-          </TechButton>
-        </div>
-      </form>
-    </BaseModal>
-
-    <!-- 详情弹窗 -->
-    <BaseModal
-      v-model="showDetailDialog"
-      :title="selectedShip?.name || '飞船详情'"
-      size="lg"
-    >
-      <div v-if="selectedShip" class="ship-detail">
-        <div class="detail-media">
-          <img :src="selectedShip.image || '/placeholder-ship.jpg'" :alt="selectedShip.name" />
-        </div>
-
-        <div class="detail-info">
-          <h3 class="font-tech">{{ selectedShip.name }}</h3>
-          <p class="callsign font-data">{{ selectedShip.callsign }}</p>
-
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="label font-data">MODEL</span>
-              <span class="value">{{ selectedShip.ship }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label font-data">CLASS</span>
-              <span class="value">{{ getCategoryText(selectedShip.category) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label font-data">STATUS</span>
-              <StatusIndicator
-                :type="getStatusType(selectedShip.status)"
-                :label="getStatusText(selectedShip.status)"
-                size="small"
-              />
-            </div>
-            <div class="detail-item">
-              <span class="label font-data">VALUE</span>
-              <span class="value font-data">{{ formatUEC(selectedShip.value) }} UEC</span>
-            </div>
-          </div>
-
-          <div v-if="selectedShip.description" class="detail-description">
-            <h4 class="font-data">DESCRIPTION</h4>
-            <p>{{ selectedShip.description }}</p>
+    <!-- Stats bar -->
+    <section class="fleet-stats">
+      <div class="container">
+        <div class="stats-bar">
+          <div v-for="stat in fleetStats" :key="stat.label" class="stats-bar__item">
+            <span class="stats-bar__value font-data">{{ stat.value }}</span>
+            <span class="stats-bar__label font-data">{{ stat.label }}</span>
           </div>
         </div>
       </div>
-    </BaseModal>
+    </section>
+
+    <!-- Category filter -->
+    <section class="fleet-filter">
+      <div class="container">
+        <div class="filter-group">
+          <button
+            v-for="cat in categories"
+            :key="cat"
+            class="filter-btn"
+            :class="{ 'filter-btn--active': activeCategory === cat }"
+            @click="activeCategory = cat"
+          >
+            {{ cat }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ship grid -->
+    <section class="fleet-grid-section section">
+      <div class="container">
+        <div class="ship-grid">
+          <div v-for="ship in filteredShips" :key="ship.name" class="ship-card">
+            <!-- Double-Bezel outer shell -->
+            <div class="bezel-shell">
+              <!-- Double-Bezel inner core -->
+              <div class="bezel-core">
+                <!-- Ship image area -->
+                <div class="ship-card__image">
+                  <img :src="ship.image" :alt="ship.name" loading="lazy" />
+                </div>
+
+                <div class="ship-card__content">
+                  <div class="ship-card__meta">
+                    <span class="ship-card__model font-data">{{ ship.manufacturer }}</span>
+                    <span class="amber-pill">{{ ship.category }}</span>
+                  </div>
+                  <h3 class="ship-card__name">{{ ship.name }}</h3>
+                  <p class="ship-card__role">{{ ship.role }}</p>
+
+                  <!-- Readiness bars -->
+                  <div class="ship-card__specs">
+                    <div v-for="spec in ship.specs" :key="spec.label" class="ship-card__spec">
+                      <span class="ship-card__spec-label font-data">{{ spec.label }}</span>
+                      <div class="spec-bar">
+                        <div class="spec-bar__fill" :style="{ width: spec.value + '%' }"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-/**
- * 舰队展示视图组件 - MFD军事终端风格
- * @description 展示战队飞船列表，支持筛选、搜索、增删改查
- * @version 2.0 - Starship Ark视觉系统
- */
+import { ref, computed } from 'vue'
 
-import { ref, computed, onMounted } from 'vue'
-import { useFleetStore } from '@/stores/fleet'
-import { useAuthStore } from '@/stores/auth'
-import { createLogger } from '../utils/logger.js'
-import MFDPanel from '@/components/ui/MFDPanel.vue'
-import TechButton from '@/components/ui/TechButton.vue'
-import StatusIndicator from '@/components/ui/StatusIndicator.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
-import ShipCard from '@/components/ui/ShipCard.vue'
-import PageHeader from '@/components/common/PageHeader.vue'
+const activeCategory = ref('全部')
+const categories = ['全部', '战斗', '运输', '采矿', '侦察']
 
-const logger = createLogger('Fleet')
-
-const fleetStore = useFleetStore()
-const authStore = useAuthStore()
-
-// 状态
-const showAddDialog = ref(false)
-const showDetailDialog = ref(false)
-const editingShip = ref(null)
-const selectedShip = ref(null)
-const searchQuery = ref('')
-
-// 表单数据
-const shipForm = ref({
-  name: '',
-  callsign: '',
-  ship: '',
-  category: 'combat',
-  status: 'available',
-  value: 0,
-  image: '',
-  description: ''
-})
-
-// 计算属性
-const loading = computed(() => fleetStore.loading)
-const error = computed(() => fleetStore.error)
-const filter = computed(() => fleetStore.filter)
-const filteredShips = computed(() => fleetStore.filteredShips)
-const totalShips = computed(() => fleetStore.ships.length)
-const totalValue = computed(() => fleetStore.totalValue)
-const isAdmin = computed(() => authStore.isAdmin)
-
-const availableCount = computed(() =>
-  fleetStore.ships.filter(s => s.status === 'available').length
-)
-
-const fleetStats = computed(() => [
-  { label: '舰队总数', value: totalShips.value.toString(), unit: 'SHIPS' },
-  { label: '总价值', value: formatUEC(totalValue.value), unit: 'UEC' },
-  { label: '可部署', value: availableCount.value.toString(), unit: 'READY' }
+const fleetStats = ref([
+  { value: '12', label: '在役舰船' },
+  { value: '4', label: '舰船类别' },
+  { value: '6', label: '制造商' },
+  { value: '100%', label: '战备率' },
 ])
 
-const categories = computed(() => [
-  { label: '全部', value: 'all', count: fleetStore.ships.length },
-  { label: '战斗', value: 'combat', count: fleetStore.shipCategories.combat || 0 },
-  { label: '运输', value: 'transport', count: fleetStore.shipCategories.transport || 0 },
-  { label: '探索', value: 'explore', count: fleetStore.shipCategories.explore || 0 },
-  { label: '支援', value: 'support', count: fleetStore.shipCategories.support || 0 }
+const ships = ref([
+  {
+    name: 'Aegis Hammerhead',
+    manufacturer: 'Aegis Dynamics',
+    category: '战斗',
+    role: '重型护卫舰 — 多炮塔反战斗机平台',
+    image: '/images/sc/sc-bengal.jpg',
+    specs: [
+      { label: '火力', value: 92 },
+      { label: '防御', value: 88 },
+      { label: '机动', value: 35 },
+    ]
+  },
+  {
+    name: 'RSI Constellation Andromeda',
+    manufacturer: 'Roberts Space Industries',
+    category: '运输',
+    role: '多功能巡洋舰 — 运输与战斗兼备',
+    image: '/images/sc/sc-constellation.jpg',
+    specs: [
+      { label: '火力', value: 70 },
+      { label: '防御', value: 65 },
+      { label: '货仓', value: 60 },
+    ]
+  },
+  {
+    name: 'Anvil Arrow',
+    manufacturer: 'Anvil Aerospace',
+    category: '战斗',
+    role: '轻型战斗机 — 高机动空优战机',
+    image: '/images/sc/sc-buccaneer.jpg',
+    specs: [
+      { label: '火力', value: 55 },
+      { label: '机动', value: 95 },
+      { label: '防御', value: 30 },
+    ]
+  },
+  {
+    name: 'MISC Prospector',
+    manufacturer: 'MISC',
+    category: '采矿',
+    role: '工业采矿船 — 小型矿物开采',
+    image: '/images/sc/sc-spaceship-4k.jpg',
+    specs: [
+      { label: '采矿', value: 85 },
+      { label: '防御', value: 25 },
+      { label: '机动', value: 60 },
+    ]
+  },
+  {
+    name: 'Drake Cutlass Black',
+    manufacturer: 'Drake Interplanetary',
+    category: '战斗',
+    role: '中型突击舰 — 多用途战斗运输',
+    image: '/images/sc/sc-bengal.jpg',
+    specs: [
+      { label: '火力', value: 72 },
+      { label: '防御', value: 50 },
+      { label: '货仓', value: 45 },
+    ]
+  },
+  {
+    name: 'Aegis Vanguard Sentinel',
+    manufacturer: 'Aegis Dynamics',
+    category: '侦察',
+    role: '电子战机 — 长距离拦截与电子战',
+    image: '/images/sc/sc-constellation.jpg',
+    specs: [
+      { label: '火力', value: 78 },
+      { label: '防御', value: 70 },
+      { label: '续航', value: 88 },
+    ]
+  },
 ])
 
-/**
- * 加载舰队数据
- * @description 调用 store 获取飞船列表，错误由 store 内部捕获并设置到 error 状态
- *              此处仅做静默兜底，防止异步错误冒泡到 ErrorBoundary 组件
- */
-async function loadData() {
-  try {
-    await fleetStore.fetchShips()
-  } catch {
-    // store 已将错误信息写入 fleetStore.error，页面模板自动展示错误状态
-    // 此处不重新抛出，避免触发上层 ErrorBoundary 导致整页白屏
-  }
-}
-
-function setFilter(value) {
-  fleetStore.setFilter(value)
-}
-
-function setSearchQuery(query) {
-  fleetStore.setSearchQuery(query)
-}
-
-function selectShip(ship) {
-  selectedShip.value = ship
-  showDetailDialog.value = true
-}
-
-function viewShipDetail(ship) {
-  selectedShip.value = ship
-  showDetailDialog.value = true
-}
-
-function editShip(ship) {
-  editingShip.value = ship.id
-  shipForm.value = { ...ship }
-  showAddDialog.value = true
-}
-
-function resetForm() {
-  editingShip.value = null
-  shipForm.value = {
-    name: '',
-    callsign: '',
-    ship: '',
-    category: 'combat',
-    status: 'available',
-    value: 0,
-    image: '',
-    description: ''
-  }
-}
-
-async function saveShip() {
-  try {
-    if (editingShip.value) {
-      await fleetStore.updateShip(editingShip.value, shipForm.value)
-    } else {
-      await fleetStore.addShip(shipForm.value)
-    }
-    showAddDialog.value = false
-    resetForm()
-  } catch (err) {
-    logger.error('保存失败:', err)
-  }
-}
-
-function getStatusType(status) {
-  const map = {
-    available: 'online',
-    borrowed: 'warning',
-    inMission: 'primary',
-    maintenance: 'offline'
-  }
-  return map[status] || 'info'
-}
-
-function getShipVariant(status) {
-  const map = {
-    available: 'primary',
-    borrowed: 'secondary',
-    inMission: 'primary',
-    maintenance: 'secondary'
-  }
-  return map[status] || 'secondary'
-}
-
-function getStatusText(status) {
-  const map = {
-    available: '可用',
-    borrowed: '出借中',
-    inMission: '任务中',
-    maintenance: '维护中'
-  }
-  return map[status] || '未知'
-}
-
-function getCategoryText(category) {
-  const map = {
-    combat: '战斗',
-    transport: '运输',
-    explore: '探索',
-    support: '支援'
-  }
-  return map[category] || '其他'
-}
-
-function formatUEC(value) {
-  if (!value) return '0'
-  return value.toLocaleString()
-}
-
-// 生命周期
-onMounted(() => {
-  loadData()
+const filteredShips = computed(() => {
+  if (activeCategory.value === '全部') return ships.value
+  return ships.value.filter(s => s.category === activeCategory.value)
 })
 </script>
 
 <style scoped>
-/* ========== 页面容器 ========== */
-.fleet-page {
+/* ── Hero ── */
+.hero {
+  position: relative;
+  min-height: 40vh;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
-  position: relative;
-}
-
-/* 星云背景装饰 */
-.page-nebulae {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.nebula-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  animation: nebula-drift 20s ease-in-out infinite;
-}
-
-.nebula-blob--purple {
-  width: 50vw;
-  height: 50vw;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.08), transparent 70%);
-  top: -10%;
-  right: -10%;
-}
-
-.nebula-blob--cyan {
-  width: 40vw;
-  height: 40vw;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.06), transparent 70%);
-  bottom: 10%;
-  left: -10%;
-  animation-delay: -7s;
-}
-
-/* ========== 页面标题区域 ========== */
-.page-header-mfd {
-  position: relative;
-  padding: 2rem;
-  margin: -2rem -1.5rem 3rem;
-  background: linear-gradient(135deg, rgba(12, 20, 36, 0.95), rgba(6, 11, 20, 0.98));
-  border: 1px solid var(--nebula-purple);
-  border-radius: var(--radius-md);
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
-.page-header-bg {
+.hero__bg {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  background: url('/images/sc/sc-fleet.jpg') center / cover no-repeat;
 }
 
-.page-header-bg img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.15;
-  filter: saturate(0.5) brightness(0.4);
-  mix-blend-mode: screen;
-}
-
-.page-header-bg-overlay {
+.hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(12, 20, 36, 0.9), rgba(6, 11, 20, 0.95));
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0.75) 0%, rgba(5, 5, 8, 0.95) 100%);
 }
 
-.page-header-mfd::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--nebula-purple), transparent);
-  animation: scanLineHorizontal 3s linear infinite;
-  z-index: 1;
-}
-
-.page-header-content {
+.hero__content {
   position: relative;
   z-index: 1;
+  text-align: center;
 }
 
-.page-id {
-  display: block;
-  color: var(--nebula-purple);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  margin-bottom: 0.5rem;
-}
-
-.page-title {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
+.hero__content h1 {
+  font-size: var(--text-4xl);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin-top: var(--space-3);
 }
 
-.page-subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1.6;
+/* ── Pill Badge ── */
+.pill-badge {
+  display: inline-block;
+  padding: 6px 20px;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(0, 229, 255, 0.08);
 }
 
-.page-header-decoration {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+/* ── Stats Bar ── */
+.stats-bar {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  gap: var(--space-8);
+  padding: var(--space-5) var(--space-6);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-2xl);
 }
 
-.header-line {
-  width: 60px;
-  height: 1px;
-  background: linear-gradient(90deg, var(--nebula-purple), transparent);
-}
-
-/* ========== 操作栏 ========== */
-.fleet-controls {
+.stats-bar__item {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  text-align: center;
+}
+
+.stats-bar__value {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.stats-bar__label {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ── Filter ── */
+.fleet-filter {
+  padding: var(--space-6) 0 0;
 }
 
 .filter-group {
   display: flex;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  gap: var(--space-sm);
 }
 
-.filter-count {
-  margin-left: 0.25rem;
-  padding: 0.1rem 0.4rem;
-  background: rgba(124, 58, 237, 0.2);
-  border-radius: 2px;
-  font-size: 0.65rem;
-  color: var(--nebula-violet);
-}
-
-.search-box {
-  position: relative;
-  width: 300px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.625rem 1rem 0.625rem 2.5rem;
-  background: rgba(10, 20, 35, 0.8);
-  border: 1px solid var(--nebula-purple);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+.filter-btn {
+  padding: 0.6rem 1.5rem;
+  font-family: var(--font-display);
   font-size: var(--text-sm);
-  font-family: var(--font-mono);
-  transition: all var(--transition-normal);
+  font-weight: 500;
+  color: var(--color-text-label);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: var(--nebula-violet);
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+.filter-btn:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+  color: #fff;
 }
 
-.search-input::placeholder {
-  color: var(--text-muted);
+.filter-btn--active {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: var(--color-accent);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
 }
 
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.8rem;
-  color: var(--nebula-purple);
+/* ── Double-Bezel Card ── */
+.bezel-shell {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-2xl);
+  padding: 6px;
+  transition: border-color var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
 }
 
-/* ========== 舰队统计 ========== */
-.fleet-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+.ship-card:hover .bezel-shell {
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow: 0 0 32px rgba(0, 229, 255, 0.15), 0 0 60px rgba(0, 229, 255, 0.06);
 }
 
-.stat-panel {
-  transition: transform 0.3s ease;
-}
-
-.stat-panel:hover {
-  transform: translateY(-4px);
-}
-
-.stat-content {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 1rem 0;
-}
-
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-.stat-unit {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-}
-
-/* ========== 飞船网格 ========== */
-.fleet-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.fleet-ship-card {
-  height: 100%;
-}
-
-/* ===== 筛选动画过渡 ===== */
-.fleet-shuffle-enter-active {
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.fleet-shuffle-leave-active {
-  transition: all 0.3s cubic-bezier(0.7, 0, 0.84, 0);
-  position: absolute;
-}
-
-.fleet-shuffle-enter-from {
-  opacity: 0;
-  transform: scale(0.85) translateY(20px);
-  filter: brightness(1.5) blur(4px);
-}
-
-.fleet-shuffle-leave-to {
-  opacity: 0;
-  transform: scale(0.9) translateY(-10px);
-  filter: brightness(0.5) blur(2px);
-}
-
-.fleet-shuffle-move {
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* ========== 加载/错误/空状态 ========== */
-.loading-state,
-.error-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-md);
-  padding: var(--space-2xl);
-  color: var(--text-muted);
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-subtle);
-  border-top-color: var(--nebula-violet);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.error-message {
-  color: var(--danger);
-}
-
-/* ========== 表单样式 ========== */
-.ship-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.form-group label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.form-input {
-  padding: 0.625rem 1rem;
-  background: rgba(10, 20, 35, 0.8);
-  border: 1px solid var(--nebula-purple);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  font-family: var(--font-mono);
-  transition: all var(--transition-fast);
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--nebula-violet);
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
-}
-
-.form-input::placeholder {
-  color: var(--text-muted);
-}
-
-.form-input select,
-.form-input textarea {
-  resize: vertical;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--border-subtle);
-}
-
-/* ========== 详情弹窗 — 全息投影风格 ========== */
-.ship-detail {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-xl);
-  position: relative;
-}
-
-.ship-detail::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(6, 182, 212, 0.03) 2px,
-      rgba(6, 182, 212, 0.03) 4px
-    );
-  pointer-events: none;
-  z-index: 1;
-}
-
-.detail-media {
-  position: relative;
+.bezel-core {
+  background: var(--color-bg-card);
+  border-radius: calc(var(--radius-2xl) - 4px);
   overflow: hidden;
 }
 
-.detail-media::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(to top, rgba(6, 11, 20, 0.8), transparent);
-  pointer-events: none;
-}
-
-.detail-media img {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-md);
-  filter: saturate(0.7) brightness(0.85);
-  transition: filter 0.3s ease;
-}
-
-.detail-media:hover img {
-  filter: saturate(1) brightness(1);
-}
-
-.detail-info {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.detail-info h3 {
-  margin: 0;
-  font-size: var(--text-2xl);
-  color: var(--text-primary);
-}
-
-.callsign {
-  margin: 0;
-  color: var(--nebula-violet);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.detail-grid {
+/* ── Ship Grid ── */
+.ship-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
 }
 
-.detail-item {
+/* ── Ship Card ── */
+.ship-card__image {
+  height: 220px;
+  overflow: hidden;
+  background: var(--color-bg-deep);
+}
+
+.ship-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease-smooth);
+}
+
+.ship-card:hover .ship-card__image img {
+  transform: scale(1.06);
+}
+
+.ship-card__content {
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-3);
 }
 
-.detail-item .label {
+.ship-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ship-card__model {
   font-size: var(--text-xs);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--color-accent);
+  letter-spacing: 0.12em;
 }
 
-.detail-item .value {
-  font-size: var(--text-base);
-  color: var(--text-primary);
+.amber-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
   font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-highlight);
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 179, 0, 0.1);
 }
 
-.detail-description h4 {
-  margin: 0 0 0.5rem;
-  font-size: var(--text-base);
-  color: var(--text-secondary);
+.ship-card__name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-bottom: 0;
 }
 
-.detail-description p {
-  margin: 0;
-  color: var(--text-muted);
+.ship-card__role {
+  font-size: var(--text-sm);
+  color: var(--color-text-body);
   line-height: 1.6;
 }
 
-/* ========== 动画 ========== */
-@keyframes scanLineHorizontal {
-  0% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
+/* ── Spec Bars ── */
+.ship-card__specs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
-/* ========== 响应式 ========== */
+.ship-card__spec {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ship-card__spec-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  letter-spacing: 0.08em;
+}
+
+.spec-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.spec-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), rgba(0, 229, 255, 0.4));
+  border-radius: 2px;
+  transition: width 0.6s var(--ease-smooth);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4), 0 0 16px rgba(0, 229, 255, 0.15);
+}
+
+/* ── Responsive ── */
 @media (max-width: 1024px) {
-  .ship-detail {
-    grid-template-columns: 1fr;
+  .stats-bar {
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+
+  .stats-bar__item {
+    flex: 0 0 calc(50% - var(--space-3));
   }
 }
 
 @media (max-width: 768px) {
-  .page-header-mfd {
-    margin: -1rem -1rem 2rem;
-    padding: 1.5rem;
+  .hero {
+    min-height: 35vh;
   }
 
-  .page-header-decoration {
-    display: none;
+  .hero__content h1 {
+    font-size: var(--text-3xl);
   }
 
-  .fleet-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .fleet-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .fleet-grid {
+  .ship-grid {
     grid-template-columns: 1fr;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .fleet-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-value {
-    font-size: 2rem;
+  .stats-bar__value {
+    font-size: var(--text-2xl);
   }
 }
 </style>

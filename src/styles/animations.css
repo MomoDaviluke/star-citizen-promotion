@@ -1,540 +1,196 @@
 /**
- * 「星渊枢纽 · Stellar Nexus」动画关键帧
- * @description 融合星云紫雾、星门启动、全息扫描的科幻动画效果
- * @version 5.0 - Stellar Nexus 版本
+ * Star Citizen Promotion — Animation Keyframes
+ * @description Cinematic Sci-Fi Spectacle — dramatic glow, shimmer, scan lines
+ * @version 10.0 - Cinematic Sci-Fi
  */
 
-/* ========== 启动序列动画 ========== */
-@keyframes boot-sequence {
-  0% {
+/* Fade in up — 入场上移 (scroll reveal) */
+@keyframes fadeInUp {
+  from {
     opacity: 0;
-    transform: scaleY(0.01);
+    transform: translateY(24px);
   }
-  20% {
+  to {
     opacity: 1;
-    transform: scaleY(0.01);
-  }
-  40% {
-    transform: scaleY(1);
-  }
-  100% {
-    opacity: 1;
-    transform: scaleY(1);
+    transform: translateY(0);
   }
 }
 
-@keyframes boot-text {
-  0% {
+/* Fade in — 简单淡入 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Scale in — 缩放入场 (card entrance) */
+@keyframes scaleIn {
+  from {
     opacity: 0;
-    clip-path: inset(0 100% 0 0);
+    transform: scale(0.96);
   }
-  100% {
+  to {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
+    transform: scale(1);
   }
 }
 
-/* ========== 星门启动序列 ========== */
-@keyframes gate-expand {
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
-  60% { transform: translate(-50%, -50%) scale(1.8); opacity: 0.3; }
-  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
-}
-
-@keyframes gate-rotate {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* ========== 标题解码动画 ========== */
-@keyframes title-decode {
-  0% { clip-path: inset(0 100% 0 0); opacity: 0; }
-  30% { clip-path: inset(0 40% 0 0); opacity: 0.5; }
-  50% { clip-path: inset(0 10% 0 0); opacity: 0.8; }
-  65% { clip-path: inset(0 30% 0 0); opacity: 0.3; }
-  75% { clip-path: inset(0 5% 0 0); opacity: 0.9; }
-  100% { clip-path: inset(0 0 0 0); opacity: 1; }
-}
-
-@keyframes title-glitch {
-  0%, 90%, 100% { transform: translate(0); }
-  92% { transform: translate(-3px, 2px); }
-  94% { transform: translate(3px, -2px); }
-  96% { transform: translate(-2px, -1px); }
-  98% { transform: translate(2px, 1px); }
-}
-
-/* ========== 星云漂移动画 ========== */
-@keyframes nebula-drift {
-  0% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -20px) scale(1.1); }
-  50% { transform: translate(-20px, 30px) scale(0.95); }
-  75% { transform: translate(-30px, -30px) scale(1.05); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-
-/* ========== 呼吸光晕 ========== */
-@keyframes breathe-glow {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.4; }
-}
-
-/* ========== 数据损坏效果 ========== */
-@keyframes data-corrupt {
-  0%, 98%, 100% { opacity: 1; }
-  98.5% { opacity: 0.2; transform: translateX(2px); }
-  99% { opacity: 1; transform: translateX(0); }
-}
-
-/* ========== 浮动粒子 ========== */
-@keyframes float-particle {
-  0%, 100% { transform: translate(0, 0); opacity: 0; }
-  20% { opacity: 0.6; }
-  80% { opacity: 0.3; }
-  100% { transform: translate(var(--tx, 100px), var(--ty, -100px)); opacity: 0; }
-}
-
-/* ========== 上升淡入 ========== */
-@keyframes fadeRise {
-  0% { opacity: 0; transform: translateY(40px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-/* ========== 脉冲光环 ========== */
-@keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 var(--nebula-glow-strong); }
-  50% { box-shadow: 0 0 0 18px rgba(124, 58, 237, 0); }
-}
-
-/* ========== 扫描线动画 ========== */
-@keyframes scanline {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100vh);
-  }
-}
-
-@keyframes scan-line-vertical {
-  0% { top: -2px; }
-  100% { top: calc(100% + 2px); }
-}
-
-@keyframes scan-line-horizontal {
-  0% { left: -2px; }
-  100% { left: calc(100% + 2px); }
-}
-
-/* ========== 金属闪光 ========== */
-@keyframes metal-flash {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-/* ========== 闪烁效果 ========== */
-@keyframes blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-
-/* ========== 脉冲光晕 ========== */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px var(--amber-glow);
-  }
-  50% {
-    box-shadow: 0 0 40px var(--amber-glow-strong);
-  }
-}
-
-@keyframes pulse-glow-cyan {
-  0%, 100% {
-    box-shadow: 0 0 20px var(--cyan-glow);
-  }
-  50% {
-    box-shadow: 0 0 40px var(--cyan-glow-strong);
-  }
-}
-
-@keyframes pulse-glow-nebula {
-  0%, 100% {
-    box-shadow: 0 0 20px var(--nebula-glow);
-  }
-  50% {
-    box-shadow: 0 0 40px var(--nebula-glow-strong);
-  }
-}
-
-/* ========== 数据流效果 ========== */
-@keyframes data-stream {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 0% 200%;
-  }
-}
-
-/* ========== 全息干扰 ========== */
-@keyframes hologram-glitch {
-  0% {
-    opacity: 1;
-    transform: translate(0);
-  }
-  20% {
-    opacity: 0.8;
-    transform: translate(-2px, 2px);
-  }
-  40% {
-    opacity: 1;
-    transform: translate(2px, -2px);
-  }
-  60% {
-    opacity: 0.9;
-    transform: translate(-1px, 1px);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(1px, -1px);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(0);
-  }
-}
-
-/* ========== 引擎尾焰 ========== */
-@keyframes engine-flicker {
-  0%, 100% {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-  25% {
-    opacity: 0.8;
-    transform: scaleX(0.95) scaleY(1.05);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scaleX(1.05) scaleY(0.95);
-  }
-  75% {
-    opacity: 0.85;
-    transform: scaleX(0.98) scaleY(1.02);
-  }
-}
-
-/* ========== 跃迁效果 ========== */
-@keyframes warp-stretch {
-  0% {
-    transform: scaleX(1) scaleY(1);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scaleX(0.1) scaleY(3);
-    filter: brightness(3);
-  }
-  100% {
-    transform: scaleX(1) scaleY(1);
-    filter: brightness(1);
-  }
-}
-
-@keyframes warp-lines {
-  0% {
+/* Slide in left */
+@keyframes slideInLeft {
+  from {
     opacity: 0;
-    transform: scaleX(0);
+    transform: translateX(-32px);
   }
-  50% {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(2);
-  }
-}
-
-/* ========== 旋转雷达 ========== */
-@keyframes radar-sweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* ========== 呼吸灯 ========== */
-@keyframes breathe {
-  0%, 100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ========== 打字机效果 ========== */
-@keyframes typewriter {
-  0% {
-    width: 0;
-  }
-  100% {
-    width: 100%;
-  }
-}
-
-/* ========== 边框流动 ========== */
-@keyframes border-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-
-/* ========== 粒子闪烁 ========== */
-@keyframes particle-twinkle {
-  0%, 100% {
-    opacity: 0.2;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
-
-/* ========== 面板滑入 ========== */
-@keyframes panel-slide-in {
-  0% {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  100% {
+  to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
-@keyframes panel-slide-up {
-  0% {
+/* Slide in right */
+@keyframes slideInRight {
+  from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(32px);
   }
-  100% {
+  to {
     opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Subtle float — 轻微浮动 */
+@keyframes subtleFloat {
+  0%, 100% {
     transform: translateY(0);
   }
-}
-
-/* ========== 警告闪烁 ========== */
-@keyframes warning-flash {
-  0%, 100% {
-    background-color: transparent;
-  }
   50% {
-    background-color: rgba(245, 158, 11, 0.1);
+    transform: translateY(-4px);
   }
 }
 
-/* ========== 能量充能 ========== */
-@keyframes charge-up {
-  0% {
-    width: 0%;
-    box-shadow: 0 0 5px var(--cyan-glow);
-  }
-  100% {
-    width: 100%;
-    box-shadow: 0 0 20px var(--cyan-glow-strong);
-  }
-}
-
-/* ========== 全息扫描线 ========== */
-@keyframes holo-scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-/* ========== 星云脉冲 ========== */
-@keyframes nebula-pulse {
-  0%, 100% {
-    filter: blur(120px) brightness(1);
-    opacity: 0.15;
-  }
-  50% {
-    filter: blur(140px) brightness(1.2);
-    opacity: 0.25;
-  }
-}
-
-/* ========== 淡入动画 ========== */
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* ========== 全息闪烁效果 ========== */
-@keyframes hologramFlicker {
+/* Gentle pulse — 柔和脉冲 */
+@keyframes gentlePulse {
   0%, 100% {
     opacity: 1;
-    filter: brightness(1);
-  }
-  5% {
-    opacity: 0.8;
-    filter: brightness(1.3);
-  }
-  10% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  15% {
-    opacity: 0.6;
-    filter: brightness(0.8);
-  }
-  20% {
-    opacity: 1;
-    filter: brightness(1.1);
   }
   50% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  52% {
     opacity: 0.7;
-    filter: brightness(1.4);
-  }
-  54% {
-    opacity: 1;
-    filter: brightness(1);
   }
 }
 
-/* ========== 粒子漂浮动画 ========== */
-@keyframes particle {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.8;
+/* Status breathe — 状态灯呼吸 */
+@keyframes statusBreathe {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 currentColor;
   }
   50% {
-    transform: translate(var(--tx, 50px), var(--ty, -80px)) scale(0.6);
+    opacity: 0.6;
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
+/* Scroll indicator bounce */
+@keyframes scrollBounce {
+  0%, 100% {
     opacity: 0.4;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(6px);
+  }
+}
+
+/* Shimmer — holographic shimmer / loading skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
   100% {
-    transform: translate(var(--tx2, -30px), var(--ty2, -150px)) scale(0);
-    opacity: 0;
+    background-position: 200% 0;
   }
 }
 
-/* ========== 网格脉冲动画 ========== */
-@keyframes gridPulse {
-  0%, 100% {
-    opacity: 0.06;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 0.15;
-    filter: brightness(1.3);
-  }
-}
-
-/* ========== 水平扫描线动画 ========== */
-@keyframes scanLineHorizontal {
-  0% { left: -2px; }
-  100% { left: calc(100% + 2px); }
-}
-
-/* ========== 旋转动画 ========== */
+/* Spin — 旋转 */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* ========== 上滑淡入动画 ========== */
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
+/* Draw line — SVG 线条绘制 */
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
   }
-  100% {
+}
+
+/* ============================================================
+ * NEW — Cinematic Sci-Fi Keyframes
+ * ============================================================ */
+
+/* Fade up — scroll reveal entrance */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* ========== 状态指示灯闪烁 ========== */
-@keyframes status-blink {
-  0%, 100% {
+/* Scale in — card entrance */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
     opacity: 1;
-    box-shadow: 0 0 6px currentColor;
-  }
-  50% {
-    opacity: 0.4;
-    box-shadow: 0 0 2px currentColor;
+    transform: scale(1);
   }
 }
 
-/* ========== 强调线脉冲 ========== */
-@keyframes accent-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-/* ========== 输入框聚焦脉冲 ========== */
-@keyframes input-focus-pulse {
+/* Glow pulse — cyan box-shadow pulse */
+@keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.15),
+                0 0 40px rgba(0, 229, 255, 0.05);
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.3),
+                0 0 60px rgba(0, 229, 255, 0.1);
   }
 }
 
-/* ========== 技术按钮涟漪扩散 ========== */
-@keyframes tech-ripple-expand {
+/* Holographic shimmer — background-position animation */
+@keyframes shimmer {
   0% {
-    transform: scale(0);
-    opacity: 0.5;
+    background-position: -200% center;
   }
   100% {
-    transform: scale(2.5);
-    opacity: 0;
+    background-position: 200% center;
   }
 }
 
-/* ========== 脉冲点动画 ========== */
-@keyframes pulseDot {
+/* Float — gentle floating motion */
+@keyframes float {
   0%, 100% {
-    transform: scale(1);
-    opacity: 1;
+    transform: translateY(0);
   }
   50% {
-    transform: scale(1.3);
-    opacity: 0.7;
+    transform: translateY(-8px);
   }
 }
 
-/* ========== 通用脉冲动画 ========== */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+/* Scan line — moving scan line down */
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
   }
-  50% {
-    opacity: 0.6;
-    transform: scale(0.95);
+  100% {
+    transform: translateY(100%);
   }
 }

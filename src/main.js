@@ -29,10 +29,8 @@ import './styles/animations.css'
 function applyInitialTheme() {
   try {
     const stored = localStorage.getItem('star-citizen-theme')
-    let theme = stored
-    if (theme !== 'light' && theme !== 'dark') {
-      theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
-    }
+    // 默认暗色主题，仅当用户明确选择亮色时才切换
+    const theme = stored === 'light' ? 'light' : 'dark'
     document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '')
   } catch {
     // localStorage 不可用时静默使用暗黑主题

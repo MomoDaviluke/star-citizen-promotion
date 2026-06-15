@@ -1,609 +1,435 @@
 <!--
-  @file 团队介绍视图组件 - Stellar Nexus 星渊枢纽风格
-  @description 展示团队背景、愿景、价值观和发展历程，采用Stellar Nexus视觉系统
-  @module views/About
-  @version 3.0 - Stellar Nexus视觉系统
+  @file 关于我们视图组件
+  @description Cinematic Sci-Fi — 团队介绍、数据面板、发展历程
+  @version 10.0 - Cinematic Sci-Fi
 -->
 
 <template>
   <div class="about-page">
-    <!-- 星云背景装饰 -->
-    <div class="page-nebulae">
-      <div class="nebula-blob nebula-blob--purple"></div>
-      <div class="nebula-blob nebula-blob--cyan"></div>
-    </div>
 
-    <!-- 页面标题区域 -->
-    <PageHeader
-      backgroundImage="/images/sc/sc-about.jpg"
-      title="团队介绍"
-      subtitle="了解我们的组织背景、愿景与核心价值"
-      systemId="SYS.ABOUT // V.3.0"
-    />
-
-    <!-- 团队介绍卡片 - MFD面板风格 -->
-    <section class="about-section">
-      <div class="section-header-mfd" v-scroll-reveal="'fadeUp'">
-        <span class="section-id font-data">// ORG.OVERVIEW</span>
-        <h2 class="section-title font-tech">组织概览</h2>
-      </div>
-
-      <div class="about-grid" v-scroll-reveal="{ animation: 'fadeUp', delay: 0.2 }">
-        <MFDPanel
-          v-for="(item, index) in aboutItems"
-          :key="item.title"
-          :variant="index === 0 ? 'primary' : 'secondary'"
-          :title="item.title.toUpperCase()"
-          :subtitle="'MODULE-' + (index + 1)"
-          :icon="getAboutIcon(index)"
-          :status="'ACTIVE'"
-          statusType="online"
-          :animated="true"
-          class="about-mfd-panel"
-        >
-          <div class="about-content">
-            <p class="about-text">{{ item.content }}</p>
-            <div class="about-metrics">
-              <DataDisplay
-                :label="'PRIORITY'"
-                :value="(index + 1) + '.0'"
-                :type="index === 0 ? 'primary' : 'secondary'"
-              />
-            </div>
-          </div>
-        </MFDPanel>
+    <!-- Hero: Full-width 50vh background -->
+    <section class="hero">
+      <div class="hero__bg"></div>
+      <div class="hero__overlay"></div>
+      <div class="hero__content container">
+        <span class="pill-badge">// ARCHIVE</span>
+        <h1>关于我们</h1>
       </div>
     </section>
 
-    <!-- 发展历程时间线 - MFD风格 -->
-    <section class="timeline-section">
-      <div class="section-header-mfd" v-scroll-reveal="'fadeUp'">
-        <span class="section-id font-data">// TIMELINE.LOG</span>
-        <h2 class="section-title font-tech">发展历程</h2>
-      </div>
-
-      <MFDPanel
-        variant="primary"
-        title="HISTORICAL DATA"
-        subtitle="CHRONOLOGICAL RECORD"
-        icon="◈"
-        status="ARCHIVED"
-        statusType="offline"
-        :scanlines="true"
-        class="timeline-mfd-panel"
-        v-scroll-reveal="{ animation: 'fadeLeft', delay: 0.2 }"
-      >
-        <div class="timeline-container">
-          <div
-            v-for="(item, index) in timeline"
-            :key="index"
-            class="timeline-item"
-            :class="{ 'timeline-item--active': index === timeline.length - 1 }"
-          >
-            <div class="timeline-marker">
-              <div class="marker-node">
-                <span class="marker-index font-data">{{ String(index + 1).padStart(2, '0') }}</span>
+    <!-- Two-column: Dossier + Stats -->
+    <section class="dossier-section section">
+      <div class="container">
+        <div class="two-col">
+          <!-- Left 60%: Dossier cards -->
+          <div class="two-col__left">
+            <div v-for="(item, i) in aboutItems" :key="item.title" class="dossier-card">
+              <!-- Double-Bezel outer shell -->
+              <div class="bezel-shell">
+                <!-- Double-Bezel inner core -->
+                <div class="bezel-core">
+                  <span class="dossier-card__label font-data">DOSSIER-{{ String(i + 1).padStart(2, '0') }}</span>
+                  <h3 class="dossier-card__title">{{ item.title }}</h3>
+                  <p class="dossier-card__text">{{ item.content }}</p>
+                  <!-- Watermark index -->
+                  <span class="dossier-card__watermark">{{ String(i + 1).padStart(2, '0') }}</span>
+                </div>
               </div>
-              <div v-if="index < timeline.length - 1" class="marker-connector"></div>
+              <!-- Left cyan border with glow -->
+              <div class="dossier-card__border-glow"></div>
             </div>
-            <div class="timeline-content">
-              <div class="timeline-meta">
-                <span class="timeline-stardate font-data">STARDATE {{ item.date }}</span>
-                <StatusIndicator
-                  :type="index === timeline.length - 1 ? 'online' : 'offline'"
-                  :label="index === timeline.length - 1 ? 'CURRENT' : 'COMPLETED'"
-                  size="small"
-                />
+          </div>
+
+          <!-- Right 40%: Sticky data panel -->
+          <div class="two-col__right">
+            <div class="data-panel">
+              <div class="data-panel__inner">
+                <div v-for="stat in teamMetrics" :key="stat.label" class="data-stat">
+                  <span class="data-stat__value font-data">{{ stat.value }}</span>
+                  <span class="data-stat__label font-data">{{ stat.label }}</span>
+                  <div class="data-stat__bar">
+                    <div class="data-stat__bar-fill" :style="{ width: stat.barWidth + '%' }"></div>
+                  </div>
+                </div>
               </div>
-              <h4 class="timeline-title font-tech">{{ item.title }}</h4>
-              <p class="timeline-desc">{{ item.desc }}</p>
             </div>
           </div>
         </div>
-      </MFDPanel>
+      </div>
     </section>
 
-    <!-- 团队统计数据 - MFD风格 -->
-    <section class="team-stats-section">
-      <div class="section-header-mfd" v-scroll-reveal="'fadeUp'">
-        <span class="section-id font-data">// METRICS.REALTIME</span>
-        <h2 class="section-title font-tech">团队指标</h2>
-      </div>
+    <!-- Timeline -->
+    <section class="timeline-section section">
+      <div class="container">
+        <div class="section-header">
+          <span class="pill-badge">TIMELINE.LOG</span>
+          <h2>发展历程</h2>
+        </div>
 
-      <div class="team-stats-grid" v-scroll-reveal="{ animation: 'fadeUp', delay: 0.2 }">
-        <MFDPanel
-          v-for="(stat, index) in teamMetrics"
-          :key="stat.label"
-          variant="secondary"
-          :title="stat.label"
-          :subtitle="'METRIC-' + (index + 1)"
-          icon="◈"
-          :status="'LIVE'"
-          statusType="online"
-          class="team-stat-panel"
-        >
-          <div class="team-stat-value">
-            <span class="stat-number-large font-data">{{ stat.value }}</span>
-            <span class="stat-trend font-data" :class="stat.trend > 0 ? 'trend-up' : 'trend-down'">
-              {{ stat.trend > 0 ? '▲' : '▼' }} {{ Math.abs(stat.trend) }}%
-            </span>
-          </div>
-          <div class="stat-bar-container">
-            <div class="stat-progress-bar">
-              <div class="stat-progress-fill" :style="{ width: stat.percentage + '%' }"></div>
+        <div class="timeline">
+          <div v-for="(item, i) in timeline" :key="i" class="timeline-node">
+            <div class="timeline-node__dot"></div>
+            <div v-if="i < timeline.length - 1" class="timeline-node__line"></div>
+            <div class="timeline-node__content">
+              <span class="timeline-node__date font-data">{{ item.date }}</span>
+              <h4 class="timeline-node__title">{{ item.title }}</h4>
+              <p class="timeline-node__desc">{{ item.desc }}</p>
             </div>
-            <span class="stat-percentage font-data">{{ stat.percentage }}%</span>
           </div>
-        </MFDPanel>
+        </div>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-/**
- * 团队介绍视图组件 - Stellar Nexus 星渊枢纽风格
- * @description 展示团队信息和发展历程时间线，采用Stellar Nexus视觉系统
- * @version 3.0 - Stellar Nexus视觉系统
- */
-
 import { ref } from 'vue'
-import MFDPanel from '@/components/ui/MFDPanel.vue'
-import StatusIndicator from '@/components/ui/StatusIndicator.vue'
-import DataDisplay from '@/components/ui/DataDisplay.vue'
-import PageHeader from '@/components/common/PageHeader.vue'
 
-/** 获取关于卡片图标 */
-function getAboutIcon(index) {
-  const icons = ['◈', '◉', '◆']
-  return icons[index] || '◈'
-}
-
-/** 团队介绍内容项 */
-const aboutItems = ref([
-  {
-    title: '我们是谁',
-    content: '一支专注于星际公民深度体验的组织，致力于在宇宙中建立强大的团队力量。我们由经验丰富的飞行员、战术专家和工程师组成，在斯坦顿星系及周边区域执行各类任务。'
-  },
-  {
-    title: '我们的目标',
-    content: '成为服务器中最具影响力的组织之一，在贸易、战斗、探索等各个领域建立卓越声誉。我们追求成员的共同成长，通过系统化训练和实战积累经验。'
-  },
-  {
-    title: '文化与纪律',
-    content: '强调团队协作、尊重与专业精神。我们要求成员保持活跃参与，遵守组织纪律，在行动中服从指挥。同时鼓励创新思维和战术讨论。'
-  }
-])
-
-/** 发展历程时间线数据 */
-const timeline = ref([
-  { date: '2954.Q1', title: '组织成立', desc: '在斯坦顿星系正式组建核心团队，确立组织架构和发展方向' },
-  { date: '2954.Q3', title: '首次大型行动', desc: '完成首次跨星系护航任务，获得客户高度评价' },
-  { date: '2955.Q2', title: '成员突破', desc: '团队规模扩展至20名活跃成员，建立完整的训练体系' },
-  { date: '2956.Q1', title: '战略升级', desc: '开启Pyro星系探索计划，部署多艘主力舰船' }
-])
-
-/** 团队统计数据 */
 const teamMetrics = ref([
-  { label: '活跃成员', value: '24', trend: 12, percentage: 80 },
-  { label: '完成任务', value: '156', trend: 8, percentage: 65 },
-  { label: '舰队规模', value: '18', trend: 5, percentage: 45 },
-  { label: '胜率', value: '87%', trend: 3, percentage: 87 }
+  { value: '128', label: 'ACTIVE MEMBERS', barWidth: 85 },
+  { value: '47', label: 'MISSIONS', barWidth: 62 },
+  { value: '36', label: 'SHIPS', barWidth: 48 },
+  { value: '87%', label: 'WIN RATE', barWidth: 87 },
+])
+
+const aboutItems = ref([
+  { title: '我们的使命', content: '打造星际公民中最专业、最有凝聚力的战队。我们追求卓越的团队协作，在每一次任务中展现专业素养。' },
+  { title: '我们的文化', content: '开放、包容、互助。无论你是新手还是老兵，都能在这里找到属于自己的位置，与志同道合的飞行员一起成长。' },
+  { title: '我们的优势', content: '完善的指挥体系、丰富的任务经验、专业的训练计划。从商船护航到大规模舰队战，我们都能胜任。' },
+])
+
+const timeline = ref([
+  { date: '2020.03', title: '战队成立', desc: '五名志同道合的飞行员在 Stanton 星系相遇，决定组建战队。' },
+  { date: '2020.09', title: '首次大规模行动', desc: '组织 30 人舰队完成首次商船护航任务，确立了战队的核心作战模式。' },
+  { date: '2021.06', title: '成员突破 50', desc: '战队规模持续扩大，建立了完善的招募和培训体系。' },
+  { date: '2022.01', title: '舰队编制完成', desc: '完成主力舰队编制，涵盖战斗、运输、采矿、侦察四大类别。' },
+  { date: '2023.08', title: '百人里程碑', desc: '活跃成员突破 100 人，成为星际公民社区中最具影响力的战队之一。' },
+  { date: '2024.12', title: '新征程', desc: '持续扩展行动范围，探索 Pyro 星系，开启战队发展的新篇章。' },
 ])
 </script>
 
 <style scoped>
-/* ========== 页面容器 ========== */
-.about-page {
+/* ── Hero ── */
+.hero {
   position: relative;
-}
-
-/* 星云背景装饰 */
-.page-nebulae {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.nebula-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  animation: nebula-drift 20s ease-in-out infinite;
-}
-
-.nebula-blob--purple {
-  width: 50vw;
-  height: 50vw;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.08), transparent 70%);
-  top: -10%;
-  right: -10%;
-}
-
-.nebula-blob--cyan {
-  width: 40vw;
-  height: 40vw;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.06), transparent 70%);
-  bottom: 10%;
-  left: -10%;
-  animation-delay: -7s;
-}
-
-/* ========== 页面标题区域 ========== */
-.page-header-mfd {
-  position: relative;
-  padding: 2rem;
-  margin: -2rem -1.5rem 3rem;
-  background: linear-gradient(135deg, rgba(12, 20, 36, 0.95), rgba(6, 11, 20, 0.98));
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.page-header-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.page-header-bg img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.15;
-  filter: saturate(0.5) brightness(0.4);
-  mix-blend-mode: screen;
-}
-
-.page-header-bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(12, 20, 36, 0.9), rgba(6, 11, 20, 0.95));
-}
-
-.page-header-mfd::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--nebula-purple), transparent);
-  animation: scanLineHorizontal 3s linear infinite;
-  z-index: 1;
-}
-
-.page-header-content {
-  position: relative;
-  z-index: 1;
-}
-
-.page-id {
-  display: block;
-  color: var(--nebula-purple);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  margin-bottom: 0.5rem;
-}
-
-.page-title {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-primary);
-}
-
-.page-subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.page-header-decoration {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  z-index: 1;
-}
-
-.header-line {
-  width: 60px;
-  height: 1px;
-  background: linear-gradient(90deg, var(--nebula-purple), transparent);
-}
-
-/* ========== 区域标题 ========== */
-.section-header-mfd {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.section-id {
-  color: var(--nebula-purple);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-}
-
-.section-title {
-  margin: 0;
-  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--text-primary);
-}
-
-/* ========== 团队介绍区域 ========== */
-.about-section {
-  margin-bottom: 3rem;
-}
-
-.about-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.about-mfd-panel {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.about-mfd-panel:hover {
-  transform: translateY(-4px);
-}
-
-.about-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.about-text {
-  margin: 0;
-  color: var(--text-secondary);
-  line-height: 1.7;
-  font-size: 0.95rem;
-}
-
-.about-metrics {
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-subtle);
-}
-
-/* ========== 时间线区域 ========== */
-.timeline-section {
-  margin-bottom: 3rem;
-}
-
-.timeline-mfd-panel {
-  overflow: visible;
-}
-
-.timeline-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 1rem 0;
-}
-
-.timeline-item {
-  display: flex;
-  gap: 1.5rem;
-  padding: 1.25rem 0;
-  position: relative;
-}
-
-.timeline-item--active {
-  background: rgba(124, 58, 237, 0.03);
-  margin: 0 -1rem;
-  padding: 1.25rem 1rem;
-  border-radius: var(--radius-sm);
-}
-
-.timeline-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-  width: 40px;
-}
-
-.marker-node {
-  width: 36px;
-  height: 36px;
+  min-height: 50vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(12, 20, 36, 0.8);
-  border: 1px solid var(--nebula-purple);
-  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
-.marker-index {
-  color: var(--nebula-violet);
-  font-size: 0.7rem;
-  font-weight: 600;
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  background: url('/images/sc/sc-about.jpg') center / cover no-repeat;
 }
 
-.marker-connector {
-  width: 1px;
-  flex: 1;
-  min-height: 30px;
-  background: linear-gradient(180deg, var(--nebula-purple), transparent);
-  margin-top: 0.5rem;
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0.8) 0%, rgba(5, 5, 8, 0.95) 100%);
 }
 
-.timeline-item:last-child .marker-connector {
-  display: none;
+.hero__content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
 }
 
-.timeline-content {
-  flex: 1;
-}
-
-.timeline-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.timeline-stardate {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
-  background: rgba(124, 58, 237, 0.1);
-  border: 1px solid rgba(124, 58, 237, 0.3);
-  border-radius: 2px;
-  color: var(--nebula-violet);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-}
-
-.timeline-title {
-  margin: 0 0 0.35rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-}
-
-.timeline-desc {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-/* ========== 团队统计区域 ========== */
-.team-stats-section {
-  margin-bottom: 3rem;
-}
-
-.team-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-}
-
-.team-stat-panel {
-  transition: transform 0.3s ease;
-}
-
-.team-stat-panel:hover {
-  transform: translateY(-4px);
-}
-
-.team-stat-value {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.stat-number-large {
-  font-size: 2.5rem;
+.hero__content h1 {
+  font-size: var(--text-4xl);
   font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin-top: var(--space-3);
+}
+
+/* ── Pill Badge ── */
+.pill-badge {
+  display: inline-block;
+  padding: 6px 20px;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(0, 229, 255, 0.08);
+}
+
+/* ── Two-column layout ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--space-12);
+  align-items: start;
+}
+
+/* ── Double-Bezel Card ── */
+.bezel-shell {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-2xl);
+  padding: 6px;
+}
+
+.bezel-core {
+  background: var(--color-bg-card);
+  border-radius: calc(var(--radius-2xl) - 4px);
+  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Dossier Card ── */
+.dossier-card {
+  position: relative;
+  margin-bottom: var(--space-5);
+}
+
+.dossier-card:last-child {
+  margin-bottom: 0;
+}
+
+.dossier-card__label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.2em;
+  margin-bottom: var(--space-2);
+}
+
+.dossier-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.02em;
+}
+
+.dossier-card__text {
+  font-size: var(--text-base);
+  color: var(--color-text-body);
+  line-height: 1.8;
+  max-width: 55ch;
+}
+
+.dossier-card__watermark {
+  position: absolute;
+  right: var(--space-5);
+  bottom: -0.2em;
+  font-family: var(--font-display);
+  font-size: 8rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.03);
   line-height: 1;
+  pointer-events: none;
+  user-select: none;
 }
 
-.stat-trend {
-  font-size: 0.75rem;
-  font-weight: 600;
+.dossier-card__border-glow {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--color-accent);
+  border-radius: 1px;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.7), 0 0 32px rgba(0, 229, 255, 0.3), 0 0 60px rgba(0, 229, 255, 0.1);
 }
 
-.trend-up {
-  color: var(--status-online);
+/* ── Data Panel (Sticky) ── */
+.data-panel {
+  position: sticky;
+  top: var(--space-6);
 }
 
-.trend-down {
-  color: var(--amber-primary);
+.data-panel__inner {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-2xl);
+  padding: 6px;
 }
 
-.stat-bar-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.data-panel__inner > .data-stat:first-child .data-stat__inner {
+  border-radius: calc(var(--radius-2xl) - 4px) calc(var(--radius-2xl) - 4px) 0 0;
 }
 
-.stat-progress-bar {
-  flex: 1;
-  height: 4px;
-  background: rgba(124, 58, 237, 0.1);
+.data-panel__inner > .data-stat:last-child .data-stat__inner {
+  border-radius: 0 0 calc(var(--radius-2xl) - 4px) calc(var(--radius-2xl) - 4px);
+}
+
+.data-stat {
+  padding: 6px;
+}
+
+.data-stat:first-child {
+  padding-top: 6px;
+}
+
+.data-stat__inner {
+  background: var(--color-bg-card);
+  padding: var(--space-5);
+}
+
+.data-stat__value {
+  display: block;
+  font-size: var(--text-5xl);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.25), 0 0 40px rgba(0, 229, 255, 0.1);
+}
+
+.data-stat__label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.data-stat__bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 2px;
   overflow: hidden;
 }
 
-.stat-progress-fill {
+.data-stat__bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--nebula-purple), var(--nebula-violet));
+  background: linear-gradient(90deg, var(--color-accent), rgba(0, 229, 255, 0.4));
   border-radius: 2px;
-  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 0 10px var(--nebula-glow);
+  transition: width 0.8s var(--ease-smooth);
 }
 
-.stat-percentage {
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  min-width: 35px;
-  text-align: right;
+/* ── Timeline ── */
+.timeline-section {
+  padding-top: 0;
 }
 
-/* ========== 动画 ========== */
-@keyframes scanLineHorizontal {
-  0% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
+.section-header {
+  margin-bottom: var(--space-8);
 }
 
-/* ========== 响应式布局 ========== */
-@media (max-width: 768px) {
-  .page-header-mfd {
-    margin: -1rem -1rem 2rem;
-    padding: 1.5rem;
-  }
+.section-header h2 {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: var(--space-3);
+  margin-bottom: 0;
+}
 
-  .page-header-decoration {
-    display: none;
-  }
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 700px;
+}
 
-  .about-grid {
+.timeline-node {
+  display: flex;
+  gap: var(--space-5);
+  padding-bottom: var(--space-6);
+  position: relative;
+}
+
+.timeline-node__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 4px;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.5), 0 0 32px rgba(0, 229, 255, 0.2);
+}
+
+.timeline-node__line {
+  position: absolute;
+  left: 6px;
+  top: 22px;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.05));
+}
+
+.timeline-node__content {
+  flex: 1;
+  padding-bottom: var(--space-2);
+}
+
+.timeline-node__date {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.timeline-node__title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: var(--space-1);
+}
+
+.timeline-node__desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-body);
+  line-height: 1.7;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .two-col {
     grid-template-columns: 1fr;
+    gap: var(--space-8);
   }
 
-  .team-stats-grid {
+  .data-panel {
+    position: static;
+  }
+
+  .data-panel__inner {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .timeline-item {
-    gap: 1rem;
+  .data-stat__value {
+    font-size: var(--text-3xl);
   }
 }
 
-@media (max-width: 480px) {
-  .team-stats-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .hero {
+    min-height: 40vh;
   }
 
-  .stat-number-large {
-    font-size: 2rem;
+  .hero__content h1 {
+    font-size: var(--text-3xl);
+  }
+
+  .dossier-card__title {
+    font-size: var(--text-xl);
+  }
+
+  .dossier-card__watermark {
+    font-size: 5rem;
+  }
+
+  .data-panel__inner {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .data-stat__value {
+    font-size: var(--text-2xl);
   }
 }
 </style>

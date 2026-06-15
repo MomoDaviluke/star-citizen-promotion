@@ -244,7 +244,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal-backdrop);
+  z-index: var(--z-modal);
   padding: 1rem;
 }
 
@@ -253,7 +253,7 @@ onUnmounted(() => {
   background: linear-gradient(165deg, rgba(15, 30, 50, 0.95), rgba(8, 18, 32, 0.98));
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
-  box-shadow: var(--glow-primary), 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--glow-accent), 0 20px 60px rgba(0, 0, 0, 0.5);
   max-width: 90vw;
   max-height: 90vh;
   display: flex;
@@ -345,8 +345,8 @@ onUnmounted(() => {
 
 .modal-close:hover {
   background: rgba(255, 107, 107, 0.1);
-  border-color: var(--color-danger);
-  color: var(--color-danger);
+  border-color: var(--color-status-danger);
+  color: var(--color-status-danger);
 }
 
 .modal-close svg {
@@ -380,7 +380,7 @@ onUnmounted(() => {
 .modal-border-effect {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--color-primary), transparent, var(--color-accent));
+  background: linear-gradient(135deg, var(--color-accent), transparent, var(--color-accent));
   opacity: 0;
   transition: opacity var(--transition-slow);
   mask-image: linear-gradient(90deg, transparent 0%, black 50%, transparent 100%);
@@ -397,7 +397,7 @@ onUnmounted(() => {
   position: absolute;
   width: 12px;
   height: 12px;
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
   border-style: solid;
   opacity: 0.6;
   transition: opacity var(--transition-fast);

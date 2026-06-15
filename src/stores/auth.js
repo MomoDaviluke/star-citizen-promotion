@@ -66,10 +66,9 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.data.user
       return response
     } catch (err) {
-      // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message
-      const error = err instanceof Error ? err : new Error(String(err))
-      error.value = error.message || '登录失败'
-      throw error
+      const errObj = err instanceof Error ? err : new Error(String(err))
+      error.value = errObj.message || '登录失败'
+      throw errObj
     } finally {
       loading.value = false
     }
@@ -88,10 +87,9 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authService.register(userData)
       return response
     } catch (err) {
-      // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message
-      const error = err instanceof Error ? err : new Error(String(err))
-      error.value = error.message || '注册失败'
-      throw error
+      const errObj = err instanceof Error ? err : new Error(String(err))
+      error.value = errObj.message || '注册失败'
+      throw errObj
     } finally {
       loading.value = false
     }
@@ -127,13 +125,12 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.data
       return response
     } catch (err) {
-      // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 status
-      const error = err instanceof Error ? err : new Error(String(err))
-      error.value = error.message || '获取用户信息失败'
-      if (error.status === 401) {
+      const errObj = err instanceof Error ? err : new Error(String(err))
+      error.value = errObj.message || '获取用户信息失败'
+      if (errObj.status === 401) {
         user.value = null
       }
-      throw error
+      throw errObj
     } finally {
       loading.value = false
     }
@@ -153,10 +150,9 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = { ...user.value, ...response.user }
       return response
     } catch (err) {
-      // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message
-      const error = err instanceof Error ? err : new Error(String(err))
-      error.value = error.message || '更新失败'
-      throw error
+      const errObj = err instanceof Error ? err : new Error(String(err))
+      error.value = errObj.message || '更新失败'
+      throw errObj
     } finally {
       loading.value = false
     }
