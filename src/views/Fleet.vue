@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   @file 舰队展示视图组件
   @description Cinematic Sci-Fi — 展示战队所有飞船
   @version 10.0 - Cinematic Sci-Fi
@@ -228,9 +228,9 @@ const filteredShips = computed(() => {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-accent);
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  border: 1px solid rgba(74, 158, 255, 0.3);
   border-radius: 999px;
-  background: rgba(0, 229, 255, 0.08);
+  background: rgba(74, 158, 255, 0.08);
 }
 
 /* ── Stats Bar ── */
@@ -290,15 +290,15 @@ const filteredShips = computed(() => {
 }
 
 .filter-btn:hover {
-  border-color: rgba(0, 229, 255, 0.3);
+  border-color: rgba(74, 158, 255, 0.3);
   color: #fff;
 }
 
 .filter-btn--active {
-  background: rgba(0, 229, 255, 0.1);
-  border-color: rgba(0, 229, 255, 0.4);
+  background: rgba(74, 158, 255, 0.1);
+  border-color: rgba(74, 158, 255, 0.4);
   color: var(--color-accent);
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.15);
 }
 
 /* ── Double-Bezel Card ── */
@@ -312,8 +312,8 @@ const filteredShips = computed(() => {
 }
 
 .ship-card:hover .bezel-shell {
-  border-color: rgba(0, 229, 255, 0.3);
-  box-shadow: 0 0 32px rgba(0, 229, 255, 0.15), 0 0 60px rgba(0, 229, 255, 0.06);
+  border-color: rgba(74, 158, 255, 0.3);
+  box-shadow: 0 0 32px rgba(74, 158, 255, 0.15), 0 0 60px rgba(74, 158, 255, 0.06);
 }
 
 .bezel-core {
@@ -425,10 +425,10 @@ const filteredShips = computed(() => {
 
 .spec-bar__fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent), rgba(0, 229, 255, 0.4));
+  background: linear-gradient(90deg, var(--color-accent), rgba(74, 158, 255, 0.4));
   border-radius: 2px;
   transition: width 0.6s var(--ease-smooth);
-  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4), 0 0 16px rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 8px rgba(74, 158, 255, 0.4), 0 0 16px rgba(74, 158, 255, 0.15);
 }
 
 /* ── Responsive ── */

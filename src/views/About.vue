@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   @file 关于我们视图组件
   @description Cinematic Sci-Fi — 团队介绍、数据面板、发展历程
   @version 10.0 - Cinematic Sci-Fi
@@ -155,9 +155,9 @@ const timeline = ref([
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-accent);
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  border: 1px solid rgba(74, 158, 255, 0.3);
   border-radius: 999px;
-  background: rgba(0, 229, 255, 0.08);
+  background: rgba(74, 158, 255, 0.08);
 }
 
 /* ── Two-column layout ── */
@@ -239,7 +239,7 @@ const timeline = ref([
   width: 2px;
   background: var(--color-accent);
   border-radius: 1px;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.7), 0 0 32px rgba(0, 229, 255, 0.3), 0 0 60px rgba(0, 229, 255, 0.1);
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.7), 0 0 32px rgba(74, 158, 255, 0.3), 0 0 60px rgba(74, 158, 255, 0.1);
 }
 
 /* ── Data Panel (Sticky) ── */
@@ -283,7 +283,7 @@ const timeline = ref([
   color: #fff;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  text-shadow: 0 0 20px rgba(0, 229, 255, 0.25), 0 0 40px rgba(0, 229, 255, 0.1);
+  text-shadow: 0 0 20px rgba(74, 158, 255, 0.25), 0 0 40px rgba(74, 158, 255, 0.1);
 }
 
 .data-stat__label {
@@ -305,7 +305,7 @@ const timeline = ref([
 
 .data-stat__bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent), rgba(0, 229, 255, 0.4));
+  background: linear-gradient(90deg, var(--color-accent), rgba(74, 158, 255, 0.4));
   border-radius: 2px;
   transition: width 0.8s var(--ease-smooth);
 }
@@ -348,7 +348,7 @@ const timeline = ref([
   background: var(--color-accent);
   flex-shrink: 0;
   margin-top: 4px;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.5), 0 0 32px rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.5), 0 0 32px rgba(74, 158, 255, 0.2);
 }
 
 .timeline-node__line {
@@ -357,7 +357,7 @@ const timeline = ref([
   top: 22px;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.05));
+  background: linear-gradient(180deg, rgba(74, 158, 255, 0.3), rgba(74, 158, 255, 0.05));
 }
 
 .timeline-node__content {

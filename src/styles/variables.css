@@ -1,6 +1,6 @@
 /**
  * Star Citizen Promotion — Design Token System
- * @description Cinematic Sci-Fi Spectacle — OLED black, electric cyan, amber gold
+ * @description Cinematic Sci-Fi Spectacle — OLED black, stellar blue, amber gold
  * @version 10.0 - Cinematic Sci-Fi Spectacle
  */
 
@@ -17,12 +17,12 @@
   --raw-void-5: #1e1e2e;
   --raw-void-6: #282840;
 
-  /* Electric Cyan — 电光青 */
-  --raw-cyan: #00e5ff;
-  --raw-cyan-rgb: 0, 229, 255;
-  --raw-cyan-bright: #33ecff;
-  --raw-cyan-dim: #00b8cc;
-  --raw-cyan-muted: rgba(0, 229, 255, 0.12);
+  /* Stellar Blue — 星际蓝 */
+  --raw-cyan: #4a9eff;
+  --raw-cyan-rgb: 74, 158, 255;
+  --raw-cyan-bright: #6bb3ff;
+  --raw-cyan-dim: #2d7fd9;
+  --raw-cyan-muted: rgba(74, 158, 255, 0.12);
 
   /* Amber Gold — 琥珀金 */
   --raw-amber: #ffb300;
@@ -66,7 +66,7 @@
   --color-bg-glass: rgba(255, 255, 255, 0.03);
   --color-bg-overlay: rgba(5, 5, 8, 0.92);
 
-  /* Accent — Electric Cyan */
+  /* Accent — Stellar Blue */
   --color-accent: var(--raw-cyan);
   --color-accent-bright: var(--raw-cyan-bright);
   --color-accent-dim: var(--raw-cyan-dim);
@@ -83,8 +83,8 @@
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-hover: rgba(255, 255, 255, 0.15);
   --color-border-subtle: rgba(255, 255, 255, 0.05);
-  --color-border-strong: rgba(0, 229, 255, 0.3);
-  --color-border-accent: rgba(0, 229, 255, 0.2);
+  --color-border-strong: rgba(74, 158, 255, 0.3);
+  --color-border-accent: rgba(74, 158, 255, 0.2);
   --color-border-amber: rgba(255, 179, 0, 0.2);
 
   /* Backward Compatibility Aliases */
@@ -133,10 +133,10 @@
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
   /* Glow */
-  --glow-cyan: 0 0 20px rgba(0, 229, 255, 0.3), 0 0 60px rgba(0, 229, 255, 0.1);
+  --glow-cyan: 0 0 20px rgba(74, 158, 255, 0.3), 0 0 60px rgba(74, 158, 255, 0.1);
   --glow-amber: 0 0 20px rgba(255, 179, 0, 0.3), 0 0 60px rgba(255, 179, 0, 0.1);
-  --glow-card-hover: 0 0 30px rgba(0, 229, 255, 0.08);
-  --shadow-accent: 0 0 20px rgba(0, 229, 255, 0.15);
+  --glow-card-hover: 0 0 30px rgba(74, 158, 255, 0.08);
+  --shadow-accent: 0 0 20px rgba(74, 158, 255, 0.15);
 
   /* Animation Duration */
   --float-duration: 4s;
@@ -244,13 +244,13 @@
   --color-border: rgba(0, 0, 0, 0.08);
   --color-border-hover: rgba(0, 0, 0, 0.15);
   --color-border-subtle: rgba(0, 0, 0, 0.04);
-  --color-border-strong: rgba(0, 229, 255, 0.4);
-  --color-border-accent: rgba(0, 229, 255, 0.2);
+  --color-border-strong: rgba(74, 158, 255, 0.4);
+  --color-border-accent: rgba(74, 158, 255, 0.2);
   --color-border-amber: rgba(255, 179, 0, 0.2);
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-accent: 0 0 16px rgba(0, 229, 255, 0.1);
+  --shadow-accent: 0 0 16px rgba(74, 158, 255, 0.1);
 
   --blur-card: 8px;
   --blur-header: 12px;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Star Citizen Promotion — Animation Keyframes
  * @description Cinematic Sci-Fi Spectacle — dramatic glow, shimmer, scan lines
  * @version 10.0 - Cinematic Sci-Fi
@@ -156,12 +156,12 @@
 /* Glow pulse — cyan box-shadow pulse */
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 12px rgba(0, 229, 255, 0.15),
-                0 0 40px rgba(0, 229, 255, 0.05);
+    box-shadow: 0 0 12px rgba(74, 158, 255, 0.15),
+                0 0 40px rgba(74, 158, 255, 0.05);
   }
   50% {
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.3),
-                0 0 60px rgba(0, 229, 255, 0.1);
+    box-shadow: 0 0 20px rgba(74, 158, 255, 0.3),
+                0 0 60px rgba(74, 158, 255, 0.1);
   }
 }
 

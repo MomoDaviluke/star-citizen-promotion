@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   @file 核心成员视图组件
   @description Cinematic Sci-Fi — 展示团队核心成员信息
   @version 10.0 - Cinematic Sci-Fi
@@ -100,7 +100,7 @@ onMounted(async () => {
 /* ── Page Header ── */
 .page-header {
   padding: var(--space-16) 0 var(--space-8);
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.04) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(74, 158, 255, 0.04) 0%, transparent 100%);
 }
 
 .page-header h1 {
@@ -121,9 +121,9 @@ onMounted(async () => {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-accent);
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  border: 1px solid rgba(74, 158, 255, 0.3);
   border-radius: 999px;
-  background: rgba(0, 229, 255, 0.08);
+  background: rgba(74, 158, 255, 0.08);
 }
 
 /* ── Stats Bar ── */
@@ -170,8 +170,8 @@ onMounted(async () => {
 }
 
 .member-card:hover .bezel-shell {
-  border-color: rgba(0, 229, 255, 0.3);
-  box-shadow: 0 0 32px rgba(0, 229, 255, 0.15), 0 0 60px rgba(0, 229, 255, 0.06), 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(74, 158, 255, 0.3);
+  box-shadow: 0 0 32px rgba(74, 158, 255, 0.15), 0 0 60px rgba(74, 158, 255, 0.06), 0 8px 32px rgba(0, 0, 0, 0.4);
   transform: translateY(-8px);
 }
 
@@ -203,7 +203,7 @@ onMounted(async () => {
   background: conic-gradient(
     from 0deg,
     var(--color-accent),
-    rgba(0, 229, 255, 0.3) 20%,
+    rgba(74, 158, 255, 0.3) 20%,
     transparent 40%,
     var(--color-highlight),
     rgba(255, 179, 0, 0.3) 70%,
@@ -211,7 +211,7 @@ onMounted(async () => {
     var(--color-accent)
   );
   animation: ringRotate 6s linear infinite;
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.3)) drop-shadow(0 0 16px rgba(255, 179, 0, 0.15));
+  filter: drop-shadow(0 0 8px rgba(74, 158, 255, 0.3)) drop-shadow(0 0 16px rgba(255, 179, 0, 0.15));
 }
 
 @keyframes ringRotate {
