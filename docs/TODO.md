@@ -163,7 +163,31 @@ function buildCacheKey(req: Request): string {
 | TD-10 | Sentry 动态导入重复 4 次 | v1.3.1 | ⚠️ 待修复 | `errorReporting.js` 每个函数独立 `import('@sentry/vue')` |
 | TD-11 | Knex 配置共享同一对象引用 | v1.0.0 | ⚠️ 待修复 | `knexfile.js` 中 development/production/test 共用 `dbConfig` |
 | TD-12 | Event ICS 导出未转义特殊字符 | v1.1.0 | ⚠️ 待修复 | 分号、逗号、反斜杠未转义，可能导致 ICS 格式损坏 |
-| TD-13 | 183 处旧变量名引用待迁移 | v1.3.4 | ⚠️ 本周完成 | 别名已止血（47个别名映射），逐个全文替换迁移到语义化长名，跑lint --strict验证 |
+| TD-13 | 183 处旧变量名引用待迁移 | v1.3.4 | 🔄 进行中 | 别名已止血（47个别名映射），分4组迁移：①基础组件~55处 ②UI组件~30处 ③Admin页面~60处 ④用户页面~38处。每组改完跑lint --strict验证。详见下方迁移计划 |
+
+### TD-13 CSS变量迁移计划
+
+**执行方式**：每组改完跑 `node scripts/css-var-lint.mjs . --strict`，deprecated 从 warning 升级 error，全过才算完成。
+
+| 组 | 组件 | 引用数 | 风险 | 状态 |
+|:---|:---|:---|:---|:---|
+| ① 基础组件 | BaseButton(12), BaseCard(10), BaseModal(7), BaseTooltip(7), BaseBadge(6), BaseCard(10) | ~55 | 高（全站复用） | 📋 待开始 |
+| ② UI组件 | ShipCard(8), TechButton(6), MFDPanel(5), DataDisplay(4), StatusIndicator(4), HoloCard(1) | ~30 | 中（首页可见） | 📋 待开始 |
+| ③ Admin页面 | ApplicationsAdmin(8), AdminLayout(7), Dashboard(7), PilotsAdmin(6), ProjectsAdmin(6), Settings(6), MembersAdmin(5) | ~60 | 低（后台页面） | 📋 待开始 |
+| ④ 用户页面+杂项 | Calendar(9), Profile(6), ApplicationStatus(5), Offline(4), PwaUpdateToast(4), PageTitle(3), LoadingIndicator(2), ThemeToggle(1), SiteHeader(1), StarfieldBg(1) | ~38 | 低 | 📋 待开始 |
+
+**变量名映射**（旧→新）：
+- `--text-muted` → `--color-text-dim` (20处)
+- `--text` → `--color-text` (11处)
+- `--accent` → `--color-accent` (11处)
+- `--text-primary` → `--color-text-heading` (10处)
+- `--danger` → `--color-status-danger` (10处)
+- `--line` → `--color-border` (10处)
+- `--text-secondary` → `--color-text-secondary` (9处)
+- `--transition-fast` → `--transition-fast` (8处，确认定义存在)
+- `--border-medium` → `--color-border-medium` (8处)
+- `--accent-2` → `--color-accent-secondary` (8处)
+- 其余37个变量各1-6处，映射关系见 `variables.css` 别名块
 
 ---
 
