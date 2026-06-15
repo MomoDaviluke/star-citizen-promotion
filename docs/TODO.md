@@ -174,7 +174,7 @@ function buildCacheKey(req: Request): string {
 
 | 组 | 组件 | 引用数 | 风险 | 状态 |
 |:---|:---|:---|:---|:---|
-| ① 基础组件 | BaseButton(12), BaseCard(10), BaseModal(7), BaseTooltip(7), BaseBadge(6), BaseCard(10) | ~55 | 高（全站复用） | 📋 待开始 |
+| ① 基础组件 | BaseButton(12), BaseCard(10), BaseModal(7), BaseTooltip(7), BaseBadge(6) | ~55 | 高（全站复用） | ✅ 已完成（branch: refactor/css-vars-group-1） |
 | ② UI组件 | ShipCard(8), TechButton(6), MFDPanel(5), DataDisplay(4), StatusIndicator(4), HoloCard(1) | ~30 | 中（首页可见） | 📋 待开始 |
 | ③ Admin页面 | ApplicationsAdmin(8), AdminLayout(7), Dashboard(7), PilotsAdmin(6), ProjectsAdmin(6), Settings(6), MembersAdmin(5) | ~60 | 低（后台页面） | 📋 待开始 |
 | ④ 用户页面+杂项 | Calendar(9), Profile(6), ApplicationStatus(5), Offline(4), PwaUpdateToast(4), PageTitle(3), LoadingIndicator(2), ThemeToggle(1), SiteHeader(1), StarfieldBg(1) | ~38 | 低 | 📋 待开始 |
