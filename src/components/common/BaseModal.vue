@@ -251,15 +251,15 @@ onUnmounted(() => {
 .modal-container {
   position: relative;
   background: linear-gradient(165deg, rgba(15, 30, 50, 0.95), rgba(8, 18, 32, 0.98));
-  border: 1px solid var(--border-medium);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--glow-accent), 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--glow-cyan), 0 20px 60px rgba(0, 0, 0, 0.5);
   max-width: 90vw;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: all var(--transition-normal);
+  transition: all var(--duration-normal);
 }
 
 /* ========== 尺寸变体 ========== */
@@ -293,7 +293,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
   background: rgba(10, 20, 35, 0.5);
 }
 
@@ -319,7 +319,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: var(--text-lg);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-heading);
   letter-spacing: 0.05em;
 }
 
@@ -336,11 +336,11 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   background: transparent;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  color: var(--color-text-dim);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast);
 }
 
 .modal-close:hover {
@@ -370,7 +370,7 @@ onUnmounted(() => {
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--color-border-subtle);
   background: rgba(10, 20, 35, 0.3);
   position: relative;
   z-index: 2;
@@ -382,7 +382,7 @@ onUnmounted(() => {
   inset: 0;
   background: linear-gradient(135deg, var(--color-accent), transparent, var(--color-accent));
   opacity: 0;
-  transition: opacity var(--transition-slow);
+  transition: opacity var(--duration-slow);
   mask-image: linear-gradient(90deg, transparent 0%, black 50%, transparent 100%);
   pointer-events: none;
   z-index: 1;
@@ -400,7 +400,7 @@ onUnmounted(() => {
   border-color: var(--color-accent);
   border-style: solid;
   opacity: 0.6;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--duration-fast);
   z-index: 3;
 }
 
@@ -435,7 +435,7 @@ onUnmounted(() => {
 /* ========== 动画 ========== */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
-  transition: opacity var(--transition-normal);
+  transition: opacity var(--duration-normal);
 }
 
 .modal-fade-enter-from,
@@ -445,7 +445,7 @@ onUnmounted(() => {
 
 .modal-fade-enter-active .modal-container,
 .modal-fade-leave-active .modal-container {
-  transition: all var(--transition-normal);
+  transition: all var(--duration-normal);
 }
 
 .modal-fade-enter-from .modal-container {

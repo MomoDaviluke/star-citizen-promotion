@@ -122,7 +122,7 @@ function handleClose(event) {
   line-height: 1.5;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast);
   white-space: nowrap;
 }
 
@@ -145,7 +145,7 @@ function handleClose(event) {
 /* ========== 样式变体 ========== */
 .base-badge--primary {
   background: rgba(95, 169, 255, 0.2);
-  color: var(--color-primary);
+  color: var(--color-accent);
   border-color: rgba(95, 169, 255, 0.3);
 }
 
@@ -154,26 +154,26 @@ function handleClose(event) {
 }
 
 .base-badge--secondary {
-  background: var(--bg-medium);
-  color: var(--text-secondary);
-  border-color: var(--border-subtle);
+  background: var(--color-bg-mid);
+  color: var(--color-text-label);
+  border-color: var(--color-border-subtle);
 }
 
 .base-badge--success {
   background: rgba(78, 205, 196, 0.2);
-  color: var(--color-success);
+  color: var(--color-status-online);
   border-color: rgba(78, 205, 196, 0.3);
 }
 
 .base-badge--warning {
   background: rgba(240, 173, 78, 0.2);
-  color: var(--color-warning);
+  color: var(--color-status-warning);
   border-color: rgba(240, 173, 78, 0.3);
 }
 
 .base-badge--danger {
   background: rgba(255, 107, 107, 0.2);
-  color: var(--color-danger);
+  color: var(--color-status-danger);
   border-color: rgba(255, 107, 107, 0.3);
 }
 
@@ -254,7 +254,7 @@ function handleClose(event) {
   color: inherit;
   cursor: pointer;
   opacity: 0.6;
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--duration-fast);
   font-size: 1.125em;
   line-height: 1;
 }

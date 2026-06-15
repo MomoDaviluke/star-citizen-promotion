@@ -181,31 +181,31 @@ onUnmounted(() => {
 
 .tooltip-content {
   position: absolute;
-  z-index: var(--z-tooltip);
+  z-index: 500;
   padding: 0.5rem 0.75rem;
-  background: var(--bg-overlay);
-  border: 1px solid var(--border-subtle);
+  background: var(--color-bg-overlay);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
   backdrop-filter: blur(8px);
-  box-shadow: var(--glow-primary);
+  box-shadow: var(--glow-cyan);
   white-space: nowrap;
   pointer-events: none;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast);
 }
 
 /* ========== 样式变体 ========== */
 .tooltip--default {
-  border-color: var(--border-subtle);
+  border-color: var(--color-border-subtle);
 }
 
 .tooltip--primary {
   border-color: rgba(95, 169, 255, 0.4);
-  box-shadow: var(--glow-primary);
+  box-shadow: var(--glow-cyan);
 }
 
 .tooltip--success {
   border-color: rgba(78, 205, 196, 0.4);
-  box-shadow: var(--glow-success);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.3);
 }
 
 .tooltip--warning {
@@ -214,7 +214,7 @@ onUnmounted(() => {
 
 .tooltip--danger {
   border-color: rgba(255, 107, 107, 0.4);
-  box-shadow: var(--glow-danger);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
 }
 
 /* ========== 箭头 ========== */
@@ -265,7 +265,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.375rem;
   font-size: var(--text-xs);
-  color: var(--text-primary);
+  color: var(--color-text-heading);
   line-height: 1.4;
 }
 
@@ -277,7 +277,7 @@ onUnmounted(() => {
 .tooltip-border-effect {
   position: absolute;
   inset: -1px;
-  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
   opacity: 0.1;
   border-radius: inherit;
   mask-image: linear-gradient(90deg, transparent 0%, black 50%, transparent 100%);
@@ -287,7 +287,7 @@ onUnmounted(() => {
 /* ========== 动画 ========== */
 .tooltip-fade-enter-active,
 .tooltip-fade-leave-active {
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  transition: opacity var(--duration-fast), transform var(--duration-fast);
 }
 
 .tooltip-fade-enter-from,
