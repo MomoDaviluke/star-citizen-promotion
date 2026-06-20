@@ -1,7 +1,13 @@
+/**
+ * @file 站点设置路由
+ * @description 站点配置的读取与更新
+ * @module server/routes/settings
+ */
+
 import { Router, Request, Response, NextFunction } from 'express'
-import { body, validationResult } from 'express-validator'
-import { ApiError } from '../middleware/errorHandler.js'
+import { body } from 'express-validator'
 import { authenticate, requireAdmin, AuthenticatedRequest } from '../middleware/auth.js'
+import { validate } from '../middleware/validator.js'
 import { getAllSettings, updateSettings } from '../services/settingsService.js'
 
 const router = Router()
@@ -19,23 +25,11 @@ router.put(
   '/',
   authenticate,
   requireAdmin,
-  [
-    body().isObject().withMessage('请求体必须是一个 JSON 对象')
-  ],
+  validate([body().isObject().withMessage('请求体必须是一个 JSON 对象')]),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const errors = validationResult(req)
-      if (!errors.isEmpty()) {
-        throw ApiError.badRequest('输入验证失败', errors.array())
-      }
-
       const updatedSettings = await updateSettings(req.body)
-
-      res.json({
-        success: true,
-        message: '站点设置更新成功',
-        data: updatedSettings
-      })
+      res.json({ success: true, message: '站点设置更新成功', data: updatedSettings })
     } catch (error) {
       next(error)
     }

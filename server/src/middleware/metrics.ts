@@ -9,6 +9,7 @@ import { Request, Response, NextFunction } from 'express'
 import client from 'prom-client'
 import { getPoolStatus } from '../database/pool.js'
 import { config } from '../config/index.js'
+import logger from '../utils/logger.js'
 
 const register = new client.Registry()
 

@@ -7,6 +7,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'
+import { paginatedQuery } from '../database/paginatedQuery.js'
+import { buildUpdateSet } from '../database/buildUpdateSet.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Pilot {
@@ -38,38 +40,29 @@ export interface PaginatedPilots {
   }
 }
 
-/**
- * 获取飞行员列表
- */
+/** 获取飞行员列表（分页） */
 export async function getPilots({ status, limit, offset }: GetPilotsOptions): Promise<PaginatedPilots> {
-  let sql = 'SELECT * FROM pilots'
+  const conditions: string[] = []
   const params: unknown[] = []
 
   if (status) {
-    sql += ' WHERE status = ?'
+    conditions.push('status = ?')
     params.push(status)
   }
 
-  sql += ' ORDER BY missions DESC LIMIT ? OFFSET ?'
-  params.push(limit, offset)
-
-  const pilots = await query<Pilot[]>(sql, params)
-
-  const countSql = status
-    ? 'SELECT COUNT(*) as total FROM pilots WHERE status = ?'
-    : 'SELECT COUNT(*) as total FROM pilots'
-  const countParams = status ? [status] : []
-  const result = await queryOne<{ total: number }>(countSql, countParams)
-  const total = result?.total ?? 0
+  const result = await paginatedQuery<Pilot>({
+    from: 'pilots',
+    conditions,
+    params,
+    orderBy: 'missions',
+    orderDir: 'DESC',
+    limit,
+    offset
+  })
 
   return {
-    pilots,
-    pagination: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + pilots.length < total
-    }
+    pilots: result.rows,
+    pagination: result.pagination
   }
 }
 
@@ -96,43 +89,17 @@ export async function createPilot(data: Partial<Pilot>): Promise<Pilot | null> {
   return queryOne<Pilot>('SELECT * FROM pilots WHERE id = ?', [id])
 }
 
-/**
- * 更新飞行员
- */
+/** 更新飞行员 */
 export async function updatePilot(id: string, data: Partial<Pilot>): Promise<Pilot> {
   return transaction<Pilot>(async (conn: PoolConnection) => {
     const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM pilots WHERE id = ?', [id])
-
-    if (existingRows.length === 0) {
-      throw ApiError.notFound('飞行员不存在')
-    }
-
-    const { name, callsign, ship, description, image, missions, kills, status } = data
-    const updates: string[] = []
-    const values: unknown[] = []
+    if (existingRows.length === 0) throw ApiError.notFound('飞行员不存在')
 
     const allowedColumns = ['name', 'callsign', 'ship', 'description', 'image', 'missions', 'kills', 'status']
-    const columnMap: Record<string, unknown> = { name, callsign, ship, description, image, missions, kills, status }
+    const { setClause, values } = buildUpdateSet(data as Record<string, unknown>, allowedColumns)
+    if (!setClause) throw ApiError.badRequest('没有要更新的内容')
 
-    for (const col of allowedColumns) {
-      if (columnMap[col] !== undefined) {
-        updates.push(col)
-        values.push(columnMap[col])
-      }
-    }
-
-    if (updates.length === 0) {
-      throw ApiError.badRequest('没有要更新的内容')
-    }
-
-    values.push(id)
-
-    const setClause = updates.map((col) => `${col} = ?`).join(', ')
-
-    await conn.execute(
-      `UPDATE pilots SET ${setClause} WHERE id = ?`,
-      values as never
-    )
+    await conn.execute(`UPDATE pilots SET ${setClause} WHERE id = ?`, [...values, id] as never)
 
     const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM pilots WHERE id = ?', [id])
     return rows[0] as Pilot

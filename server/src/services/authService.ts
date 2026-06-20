@@ -105,7 +105,7 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
 /**
  * 通过 ID 获取用户信息
  */
-export async function getUserById(userId: string): Promise<Omit<User, 'role'> | null> {
+export async function getUserById(userId: string): Promise<User | null> {
   return queryOne<
     { id: string; username: string; email: string; role: string; avatar: string | null; created_at: string }
   >(

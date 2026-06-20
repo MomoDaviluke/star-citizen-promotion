@@ -7,6 +7,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'
+import { paginatedQuery } from '../database/paginatedQuery.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Application {
@@ -41,42 +42,31 @@ export interface PaginatedApplications {
   }
 }
 
-/**
- * 获取申请列表
- */
+/** 获取申请列表（分页，含审核人 JOIN） */
 export async function getApplications({ status, limit, offset }: GetApplicationsOptions): Promise<PaginatedApplications> {
-  let sql = `
-    SELECT a.*, u.username as reviewer_name
-    FROM applications a
-    LEFT JOIN users u ON a.reviewed_by = u.id
-  `
+  const conditions: string[] = []
   const params: unknown[] = []
 
   if (status) {
-    sql += ' WHERE a.status = ?'
+    conditions.push('a.status = ?')
     params.push(status)
   }
 
-  sql += ' ORDER BY a.created_at DESC LIMIT ? OFFSET ?'
-  params.push(limit, offset)
-
-  const applications = await query<Application[]>(sql, params)
-
-  const countSql = status
-    ? 'SELECT COUNT(*) as total FROM applications WHERE status = ?'
-    : 'SELECT COUNT(*) as total FROM applications'
-  const countParams = status ? [status] : []
-  const result = await queryOne<{ total: number }>(countSql, countParams)
-  const total = result?.total ?? 0
+  const result = await paginatedQuery<Application>({
+    select: 'SELECT a.*, u.username as reviewer_name',
+    from: 'applications a LEFT JOIN users u ON a.reviewed_by = u.id',
+    conditions,
+    params,
+    countFrom: 'applications',
+    orderBy: 'a.created_at',
+    orderDir: 'DESC',
+    limit,
+    offset
+  })
 
   return {
-    applications,
-    pagination: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + applications.length < total
-    }
+    applications: result.rows,
+    pagination: result.pagination
   }
 }
 

@@ -7,6 +7,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'
+import { paginatedQuery } from '../database/paginatedQuery.js'
+import { buildUpdateSet } from '../database/buildUpdateSet.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Project {
@@ -36,38 +38,29 @@ export interface PaginatedProjects {
   }
 }
 
-/**
- * 获取项目列表
- */
+/** 获取项目列表（分页） */
 export async function getProjects({ status, limit, offset }: GetProjectsOptions): Promise<PaginatedProjects> {
-  let sql = 'SELECT * FROM projects'
+  const conditions: string[] = []
   const params: unknown[] = []
 
   if (status) {
-    sql += ' WHERE status = ?'
+    conditions.push('status = ?')
     params.push(status)
   }
 
-  sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-  params.push(limit, offset)
-
-  const projects = await query<Project[]>(sql, params)
-
-  const countSql = status
-    ? 'SELECT COUNT(*) as total FROM projects WHERE status = ?'
-    : 'SELECT COUNT(*) as total FROM projects'
-  const countParams = status ? [status] : []
-  const result = await queryOne<{ total: number }>(countSql, countParams)
-  const total = result?.total ?? 0
+  const result = await paginatedQuery<Project>({
+    from: 'projects',
+    conditions,
+    params,
+    orderBy: 'created_at',
+    orderDir: 'DESC',
+    limit,
+    offset
+  })
 
   return {
-    projects,
-    pagination: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + projects.length < total
-    }
+    projects: result.rows,
+    pagination: result.pagination
   }
 }
 
@@ -93,43 +86,17 @@ export async function createProject(data: Partial<Project>): Promise<Project | n
   return queryOne<Project>('SELECT * FROM projects WHERE id = ?', [id])
 }
 
-/**
- * 更新项目
- */
+/** 更新项目 */
 export async function updateProject(id: string, data: Partial<Project>): Promise<Project> {
   return transaction<Project>(async (conn: PoolConnection) => {
     const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM projects WHERE id = ?', [id])
-
-    if (existingRows.length === 0) {
-      throw ApiError.notFound('项目不存在')
-    }
-
-    const { name, period, description, status, progress, participants } = data
-    const updates: string[] = []
-    const values: unknown[] = []
+    if (existingRows.length === 0) throw ApiError.notFound('项目不存在')
 
     const allowedColumns = ['name', 'period', 'description', 'status', 'progress', 'participants']
-    const columnMap: Record<string, unknown> = { name, period, description, status, progress, participants }
+    const { setClause, values } = buildUpdateSet(data as Record<string, unknown>, allowedColumns)
+    if (!setClause) throw ApiError.badRequest('没有要更新的内容')
 
-    for (const col of allowedColumns) {
-      if (columnMap[col] !== undefined) {
-        updates.push(col)
-        values.push(columnMap[col])
-      }
-    }
-
-    if (updates.length === 0) {
-      throw ApiError.badRequest('没有要更新的内容')
-    }
-
-    values.push(id)
-
-    const setClause = updates.map((col) => `${col} = ?`).join(', ')
-
-    await conn.execute(
-      `UPDATE projects SET ${setClause} WHERE id = ?`,
-      values as never
-    )
+    await conn.execute(`UPDATE projects SET ${setClause} WHERE id = ?`, [...values, id] as never)
 
     const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM projects WHERE id = ?', [id])
     return rows[0] as Project

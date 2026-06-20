@@ -7,6 +7,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'
+import { paginatedQuery } from '../database/paginatedQuery.js'
+import { buildUpdateSet } from '../database/buildUpdateSet.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Member {
@@ -36,38 +38,29 @@ export interface PaginatedMembers {
   }
 }
 
-/**
- * 获取成员列表
- */
+/** 获取成员列表（分页） */
 export async function getMembers({ status, limit, offset }: GetMembersOptions): Promise<PaginatedMembers> {
-  let sql = 'SELECT * FROM members'
+  const conditions: string[] = []
   const params: unknown[] = []
 
   if (status) {
-    sql += ' WHERE status = ?'
+    conditions.push('status = ?')
     params.push(status)
   }
 
-  sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-  params.push(limit, offset)
-
-  const members = await query<Member[]>(sql, params)
-
-  const countSql = status
-    ? 'SELECT COUNT(*) as total FROM members WHERE status = ?'
-    : 'SELECT COUNT(*) as total FROM members'
-  const countParams = status ? [status] : []
-  const result = await queryOne<{ total: number }>(countSql, countParams)
-  const total = result?.total ?? 0
+  const result = await paginatedQuery<Member>({
+    from: 'members',
+    conditions,
+    params,
+    orderBy: 'created_at',
+    orderDir: 'DESC',
+    limit,
+    offset
+  })
 
   return {
-    members,
-    pagination: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + members.length < total
-    }
+    members: result.rows,
+    pagination: result.pagination
   }
 }
 
@@ -93,43 +86,17 @@ export async function createMember(data: Partial<Member>): Promise<Member | null
   return queryOne<Member>('SELECT * FROM members WHERE id = ?', [id])
 }
 
-/**
- * 更新成员
- */
+/** 更新成员 */
 export async function updateMember(id: string, data: Partial<Member>): Promise<Member> {
   return transaction<Member>(async (conn: PoolConnection) => {
     const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM members WHERE id = ?', [id])
-
-    if (existingRows.length === 0) {
-      throw ApiError.notFound('成员不存在')
-    }
-
-    const { name, role, intro, avatar, status } = data
-    const updates: string[] = []
-    const values: unknown[] = []
+    if (existingRows.length === 0) throw ApiError.notFound('成员不存在')
 
     const allowedColumns = ['name', 'role', 'intro', 'avatar', 'status']
-    const columnMap: Record<string, unknown> = { name, role, intro, avatar, status }
+    const { setClause, values } = buildUpdateSet(data as Record<string, unknown>, allowedColumns)
+    if (!setClause) throw ApiError.badRequest('没有要更新的内容')
 
-    for (const col of allowedColumns) {
-      if (columnMap[col] !== undefined) {
-        updates.push(col)
-        values.push(columnMap[col])
-      }
-    }
-
-    if (updates.length === 0) {
-      throw ApiError.badRequest('没有要更新的内容')
-    }
-
-    values.push(id)
-
-    const setClause = updates.map((col) => `${col} = ?`).join(', ')
-
-    await conn.execute(
-      `UPDATE members SET ${setClause} WHERE id = ?`,
-      values as never
-    )
+    await conn.execute(`UPDATE members SET ${setClause} WHERE id = ?`, [...values, id] as never)
 
     const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM members WHERE id = ?', [id])
     return rows[0] as Member

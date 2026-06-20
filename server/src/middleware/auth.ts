@@ -72,8 +72,9 @@ export async function authenticate(req: AuthenticatedRequest, _res: Response, ne
 /**
  * 可选认证中间件
  * @description 即使未携带令牌也不报错，用于公开接口的增强验证
+ *              携带有效令牌时查库验证用户存在性，防止已删除用户的 Token 继续有效
  */
-export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
+export async function optionalAuth(req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> {
   const token = req.cookies?.auth_token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : null)
 
   if (!token) {
@@ -83,7 +84,16 @@ export function optionalAuth(req: AuthenticatedRequest, _res: Response, next: Ne
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
-    req.user = { id: decoded.userId }
+
+    // 查库验证用户是否仍然存在，与 authenticate 保持一致
+    const user = await queryOne<{ id: string; role: string }>(
+      'SELECT id, role FROM users WHERE id = ?',
+      [decoded.userId]
+    )
+
+    if (user) {
+      req.user = { id: user.id, role: user.role }
+    }
   } catch {
     // Token 无效或过期，继续处理但不带用户信息
   }
