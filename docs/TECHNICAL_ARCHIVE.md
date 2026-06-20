@@ -1,9 +1,19 @@
-# 项目技术档案
+﻿# 项目技术档案
 
 > **项目名称**: Star Citizen 战队宣传网站
-> **版本**: v1.3.1（含未提交增量变更）
-> **档案日期**: 2026-06-05（含最新实测数据）
+> **版本**: v1.3.4
+> **档案日期**: 2026-06-19（全面审查更新）
 > **档案说明**: 本文档基于源码逐文件审阅与真实测试运行结果编写，所有数据均可交叉验证。
+> **⚠️ 技能档案更新提醒**: 本技术档案需随项目进展随时更新，每次重大变更后应同步更新对应章节。
+
+---
+
+## 〇、档案更新日志
+
+| 日期 | 更新内容 | 更新人 |
+|:-----|:---------|:-------|
+| 2026-06-05 | 初始版本（v1.3.1） | AI Assistant |
+| 2026-06-19 | 全面审查更新：版本升级至v1.3.4、漏洞分析P0-P3、Skills优化、前端设计问题、测试数据更新 | AI Agent |
 
 ---
 
@@ -27,11 +37,16 @@ Vue 3 SPA + Express.js REST API + MySQL 8.0，Docker 容器化部署，Nginx 反
 | 2026-04-15 | v1.1.0 舰队管理、飞行员档案、项目协作、日历 |
 | 2026-05-20 | v1.2.0 管理后台仪表盘、申请审批、WebSocket 通知 |
 | 2026-05-28 | v1.3.0/v1.3.1 认证中间件重构、310 测试通过、安全扫描清零 |
-| 2026-05-28 ~ 06-01 | PWA、亮色主题、新 UI 组件、测试扩充、文档重建（未提交） |
+| 2026-06-15 | v1.3.4 设计改版（SpaceX极简）、设计系统收口、CSS变量lint、CI/CD修复 |
+| 2026-06-19 | 技术档案全面更新、漏洞分析、Skills优化（67→27个） |
 
 ### 1.4 当前状态
 
-主分支有约 140 个文件的未提交变更，涵盖 PWA 支持、亮色主题、UI 组件库、测试扩充、文档重建、安全加固等。
+- **版本**: v1.3.4（已提交至main分支）
+- **最新提交**: 784689c merge: TD-13 组①基础组件CSS变量迁移
+- **Git状态**: 工作区干净，仅4个文件有未暂存变更
+- **测试状态**: 前端410/411通过，后端352/352通过
+- **Skills优化**: 已从67个精简至27个核心skills
 
 ---
 
@@ -93,7 +108,7 @@ Vue 3 SPA + Express.js REST API + MySQL 8.0，Docker 容器化部署，Nginx 反
 
 ### 3.1 整体架构
 
-```text
+`	ext
 浏览器
   v
 Nginx（反向代理）
@@ -105,19 +120,19 @@ Nginx（反向代理）
                     ├── 10 个路由模块
                     ├── /ws -> WebSocket
                     └── MySQL 8.0（连接池）
-```
+`
 
 ### 3.2 后端分层
 
-```text
+`	ext
 Route（路由 + 中间件编排）-> Service（业务逻辑）-> Database Pool（数据访问）
-```
+`
 
 ### 3.3 前端架构
 
-```text
+`	ext
 main.js -> App.vue -> Router -> Views -> Components/Composables/Services/Stores
-```
+`
 
 ---
 
@@ -181,7 +196,7 @@ main.js -> App.vue -> Router -> Views -> Components/Composables/Services/Stores
 
 | 文件 | 职责 |
 |:-----|:-----|
-| http.js | HTTP 客户端：fetch + Authorization header + 401 自动刷新 |
+| http.js | HTTP 客户端：fetch + httpOnly Cookie + 401 自动刷新 |
 | authService.js | 认证 API |
 | dataService.js | API/静态数据自动切换 |
 | AIService.js | AI 任务引擎（优先级队列/并发控制/超时重试） |
@@ -202,28 +217,28 @@ main.js -> App.vue -> Router -> Views -> Components/Composables/Services/Stores
 
 #### 视图页面（src/views/）
 
-| 文件 | 功能 |
-|:-----|:-----|
-| Home.vue | 首页：英雄区域、统计、任务控制台、王牌飞行员轮播 |
-| About.vue | 团队介绍 |
-| Members.vue | 核心成员展示 |
-| Projects.vue | 活动项目 |
-| Fleet.vue | 舰队展示 |
-| Calendar.vue | 活动日历 |
-| Join.vue | 入队申请表单 |
-| Contact.vue | 联系我们 |
-| Login.vue | 登录 |
-| Register.vue | 注册 |
-| Profile.vue | 个人中心 |
-| ApplicationStatus.vue | 申请状态 |
-| Offline.vue | PWA 离线页 |
-| NotFound.vue | 404 |
-| admin/Dashboard.vue | 仪表盘 |
-| admin/MembersAdmin.vue | 成员管理 |
-| admin/PilotsAdmin.vue | 飞行员管理 |
-| admin/ProjectsAdmin.vue | 项目管理 |
-| admin/ApplicationsAdmin.vue | 申请审核 |
-| admin/Settings.vue | 系统设置 |
+| 文件 | 功能 | 设计状态 |
+|:-----|:-----|:---------|
+| Home.vue | 首页：Hero、Key Numbers、Fleet Preview、CTA | ⚠️ 需重新设计 |
+| About.vue | 团队介绍：Dossier + 数据面板 + 时间线 | ⚠️ 需重新设计 |
+| Members.vue | 核心成员展示 | ⚠️ 需重新设计 |
+| Projects.vue | 活动项目 | ⚠️ 需重新设计 |
+| Fleet.vue | 舰队展示 | ⚠️ 需重新设计 |
+| Calendar.vue | 活动日历（MFD风格） | ✅ 已使用新组件 |
+| Join.vue | 入队申请表单 | ⚠️ 需重新设计 |
+| Contact.vue | 联系我们 | ⚠️ 需重新设计 |
+| Login.vue | 登录（全息终端风格） | ✅ 已使用新风格 |
+| Register.vue | 注册 | ⚠️ 需重新设计 |
+| Profile.vue | 个人中心 | ⚠️ 需重新设计 |
+| ApplicationStatus.vue | 申请状态 | ⚠️ 需重新设计 |
+| Offline.vue | PWA 离线页 | ✅ 可用 |
+| NotFound.vue | 404 | ⚠️ 需重新设计 |
+| admin/Dashboard.vue | 仪表盘 | ⚠️ 需重新设计 |
+| admin/MembersAdmin.vue | 成员管理 | ⚠️ 需重新设计 |
+| admin/PilotsAdmin.vue | 飞行员管理 | ⚠️ 需重新设计 |
+| admin/ProjectsAdmin.vue | 项目管理 | ⚠️ 需重新设计 |
+| admin/ApplicationsAdmin.vue | 申请审核 | ⚠️ 需重新设计 |
+| admin/Settings.vue | 系统设置 | ⚠️ 需重新设计 |
 
 #### 其他
 
@@ -349,11 +364,11 @@ API 版本: /api/v1/*（推荐）+ /api/*（兼容，带 Deprecation 头）
 
 ---
 
-## 七、测试现状（2026-06-05 实测）
+## 七、测试现状（2026-06-19 实测）
 
 ### 7.1 后端（Jest）
 
-**29 suites / 352 tests / 全部通过 / 9.3s**
+**29 suites / 352 tests / 全部通过 / 4.99s**
 
 覆盖率: 语句 63.86% | 分支 72.00% | 函数 85.88% | 通过率 100%
 
@@ -363,17 +378,11 @@ API 版本: /api/v1/*（推荐）+ /api/*（兼容，带 Deprecation 头）
 
 ### 7.2 前端（Vitest）
 
-**44 files / 41 passed / 3 failed / 416 tests / 388 passed / 28 failed / 27.7s**
+**44 files / 44 passed / 410 tests passed / 1 skipped / 32.27s**
 
-3 个失败文件及根因:
+✅ 全部通过，无失败用例
 
-| 文件 | 失败 | 根因 |
-|:-----|:-----|:-----|
-| http.test.js | 15 | 测试假设 httpOnly Cookie，实现用 localStorage token |
-| Home.test.js | 5 | GSAP 找不到 DOM + RouterLink 未注册 + 指令未 mock |
-| wsService.test.js | 1 | mockWsInstance 为 null 时 spy 断言失败 |
-
-41 个通过文件: 6 组件 + 6 composable + 1 config + 1 router + 8 service + 3 store + 1 util + 14 view + 1 PWA
+测试覆盖: 6 组件 + 6 composable + 1 config + 1 router + 8 service + 3 store + 1 util + 14 view + 1 PWA
 
 ### 7.3 E2E（Playwright）
 
@@ -413,7 +422,7 @@ pre-push: 测试 + 漏洞审计
 
 | 层面 | 措施 |
 |:-----|:-----|
-| 认证 | JWT (HS256)，可选认证 + 角色鉴权 |
+| 认证 | JWT (HS256)，httpOnly Cookie，可选认证 + 角色鉴权 |
 | 密码 | bcryptjs，salt 12 |
 | 传输 | Helmet (CSP/XSS/HSTS)，CORS 限定域名 |
 | 限流 | API 100/15min，认证 10/15min，刷新 60/1h |
@@ -446,7 +455,228 @@ pre-push: 测试 + 漏洞审计
 
 ---
 
-## 十一、开发规范
+## 十一、Skills 技能框架管理
+
+> **⚠️ 技能档案更新提醒**: Skills 配置需随项目需求变化随时更新，新增或移除 skill 后应同步更新本章节。
+
+### 11.1 当前 Skills 配置（2026-06-19 优化后）
+
+**总计**: 27 个核心 skills（从原有 67 个精简 60%）
+
+**备份位置**: .agents/skills.backup/ + .trae/skills.backup/
+
+### 11.2 保留的 Skills 分类
+
+#### 前端设计类（10个）
+
+| Skill | 用途 | 位置 |
+|:------|:-----|:-----|
+| design-taste-frontend | 前端设计品味 | .agents/skills/ |
+| minimalist-ui | 极简UI设计 | .agents/skills/ |
+| web-design-engineer | 网页设计工程 | .agents/skills/ |
+| high-end-visual-design | 高端视觉设计 | .agents/skills/ |
+| industrial-brutalist-ui | 工业风UI | .agents/skills/ |
+| superdesign | 超级设计 | .agents/skills/ |
+| stitch-design-taste | 设计品味整合 | .agents/skills/ |
+| prototype | 原型设计 | .agents/skills/ |
+| redesign-existing-projects | 项目重设计 | .agents/skills/ |
+| improve-codebase-architecture | 架构改进 | .agents/skills/ |
+
+#### 后端开发类（6个）
+
+| Skill | 用途 | 位置 |
+|:------|:-----|:-----|
+| api-design-standards | API设计标准 | .agents/skills/ |
+| database-design | 数据库设计 | .agents/skills/ |
+| nodejs-database-patterns | Node.js数据库模式 | .agents/skills/ |
+| express-security-hardening | Express安全加固 | .agents/skills/ |
+| sql-toolkit | SQL工具包 | .agents/skills/ |
+| docker-essentials | Docker基础 | .agents/skills/ |
+
+#### Vue专项类（2个）
+
+| Skill | 用途 | 位置 |
+|:------|:-----|:-----|
+| vue-component-testing | Vue组件测试 | .agents/skills/ |
+| vue-chartjs-integration | Vue图表集成 | .agents/skills/ |
+
+#### 工程流程类（2个）
+
+| Skill | 用途 | 位置 |
+|:------|:-----|:-----|
+| tdd | 测试驱动开发 | .agents/skills/ |
+| typescript-migration-guide | TypeScript迁移指南 | .agents/skills/ |
+
+#### Superpowers框架（7个）
+
+| Skill | 用途 | 位置 |
+|:------|:-----|:-----|
+| brainstorming | 头脑风暴/需求分析 | .trae/skills/ |
+| test-driven-development | 测试驱动开发 | .trae/skills/ |
+| systematic-debugging | 系统化调试 | .trae/skills/ |
+| requesting-code-review | 请求代码审查 | .trae/skills/ |
+| verification-before-completion | 完成前验证 | .trae/skills/ |
+| writing-plans | 编写计划 | .trae/skills/ |
+| finishing-a-development-branch | 完成开发分支 | .trae/skills/ |
+
+### 11.3 已剔除的 Skills（40个）
+
+**从 .agents/skills 剔除（27个）**: image-to-code, imagegen-frontend-web, web-video-presentation, brandkit, caveman, deep-research-pro, diagnose, ecc, find-skills, full-output-enforcement, git-essentials, github, grill-me, grill-with-docs, handoff, kb-retriever, learned, playwright-mcp, proactive-agent, self-improving, skill-vetter, summarize, to-issues, to-prd, triage, write-a-skill, zoom-out
+
+**从 .trae/skills 剔除（13个）**: chinese-code-review, chinese-commit-conventions, chinese-documentation, chinese-git-workflow, dispatching-parallel-agents, executing-plans, mcp-builder, receiving-code-review, subagent-driven-development, using-git-worktrees, using-superpowers, workflow-runner, writing-skills
+
+### 11.4 Skills 更新规则
+
+1. **新增 Skill**: 当项目引入新技术栈或新流程时，添加对应 skill
+2. **移除 Skill**: 当 skill 与项目不再相关时，移除并更新本章节
+3. **备份原则**: 每次批量操作前必须备份至 .agents/skills.backup/
+4. **文档同步**: Skills 变更后必须同步更新本技术档案的第十一章
+
+---
+
+## 十二、漏洞分析报告（P0-P3 排序）
+
+> **分析日期**: 2026-06-19
+> **分析范围**: 全栈代码审查（前端Vue组件 + 后端Express路由/服务/中间件）
+
+### 12.1 P0 — 严重漏洞（影响系统安全/数据完整性）
+
+| 编号 | 漏洞 | 文件 | 影响 | 修复方案 | 预计工时 |
+|:-----|:-----|:-----|:-----|:---------|:--------|
+| V-P0-1 | 申请提交接口缺少独立速率限制 | server/src/routes/applications.ts:59 | 攻击者可用不同邮箱批量刷申请，污染数据库 | 为申请提交路由添加独立速率限制（每IP每小时最多5次） | 半天 |
+| V-P0-2 | 生产构建未验证 | vite.config.js | vite-plugin-pwa的esbuild子进程EPERM，生产环境可能无法部署 | 本地运行
+pm run build验证构建输出 | 半天 |
+| V-P0-3 | Admin路由缺少CSRF防护 | server/src/routes/admin.ts | 高危操作（reset-db/clear-cache）无CSRF token，管理员可被CSRF攻击 | 添加CSRF token中间件 | 1天 |
+
+### 12.2 P1 — 高优先级漏洞（影响功能/用户体验）
+
+| 编号 | 漏洞 | 文件 | 影响 | 修复方案 | 预计工时 |
+|:-----|:-----|:-----|:-----|:---------|:--------|
+| V-P1-1 | 128处CSS变量deprecated引用未迁移 | 多个前端组件 | 样式维护困难，主题切换可能不一致 | 按TD-13计划分组迁移（组②③④） | 3-4天 |
+| V-P1-2 | 两套重复滚动揭示动画系统 | composables/useScrollReveal.js + useGSAPReveal.js | 打包体积增大，维护混乱 | 统一使用一套，删除另一套 | 1天 |
+| V-P1-3 | Sentry动态导入重复4次 | services/errorReporting.js | 增加不必要的网络请求 | 模块顶层做一次动态导入 | 半天 |
+| V-P1-4 | Service update函数冗余SELECT | server/src/services/*.ts | 每次更新多一次数据库查询 | 使用UPDATE后检查affectedRows | 1天 |
+| V-P1-5 | 前端设计缺乏一致性 | 多个Vue组件 | 用户体验差，品牌形象受损 | 重新设计前端，统一视觉风格 | 2周 |
+
+### 12.3 P2 — 中优先级问题（影响代码质量/可维护性）
+
+| 编号 | 问题 | 文件 | 影响 | 修复方案 | 预计工时 |
+|:-----|:-----|:-----|:-----|:---------|:--------|
+| V-P2-1 | sanitizeBody重复实现 | middleware/auditLogger.ts + requestLogger.ts | 代码重复，维护困难 | 抽取为utils/sanitize.ts | 半天 |
+| V-P2-2 | Knex配置共享同一对象引用 | server/knexfile.js | 环境隔离性差 | 使用深拷贝或独立配置对象 | 半天 |
+| V-P2-3 | Event ICS导出未转义特殊字符 | 活动日历相关服务 | 导出的日历文件可能格式损坏 | 按RFC 5545规范转义 | 半天 |
+| V-P2-4 | 生产构建验证未完成 | vite.config.js | 不确定生产部署是否可行 | 运行npm run build并验证输出 | 半天 |
+
+### 12.4 P3 — 低优先级问题（技术债务/优化改进）
+
+| 编号 | 问题 | 文件 | 影响 | 触发条件 |
+|:-----|:-----|:-----|:-----|:--------|
+| V-P3-1 | 数据库DDL重复 | database/init.ts + migrate.ts | 维护困难 | 需要修改表结构时 |
+| V-P3-2 | 前端i18n支持缺失 | 全站 | 无法面向国际用户 | 面向国际玩家时 |
+| V-P3-3 | 前端性能监控(RUM)缺失 | 前端 | 无法了解真实用户体验 | 需要性能优化时 |
+| V-P3-4 | 前端未迁移到TypeScript | src/ | 类型安全依赖运行时 | 代码量增长或第二开发者加入 |
+| V-P3-5 | 无软删除机制 | 数据库 | 删除即物理删除 | 有数据审计需求 |
+| V-P3-6 | 无Redis缓存层 | 后端 | 多实例部署时缓存失效 | 并发用户超过500 |
+| V-P3-7 | 无Grafana监控仪表盘 | 基础设施 | 缺少可视化监控 | 生产部署后 |
+
+---
+
+## 十三、前端设计问题分析
+
+> **分析日期**: 2026-06-19
+> **用户反馈**: "前端太丑没有设计感，要重新设计一遍前端排版"
+
+### 13.1 当前设计问题诊断
+
+| 问题 | 严重程度 | 影响页面 | 说明 |
+|:-----|:---------|:---------|:-----|
+| 视觉风格不统一 | 🔴 高 | 全站 | 部分页面用bezel-shell风格，部分用glass-card风格，部分用普通card |
+| 布局单调 | 🔴 高 | Members/Projects/About | 大量简单卡片网格，缺乏视觉层次和空间感 |
+| 交互反馈不足 | 🟡 中 | Fleet/Members | 悬停效果、过渡动画不够丰富 |
+| 响应式不够精细 | 🟡 中 | 全站 | 移动端体验需要优化 |
+| 信息密度过低 | 🟡 中 | About/Contact | 部分页面内容稀疏，空间利用不充分 |
+| CSS变量deprecated引用 | 🟠 中 | 128处 | 旧变量名仍在使用，影响主题一致性 |
+
+### 13.2 前端重新设计优先级
+
+| 页面 | 当前问题 | 设计方向 | 优先级 |
+|:-----|:----------|:---------|:-------|
+| Home.vue | 数据硬编码，视觉层次不够 | SpaceX极简+沉浸式 | 🔴 最高 |
+| Members.vue | 卡片过于简单 | 飞行员档案风格+数据可视化 | 🔴 高 |
+| Fleet.vue | 舰船卡片缺乏互动 | 3D视差+全息效果 | 🔴 高 |
+| Join.vue | 表单缺乏设计感 | 终端风格+进度引导 | 🟡 中 |
+| About.vue | 布局单调 | 数据仪表盘+时间线 | 🟡 中 |
+| Contact.vue | 信息稀疏 | 通讯频道风格 | 🟢 低 |
+| Projects.vue | 卡片过于简单 | 任务指挥面板 | 🟢 低 |
+| Login/Register | 风格不一致 | 统一全息终端风格 | 🟡 中 |
+| Profile/ApplicationStatus | 缺乏设计 | 个人数据中心风格 | 🟢 低 |
+| Admin页面 | 全部需要重设计 | MFD仪表盘风格 | 🟡 中 |
+
+### 13.3 设计系统现状
+
+**色彩体系**: ✅ 已统一为星际蓝（#4a9eff）+ OLED黑底
+**字体系统**: ✅ 已定义（font-display/font-body/font-data/font-tech）
+**间距系统**: ✅ 已定义（space-1到space-20）
+**圆角系统**: ✅ 已定义（radius-sm到radius-2xl）
+**动画系统**: ⚠️ 存在两套重复实现
+**组件库**: ⚠️ 有基础组件但使用不一致
+
+---
+
+## 十四、技术债务追踪
+
+### 14.1 已解决的技术债务
+
+| 编号 | 问题 | 解决日期 | 版本 |
+|:-----|:-----|:---------|:-----|
+| TD-1 | 认证中间件使用.then()而非async/await | 2026-05-28 | v1.3.0 |
+| TD-3 | 前端console.log未清理 | 2026-05-28 | v1.3.0 |
+| TD-4 | 数据库查询未使用连接池监控 | 2026-05-28 | v1.3.0 |
+| TD-5 | 缺少API版本控制 | 2026-04-15 | v1.1.0 |
+| TD-6 | 缓存键未包含查询参数 | 2026-06-08 | v1.3.1 |
+
+### 14.2 待解决的技术债务
+
+| 编号 | 问题 | 引入版本 | 状态 | 优先级 |
+|:-----|:-----|:---------|:------|:-------|
+| TD-7 | Service update函数冗余SELECT | v1.0.0 | ⚠️ 待修复 | P1 |
+| TD-8 | sanitizeBody重复实现 | v1.1.0 | ⚠️ 待修复 | P2 |
+| TD-9 | 两套重复滚动揭示动画系统 | v1.2.0 | ⚠️ 待修复 | P1 |
+| TD-10 | Sentry动态导入重复4次 | v1.3.1 | ⚠️ 待修复 | P1 |
+| TD-11 | Knex配置共享同一对象引用 | v1.0.0 | ⚠️ 待修复 | P2 |
+| TD-12 | Event ICS导出未转义特殊字符 | v1.1.0 | ⚠️ 待修复 | P2 |
+| TD-13 | 128处旧CSS变量名待迁移 | v1.3.4 | 🔄 进行中 | P1 |
+
+---
+
+## 十五、质量门禁
+
+| 指标 | 当前值 | 目标值 | 状态 |
+|:-----|:-------|:-------|:-----|
+| 后端语句覆盖率 | 63.86% | ≥ 70% | ⚠️ 差距6.14% |
+| 后端分支覆盖率 | 72.00% | ≥ 60% | ✅ 已达标 |
+| 后端函数覆盖率 | 85.88% | ≥ 70% | ✅ 已达标 |
+| 后端测试通过率 | 352/352 (100%) | 100% | ✅ 已达标 |
+| 前端测试通过率 | 410/411 (99.76%) | 100% | ✅ 基本达标 |
+| E2E 测试 spec 数 | 5 | ≥ 7 | ⚠️ 差距2个 |
+| ESLint 错误数 | 0 | 0 | ✅ 已达标 |
+| 高危安全漏洞 | 0 | 0 | ✅ 已达标 |
+| CSS变量deprecated引用 | 128 | 0 | ⚠️ 迁移中 |
+
+---
+
+## 十六、版本规划
+
+| 版本 | 关键交付 | 预计时间 | 状态 |
+|:-----|:---------|:---------|:-----|
+| v1.3.4 | 设计改版、设计系统收口、CSS变量lint | 2026-06-15 | ✅ 已完成 |
+| v1.4.0 | 后端≥70%、日志轮转、数据库备份、SSL自动化、CSS变量迁移 | 2026-06-21 | 🔄 进行中 |
+| v1.5.0 | 前端≥70%、E2E 7 spec、前端重新设计 | 2026-06-28 | 📋 计划中 |
+| v1.6.0 | httpOnly Cookie JWT、CSRF防护、安全架构完善 | 2026-07-05 | 📋 计划中 |
+
+---
+
+## 十七、开发规范
 
 代码: ESLint 9.x + Prettier + Vue 3 Composition API + JSDoc/TS
 
@@ -456,224 +686,36 @@ Git: feat/ fix/ refactor/ docs/ chore/ 前缀
 
 ---
 
-## 十二、已知问题与风险矩阵
+## 十八、文档索引
 
-### 12.1 高风险（阻断上线或生产安全）
-
-| 编号 | 问题 | 影响范围 | 当前状态 | 修复方案 | 预计工时 |
-|:-----|:-----|:---------|:---------|:---------|:--------|
-| R-01 | **~140 文件未提交 Git** | 全项目 | 未提交变更覆盖 PWA、亮色主题、UI 组件库、测试扩充、安全加固等全部增量工作 | 按功能拆分为 8~10 个 commit：PWA 支持、亮色主题、UI 组件、后端测试扩充、前端测试扩充、文档重建、安全加固、配置调整 | 1 天 |
-| R-02 | **JWT 存储在 localStorage** | 前端安全 | XSS 攻击可窃取 token | 迁移到 httpOnly Cookie（后端 COOKIE_OPTIONS 已定义，前端改 http.js + authService.js + auth store） | 2~3 天 |
-| R-03 | **生产构建失败** | 部署 | vite-plugin-pwa 的 esbuild 子进程 EPERM（沙箱限制，非代码问题） | 本地环境验证构建；若仍有问题检查 esbuild 权限或降级 vite-plugin-pwa 版本 | 半天 |
-
-### 12.2 中风险（影响质量和可维护性）
-
-| 编号 | 问题 | 影响范围 | 根因 | 修复方案 | 预计工时 |
-|:-----|:-----|:---------|:-----|:---------|:--------|
-| R-04 | **前端 3 个测试文件共 28 个用例失败** | 测试质量 | 测试与实现不同步，5 个根因各异 | 逐文件修复，见 12.4 详细分析 | 2~3 天 |
-| R-05 | **后端测试无法在沙箱运行** | CI/开发 | esbuild spawn EPERM（Windows 沙箱权限限制） | 本地环境运行验证；CI 环境不受影响 | 环境问题 |
-| R-06 | **前端覆盖率未量化** | 质量指标 | Vitest coverage 配置未生效 | 启用 `@vitest/coverage-v8`，配置 thresholds | 半天 |
-| R-07 | **~30 个前端文件零测试覆盖** | 测试完整性 | 组件/指令/视图未写测试 | 按 ROADMAP 第三阶段逐步补充 | 2 周 |
-
-### 12.3 低风险（技术债务，按需处理）
-
-| 编号 | 问题 | 说明 | 触发条件 |
-|:-----|:-----|:-----|:--------|
-| TD-6 | 前端未迁移到 TypeScript | 单人开发投入产出比低 | 代码量增长到维护困难或有第二个开发者 |
-| TD-7 | 无 i18n 国际化支持 | 当前仅中文 | 面向国际玩家时启动 |
-| TD-8 | 无软删除机制 | 删除即物理删除 | 有数据审计需求或用户误删反馈 |
-| TD-9 | 无集中式表单验证 | 各表单独立校验 | 表单数量增多、校验逻辑变复杂时 |
-| TD-10 | 数据库无读写分离 | 单节点 | 并发用户超过 500 时 |
-| TD-11 | 无 Redis 缓存层 | 内存缓存 TTL | 多实例部署或缓存命中率需提升时 |
-| TD-12 | 无 Grafana 监控仪表盘 | Prometheus 指标已就绪 | 部署到生产环境后 |
-
-### 12.4 前端测试失败详细分析
-
-#### http.test.js（15 个失败）
-
-**根因**: 测试假设 JWT 通过 httpOnly Cookie 传递，但当前实现使用 localStorage + Authorization header。测试写了 `document.cookie = ...` 模拟 token，但 `http.js` 的 `getStoredToken()` 从 localStorage 读取。这是测试先行于实现的典型问题。
-
-**修复路径**: A) 让测试适配当前实现（改用 localStorage mock）；B) 先实现 httpOnly Cookie 迁移，测试自然通过。建议选 B。
-
-#### Home.test.js（5 个失败）
-
-**根因**: GSAP 在测试环境找不到 DOM 元象；RouterLink 未注册；自定义指令 `v-ripple`/`v-scroll-reveal` 未 mock；TechButton 的 variant 验证器不接受 'outline'。
-
-**修复路径**: 测试 setup 中注册全局组件 stub 和指令 mock，mock GSAP，修正 variant 验证器。
-
-#### wsService.test.js（1 个失败）
-
-**根因**: `mockWsInstance` 在未连接状态下为 `null`，spy 断言失败。
-
-**修复路径**: 改为 `expect(wsService.ws).toBeNull()` 或用 `vi.fn()` 初始化 mock。
+| 文档 | 路径 | 说明 |
+|:-----|:-----|:-----|
+| 技术档案 | docs/TECHNICAL_ARCHIVE.md | **本文档** - 项目全貌 |
+| 架构设计 | docs/ARCHITECTURE.md | 系统架构详解 |
+| 路线图 | docs/ROADMAP.md | 优化路线规划 |
+| 待办清单 | docs/TODO.md | 任务追踪 |
+| 测试指南 | docs/TESTING.md | 测试规范 |
+| API文档 | docs/guides/API.md | 接口说明 |
+| 配置指南 | docs/guides/CONFIG.md | 配置参数 |
+| 开发指南 | docs/guides/DEVELOPMENT.md | 开发流程 |
+| 部署指南 | docs/guides/DEPLOYMENT.md | 部署方案 |
+| 安全指南 | docs/guides/SECURITY.md | 安全体系 |
+| 监控指南 | docs/guides/MONITORING.md | 监控方案 |
+| 贡献指南 | docs/guides/CONTRIBUTING.md | 贡献规范 |
+| 技术选型 | docs/guides/TECH_STACK.md | 选型依据 |
+| 改进报告 | docs/reports/ENTERPRISE_IMPROVEMENTS.md | 企业级改进 |
+| 变更记录 | CHANGELOG.md | 版本变更 |
+| 前端重设计计划 | docs/home-redesign-plan.md | 首页重设计方案 |
 
 ---
 
-## 十三、项目不足深度分析
-
-### 13.1 工程流程不足
-
-| 维度 | 现状 | 理想状态 | 差距分析 |
-|:-----|:-----|:---------|:--------|
-| **版本控制** | ~140 文件未提交，工作区与 last commit 严重脱节 | 功能分支 + 原子提交 | 增量变更未拆分 commit，磁盘故障将丢失全部工作。最紧迫的风险 |
-| **测试可信度** | 前端 28 个测试失败，后端测试因沙箱权限无法本地验证 | 全量通过 + 本地可跑 | 失败用例让其他通过的测试也失去可信度 |
-| **构建验证** | 生产构建 EPERM 失败 | `npm run build` 零错误 | 沙箱环境限制是外因，但本地也需验证一次完整构建 |
-
-### 13.2 安全架构不足
-
-| 维度 | 现状 | 理想状态 | 差距分析 |
-|:-----|:-----|:---------|:--------|
-| **Token 存储** | JWT 在 localStorage | httpOnly + Secure + SameSite Cookie | localStorage 对 XSS 完全暴露 |
-| **CSRF 防护** | 无 CSRF token | 双重验证（Cookie JWT + CSRF token） | 迁移到 Cookie 后 CSRF 风险随之而来 |
-| **API 版本控制** | 双前缀兼容 | 仅 `/api/v1/`，旧版返回 410 Gone | 长期兼容两套前缀增加维护负担 |
-| **密码策略** | 仅 bcrypt salt 12 | + 密码复杂度 + 登录失败锁定 | 注册接口未校验密码强度 |
-
-### 13.3 前端架构不足
-
-| 维度 | 现状 | 理想状态 | 差距分析 |
-|:-----|:-----|:---------|:--------|
-| **状态管理** | 3 个 store | 按业务域拆分，含缓存和乐观更新 | 缺少 memberStore/projectStore/applicationStore |
-| **错误处理** | ErrorBoundary + errorHandler | + API 错误分类 + 用户友好提示 | 对网络超时、429、500 的提示不够差异化 |
-| **类型安全** | 前端纯 JS | TypeScript strict | 全靠运行时发现类型错误 |
-| **表单验证** | 各组件独立校验 | VeeValidate / FormKit 统一方案 | Join/Login/Register 各自实现校验逻辑 |
-| **性能监控** | Sentry 错误追踪 | + Web Vitals RUM | 缺少真实用户性能数据 |
-
-### 13.4 后端架构不足
-
-| 维度 | 现状 | 理想状态 | 差距分析 |
-|:-----|:-----|:---------|:--------|
-| **缓存层** | 内存 TTL 缓存 | Redis + 内存二级缓存 | 多实例部署时缓存失效 |
-| **数据库** | 单节点 MySQL | 主从复制 + 故障转移 | 单点故障风险，备份恢复未验证 |
-| **日志** | Winston 文件 + 控制台 | + ELK/Loki 集中式日志 | 缺少跨服务日志聚合 |
-| **API 文档** | Swagger 配置已就绪 | 完整 OpenAPI spec + 示例 | 部分接口无文档 |
-| **文件上传** | 无 | 图片/文件上传到对象存储 | 成员头像等无上传通道 |
-
-### 13.5 DevOps 不足
-
-| 维度 | 现状 | 理想状态 | 差距分析 |
-|:-----|:-----|:---------|:--------|
-| **环境管理** | .env 手动配置 | 环境变量管理 + 秘钥轮转 | 无自动轮转 |
-| **监控告警** | Prometheus + Sentry | + Grafana + 告警通知 | 无可视化和主动告警 |
-| **数据库迁移** | Knex 手动执行 | CI 自动迁移 + 回滚 | 无迁移失败回滚机制 |
-| **CDN** | `cdnUrl()` 已实现 | 实际接入 CDN | 代码就绪但未配置实际地址 |
-
----
-
-## 十四、后续发展方向
-
-### 14.1 优先级排序原则
-
-按投入产出比和风险降低幅度双维度排序。
-
-```
-高回报 + 低风险 ← 优先做
-高回报 + 高风险 ← 仔细规划后做
-低回报 + 低风险 ← 有空再做
-低回报 + 高风险 ← 不做
-```
-
-### 14.2 紧急（本周内）
-
-**方向一：Git 工作区清理**
-
-140 个未提交文件是最大的工程风险。
-
-```
-commit 1: feat(pwa): 添加 PWA 支持和离线页面
-commit 2: feat(theme): 添加亮色主题切换
-commit 3: feat(ui): 添加 HoloCard/MFDPanel/TechButton 等 UI 组件
-commit 4: test(backend): 补充 websocket/metrics/swagger 测试
-commit 5: test(frontend): 补充 service/store/router/view 测试
-commit 6: docs: 重建文档体系
-commit 7: security: 安全加固（CodeQL/Snyk/git hooks）
-commit 8: chore: 配置调整（ESLint/vitest/docker/nginx）
-```
-
-**方向二：修复前端失败测试**
-
-执行顺序：wsService.test.js（1 个）→ http.test.js（15 个）→ Home.test.js（5 个）
-
-### 14.3 短期（1~2 周，v1.4.0）
-
-**方向三：后端覆盖率 63.86% → 70%+**
-
-任务：websocket.ts 覆盖率验证、errorHandler 生产模式测试、fleetService/authService 异常分支测试。
-
-**方向四：运维地基验证**
-
-代码已就绪，需在测试环境跑一次备份恢复流程验证。
-
-### 14.4 中期（2~4 周，v1.5.0）
-
-**方向五：前端测试体系补全**
-
-优先级：Service 层 → Store → 核心 View → E2E 扩展。策略：只补逻辑测试，跳过纯渲染测试。
-
-**方向六：httpOnly Cookie JWT 迁移**
-
-后端已就绪。前端改 http.js + authService.js + auth store。同步实施 CSRF 防护。
-
-### 14.5 长期（按需启动）
-
-| 方向 | 触发条件 | 工作量 |
-|:-----|:---------|:------|
-| 前端 TypeScript 迁移 | 代码量增长或第二开发者 | 2~3 周 |
-| i18n 国际化 | 面向国际玩家 | 1~2 周 |
-| 软删除机制 | 数据审计需求 | 2~3 天 |
-| Redis 缓存层 | 多实例部署 | 2~3 天 |
-| Grafana 仪表盘 | 生产部署后 | 1~2 天 |
-| 文件上传服务 | 需要头像/图片管理 | 3~5 天 |
-| 集中式表单验证 | 表单数量增多 | 2~3 天 |
-| Web Vitals RUM | 需要真实用户性能数据 | 1~2 天 |
-
-### 14.6 架构演进路线图
-
-```
-当前状态 (v1.3.1)
-  │
-  ├─→ [紧急] Git 清理 + 测试修复
-  │
-  ├─→ [v1.4.0] 后端 70% + 运维验证
-  │     └─→ 后端达到可上线质量标准
-  │
-  ├─→ [v1.5.0] 前端 70% + httpOnly Cookie
-  │     └─→ 全栈达到可上线质量标准
-  │
-  ├─→ [v1.6.0] CSRF + 密码策略 + API 废弃计划
-  │     └─→ 安全体系完善
-  │
-  └─→ [按需] TS 迁移 / i18n / Redis / Grafana
-        └─→ 根据业务增长择机启动
-```
-
----
-
-## 十五、ROADMAP
-
-| 版本 | 交付 | 目标 | 截止日期 |
-|:-----|:-----|:-----|:--------|
-| v1.3.1 | 文档+安全清零 | 已完成 | 2026-05-31 ✅ |
-| v1.4.0 | Git 清理 + 后端 70% + 运维验证 + 前端测试修复 | 可上线后端质量 | 2026-06-14 |
-| v1.5.0 | 前端 70% + E2E 7 spec + httpOnly Cookie + CSRF | 可上线全栈质量 | 2026-06-28 |
-| v1.6.0 | 密码策略 + API 废弃计划 + 安全架构完善 | 生产级安全 | 2026-07-05 |
-
----
-
-## 十六、文档索引
-
-| 文档 | 路径 |
-|:-----|:-----|
-| 架构设计 | docs/ARCHITECTURE.md |
-| 路线图 | docs/ROADMAP.md |
-| 测试指南 | docs/TESTING.md |
-| 待办清单 | docs/TODO.md |
-| API | docs/guides/API.md |
-| 配置 | docs/guides/CONFIG.md |
-| 开发 | docs/guides/DEVELOPMENT.md |
-| 部署 | docs/guides/DEPLOYMENT.md |
-| 安全 | docs/guides/SECURITY.md |
-| 监控 | docs/guides/MONITORING.md |
-| 贡献 | docs/guides/CONTRIBUTING.md |
-| 技术选型 | docs/guides/TECH_STACK.md |
-| 改进报告 | docs/reports/ENTERPRISE_IMPROVEMENTS.md |
-| 变更记录 | CHANGELOG.md |
+> **⚠️ 技能档案更新提醒**
+> 
+> 本技术档案是项目的核心参考文档，需随项目进展随时更新。以下情况必须同步更新本档案：
+> 
+> 1. **版本发布后** — 更新版本号、测试数据、质量门禁
+> 2. **Skills变更后** — 更新第十一章Skills配置
+> 3. **漏洞修复后** — 更新第十二章漏洞状态
+> 4. **设计改版后** — 更新第十三章设计问题分析
+> 5. **技术债务解决后** — 更新第十四章债务追踪
+> 6. **架构变更后** — 更新第三章架构设计和第四章源码清单
