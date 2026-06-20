@@ -117,3 +117,6 @@ reasonix.toml
 
 # Trae local data
 .trae/
+
+# Agents local data (IDE skill files, not project source)
+.agents/
