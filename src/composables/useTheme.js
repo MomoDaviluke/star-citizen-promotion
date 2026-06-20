@@ -44,12 +44,15 @@ function persistTheme(theme) {
  * @returns {Object} { theme, isDark, isLight, toggle, setTheme }
  */
 export function useTheme() {
-  // 初始化
-  if (currentTheme.value === THEME_DARK && !getStoredTheme()) {
-    const stored = getStoredTheme()
-    const initial = stored || getSystemPreference()
+  // 初始化：仅在首次调用时从存储恢复主题
+  if (!getStoredTheme() && currentTheme.value === THEME_DARK) {
+    const initial = getSystemPreference()
     currentTheme.value = initial
     applyTheme(initial)
+  } else if (getStoredTheme() && getStoredTheme() !== currentTheme.value) {
+    const stored = getStoredTheme()
+    currentTheme.value = stored
+    applyTheme(stored)
   }
 
   const isDark = () => currentTheme.value === THEME_DARK

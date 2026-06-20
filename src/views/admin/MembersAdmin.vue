@@ -41,7 +41,7 @@
               <td>{{ member.role }}</td>
               <td>
                 <span class="status-badge" :class="`status-${member.status}`">
-                  {{ statusLabel(member.status) }}
+                  {{ getMemberStatusLabel(member.status) }}
                 </span>
               </td>
               <td>{{ formatDate(member.created_at) }}</td>
@@ -76,6 +76,7 @@ const logger = createLogger('MembersAdmin')
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
+import { getMemberStatusLabel } from '@/utils/labelMaps'
 
 /** 成员列表数据 */
 const members = ref([])
@@ -153,17 +154,6 @@ async function deleteMember(id) {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString('zh-CN')
-}
-
-/**
- * 状态标签转换
- * @description 将英文状态码转换为中文标签
- * @param {string} status - 英文状态码
- * @returns {string} 中文状态标签
- */
-function statusLabel(status) {
-  const labels = { active: '活跃', inactive: '非活跃' }
-  return labels[status] || status
 }
 
 /** 组件挂载时加载成员数据 */

@@ -47,7 +47,7 @@
               <div class="app-meta">
                 <span class="app-date">{{ formatDate(app.created_at) }}</span>
                 <span class="app-status" :class="`status-${app.status}`">
-                  {{ statusLabel(app.status) }}
+                  {{ getApplicationStatusLabel(app.status) }}
                 </span>
               </div>
             </div>
@@ -115,6 +115,7 @@ const logger = createLogger('Dashboard')
 import { ref, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
+import { getApplicationStatusLabel } from '@/utils/labelMaps'
 
 /**
  * 统计卡片数据
@@ -190,21 +191,6 @@ function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
-}
-
-/**
- * 状态标签转换
- * @description 将英文状态码转换为中文标签
- * @param {string} status - 英文状态码
- * @returns {string} 中文状态标签
- */
-function statusLabel(status) {
-  const labels = {
-    pending: '待审核',
-    approved: '已通过',
-    rejected: '已拒绝'
-  }
-  return labels[status] || status
 }
 
 /** 组件挂载时加载仪表盘数据 */

@@ -63,6 +63,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '@/services'
+import { getUserRoleLabel } from '@/utils/labelMaps'
 
 /** Vue Router 实例，用于页面导航 */
 const router = useRouter()
@@ -88,15 +89,7 @@ const menuItems = [
 /** 当前登录用户信息 */
 const user = computed(() => authService.getUser())
 
-/**
- * 用户角色标签计算属性
- * @description 将角色代码转换为中文标签
- * @returns {string} 中文角色名称
- */
-const roleLabel = computed(() => {
-  const roles = { admin: '管理员', member: '成员', guest: '访客' }
-  return roles[user.value?.role] || '未知'
-})
+const roleLabel = computed(() => getUserRoleLabel(user.value?.role))
 
 /**
  * 当前页面标题计算属性

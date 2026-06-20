@@ -61,7 +61,7 @@
               <td>{{ formatDate(app.created_at) }}</td>
               <td>
                 <span class="status-badge" :class="`status-${app.status}`">
-                  {{ statusLabel(app.status) }}
+                  {{ getApplicationStatusLabel(app.status) }}
                 </span>
               </td>
               <td>
@@ -143,7 +143,7 @@
             </div>
             <div class="detail-row" v-if="selectedApplication.availability">
               <span class="detail-label">在线时间</span>
-              <span class="detail-value">{{ availabilityLabel(selectedApplication.availability) }}</span>
+              <span class="detail-value">{{ getAvailabilityLabel(selectedApplication.availability) }}</span>
             </div>
             <div class="detail-row" v-if="selectedApplication.experience">
               <span class="detail-label">游戏经验</span>
@@ -190,6 +190,7 @@ const logger = createLogger('ApplicationsAdmin')
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
+import { getApplicationStatusLabel, getAvailabilityLabel } from '@/utils/labelMaps'
 
 /** 申请列表数据 */
 const applications = ref([])
@@ -339,33 +340,6 @@ function formatDate(dateStr) {
 function truncate(text, length) {
   if (!text) return ''
   return text.length > length ? text.slice(0, length) + '...' : text
-}
-
-/**
- * 状态标签转换
- * @description 将英文状态码转换为中文标签
- * @param {string} status - 英文状态码
- * @returns {string} 中文状态标签
- */
-function statusLabel(status) {
-  const labels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' }
-  return labels[status] || status
-}
-
-/**
- * 在线时间标签转换
- * @description 将 availability 值转换为中文标签
- * @param {string} value - 在线时间代码
- * @returns {string} 中文描述
- */
-function availabilityLabel(value) {
-  const labels = {
-    weekdays: '工作日晚上',
-    weekends: '周末全天',
-    flexible: '时间灵活',
-    limited: '时间有限'
-  }
-  return labels[value] || value
 }
 
 onMounted(() => {

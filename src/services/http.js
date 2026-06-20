@@ -53,11 +53,19 @@ function onRefreshed() {
 }
 
 /**
+ * 已尝试刷新的请求集合
+ * @description 防止刷新后重试仍返回 401 时无限递归
+ * @type {Set<string>}
+ */
+const refreshedRequests = new Set()
+
+/**
  * HTTP 请求客户端
  * @description 封装 fetch API 的核心请求函数，处理请求配置和错误处理
  *              认证通过 httpOnly cookie 自动携带，无需手动设置 Authorization header
  * @param {string} endpoint - API 端点路径（如 '/auth/login'）
  * @param {Object} options - 请求选项，与 fetch API 的 options 参数兼容
+ * @param {boolean} [options._isRetry] - 内部标记，标识是否为刷新后重试
  * @returns {Promise<Object>} 解析后的 JSON 响应数据
  * @throws {Error} 请求失败时抛出包含状态码和错误信息的异常
  */
@@ -104,9 +112,9 @@ async function http(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-      // 处理 401 未授权错误，尝试自动刷新令牌
-      if (response.status === 401 && !endpoint.includes('/auth/')) {
-        return handleTokenRefresh(endpoint, options)
+      // 处理 401 未授权错误，尝试自动刷新令牌（仅限首次，防止无限递归）
+      if (response.status === 401 && !endpoint.includes('/auth/') && !options._isRetry) {
+        return handleTokenRefresh(endpoint, { ...options, _isRetry: true })
       }
 
       const error = new Error(data?.error || data?.message || '请求失败')

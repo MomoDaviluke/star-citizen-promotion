@@ -1,8 +1,9 @@
 /**
  * @file 组合式函数导出模块
- * @description 统一导出所有组合式函数和服务实例
+ * @description 统一导出所有组合式函数
  * @module composables
  */
 
-export { useAI, useAIStatus, aiService } from './useAI'
-export { useWebSocket } from './useWebSocket'
+export { useGSAPReveal, ANIMATION_CONFIGS } from './useGSAPReveal'
+export { usePwa } from './usePwa'
+export { useTheme } from './useTheme'

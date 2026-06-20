@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { fleetService } from '@/services/fleetService'
+import { createStoreHelpers } from '@/utils/storeHelpers'
 
 export const useFleetStore = defineStore('fleet', () => {
   // ========== 状态定义 ==========
@@ -17,6 +18,8 @@ export const useFleetStore = defineStore('fleet', () => {
   const searchQuery = ref('')
   const sortBy = ref('name') // name|value|added
   const sortOrder = ref('asc') // asc|desc
+
+  const { withLoading } = createStoreHelpers(loading, error)
 
   // ========== 计算属性 ==========
   const filteredShips = computed(() => {
@@ -30,7 +33,7 @@ export const useFleetStore = defineStore('fleet', () => {
     // 搜索过滤
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
-      result = result.filter(ship => 
+      result = result.filter(ship =>
         ship.name.toLowerCase().includes(query) ||
         ship.callsign?.toLowerCase().includes(query) ||
         ship.ship?.toLowerCase().includes(query)
@@ -40,7 +43,7 @@ export const useFleetStore = defineStore('fleet', () => {
     // 排序
     result.sort((a, b) => {
       let compare = 0
-      
+
       switch (sortBy.value) {
         case 'name':
           compare = a.name.localeCompare(b.name)
@@ -59,7 +62,7 @@ export const useFleetStore = defineStore('fleet', () => {
     return result
   })
 
-  const totalValue = computed(() => 
+  const totalValue = computed(() =>
     ships.value.reduce((sum, ship) => sum + (ship.value || 0), 0)
   )
 
@@ -82,143 +85,65 @@ export const useFleetStore = defineStore('fleet', () => {
 
   // ========== 方法定义 ==========
 
-  /**
-   * 获取舰队列表
-   * @param {Object} [params] - 查询参数
-   * @returns {Promise<Array>} 飞船列表
-   */
+  /** 获取舰队列表 */
   async function fetchShips(params = {}) {
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await fleetService.getFleet(params)
       ships.value = response.data || []
       return ships.value
-    } catch (err) {
-      error.value = err.message || '获取舰队数据失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '获取舰队数据失败')
   }
 
-  /**
-   * 获取单艘飞船详情
-   * @param {string} shipId - 飞船ID
-   * @returns {Promise<Object>} 飞船详情
-   */
+  /** 获取单艘飞船详情 */
   async function fetchShip(shipId) {
     if (!shipId) throw new Error('shipId is required')
-    
-    loading.value = true
-    error.value = null
-
-    try {
-      const response = await fleetService.getShip(shipId)
-      return response.data
-    } catch (err) {
-      error.value = err.message || '获取飞船详情失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    return withLoading(() => fleetService.getShip(shipId).then(r => r.data), '获取飞船详情失败')
   }
 
-  /**
-   * 添加飞船
-   * @param {Object} shipData - 飞船数据
-   * @returns {Promise<Object>} 创建的飞船
-   */
+  /** 添加飞船 */
   async function addShip(shipData) {
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await fleetService.createShip(shipData)
       ships.value.push(response.data)
       return response.data
-    } catch (err) {
-      error.value = err.message || '添加飞船失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '添加飞船失败')
   }
 
-  /**
-   * 更新飞船信息
-   * @param {string} shipId - 飞船ID
-   * @param {Object} updates - 更新数据
-   * @returns {Promise<Object>} 更新后的飞船
-   */
+  /** 更新飞船信息 */
   async function updateShip(shipId, updates) {
     if (!shipId) throw new Error('shipId is required')
-    
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await fleetService.updateShip(shipId, updates)
       const index = ships.value.findIndex(s => s.id === shipId)
       if (index !== -1) {
         ships.value[index] = { ...ships.value[index], ...response.data }
       }
       return response.data
-    } catch (err) {
-      error.value = err.message || '更新飞船失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '更新飞船失败')
   }
 
-  /**
-   * 删除飞船
-   * @param {string} shipId - 飞船ID
-   * @returns {Promise<void>}
-   */
+  /** 删除飞船 */
   async function deleteShip(shipId) {
     if (!shipId) throw new Error('shipId is required')
-    
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       await fleetService.deleteShip(shipId)
       ships.value = ships.value.filter(s => s.id !== shipId)
-    } catch (err) {
-      error.value = err.message || '删除飞船失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '删除飞船失败')
   }
 
-  /**
-   * 设置筛选条件
-   * @param {string} newFilter - 筛选类别
-   */
+  /** 设置筛选条件 */
   function setFilter(newFilter) {
     filter.value = newFilter
   }
 
-  /**
-   * 设置搜索查询
-   * @param {string} query - 搜索关键词
-   */
+  /** 设置搜索查询 */
   function setSearchQuery(query) {
     searchQuery.value = query
   }
 
-  /**
-   * 设置排序
-   * @param {string} sortKey - 排序字段
-   * @param {string} [order] - 排序方向
-   */
+  /** 设置排序 */
   function setSorting(sortKey, order) {
     if (sortBy.value === sortKey) {
-      // 切换排序方向
       sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
     } else {
       sortBy.value = sortKey
@@ -226,16 +151,12 @@ export const useFleetStore = defineStore('fleet', () => {
     }
   }
 
-  /**
-   * 清除错误状态
-   */
+  /** 清除错误状态 */
   function clearError() {
     error.value = null
   }
 
-  /**
-   * 重置状态
-   */
+  /** 重置状态 */
   function resetState() {
     ships.value = []
     loading.value = false
@@ -246,33 +167,10 @@ export const useFleetStore = defineStore('fleet', () => {
     sortOrder.value = 'asc'
   }
 
-  // 返回所有状态和方法
   return {
-    // 状态
-    ships,
-    loading,
-    error,
-    filter,
-    searchQuery,
-    sortBy,
-    sortOrder,
-
-    // 计算属性
-    filteredShips,
-    totalValue,
-    shipCategories,
-    shipsByStatus,
-
-    // 方法
-    fetchShips,
-    fetchShip,
-    addShip,
-    updateShip,
-    deleteShip,
-    setFilter,
-    setSearchQuery,
-    setSorting,
-    clearError,
-    resetState
+    ships, loading, error, filter, searchQuery, sortBy, sortOrder,
+    filteredShips, totalValue, shipCategories, shipsByStatus,
+    fetchShips, fetchShip, addShip, updateShip, deleteShip,
+    setFilter, setSearchQuery, setSorting, clearError, resetState
   }
 })

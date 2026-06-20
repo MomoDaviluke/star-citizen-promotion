@@ -1,6 +1,6 @@
 /**
  * @file 组件统一导出模块
- * @description 统一导出所有组件，提供清晰的模块访问接口，提高代码可维护性
+ * @description 统一导出所有组件，提供清晰的模块访问接口
  * @module components
  */
 
@@ -22,16 +22,7 @@ export { default as BaseModal } from './common/BaseModal.vue'
 export { default as BaseBadge } from './common/BaseBadge.vue'
 export { default as BaseTooltip } from './common/BaseTooltip.vue'
 
-// 舰队相关组件
-export { default as FleetCard } from './fleet/FleetCard.vue'
-export { default as FleetFilter } from './fleet/FleetFilter.vue'
-export { default as FleetStats } from './fleet/FleetStats.vue'
-
 // 科幻 UI 组件
-export { default as ShipCard } from './ui/ShipCard.vue'
-
-// 日历相关组件
-export { default as CalendarMonth } from './calendar/CalendarMonth.vue'
-export { default as CalendarWeek } from './calendar/CalendarWeek.vue'
-export { default as CalendarDay } from './calendar/CalendarDay.vue'
-export { default as CalendarList } from './calendar/CalendarList.vue'
+export { default as MFDPanel } from './ui/MFDPanel.vue'
+export { default as StatusIndicator } from './ui/StatusIndicator.vue'
+export { default as TechButton } from './ui/TechButton.vue'

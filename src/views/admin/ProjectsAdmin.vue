@@ -38,7 +38,7 @@
               <td class="project-desc">{{ truncate(project.description, 50) }}</td>
               <td>
                 <span class="status-badge" :class="`status-${project.status}`">
-                  {{ statusLabel(project.status) }}
+                  {{ getProjectStatusLabel(project.status) }}
                 </span>
               </td>
               <td>
@@ -114,6 +114,7 @@ const logger = createLogger('ProjectsAdmin')
 import { ref, computed, onMounted } from 'vue'
 import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
+import { getProjectStatusLabel } from '@/utils/labelMaps'
 
 const projects = ref([])
 const statusFilter = ref('')
@@ -184,11 +185,6 @@ async function deleteProject(id) {
 function truncate(text, length) {
   if (!text) return ''
   return text.length > length ? text.slice(0, length) + '...' : text
-}
-
-function statusLabel(status) {
-  const labels = { active: '进行中', completed: '已完成', paused: '已暂停' }
-  return labels[status] || status
 }
 
 onMounted(() => {

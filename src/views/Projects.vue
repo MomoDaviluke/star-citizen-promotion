@@ -20,7 +20,7 @@
         <div class="projects-grid">
           <div v-for="project in projects" :key="project.name" class="project-card card">
             <div class="project-card__header">
-              <span class="tag" :class="`tag--${project.status}`">{{ statusLabel(project.status) }}</span>
+              <span class="tag" :class="`tag--${project.status}`">{{ getProjectStatusLabel(project.status) }}</span>
               <span class="project-card__date font-data">{{ project.date }}</span>
             </div>
             <h3 class="project-card__name">{{ project.name }}</h3>
@@ -38,6 +38,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { getProjectStatusLabel } from '@/utils/labelMaps'
 
 const projects = ref([
   { name: '商船护航 Alpha', status: 'active', date: '2024.12', description: 'Stanton 星系定期商船护航任务，保障贸易航线安全。', members: 24, type: '周期任务' },
@@ -47,11 +48,6 @@ const projects = ref([
   { name: '新人训练营', status: 'active', date: '2024.12', description: '为期两周的新飞行员培训计划，涵盖基础飞行与战术。', members: 12, type: '培训计划' },
   { name: '社区联赛', status: 'planning', date: '2025.02', description: '与其他战队联合举办的社区竞技联赛。', members: 32, type: '竞技活动' },
 ])
-
-function statusLabel(status) {
-  const map = { active: '进行中', planning: '计划中', completed: '已完成' }
-  return map[status] || status
-}
 </script>
 
 <style scoped>

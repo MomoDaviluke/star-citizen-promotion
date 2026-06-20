@@ -8,6 +8,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
 import { calendarService } from '@/services/calendarService'
+import { createStoreHelpers } from '@/utils/storeHelpers'
 
 export const useCalendarStore = defineStore('calendar', () => {
   // ========== 状态定义 ==========
@@ -18,6 +19,8 @@ export const useCalendarStore = defineStore('calendar', () => {
   const viewMode = ref('month') // month|week|list
   const selectedEvent = ref(null)
   const filter = ref('all') // all|upcoming|past|mine
+
+  const { withLoading } = createStoreHelpers(loading, error)
 
   // ========== 计算属性 ==========
   const upcomingEvents = computed(() => {
@@ -44,14 +47,10 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   const filteredEvents = computed(() => {
     switch (filter.value) {
-      case 'upcoming':
-        return upcomingEvents.value
-      case 'past':
-        return pastEvents.value
-      case 'mine':
-        return myEvents.value
-      default:
-        return events.value
+      case 'upcoming': return upcomingEvents.value
+      case 'past': return pastEvents.value
+      case 'mine': return myEvents.value
+      default: return events.value
     }
   })
 
@@ -76,84 +75,38 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   // ========== 方法定义 ==========
 
-  /**
-   * 获取活动列表
-   * @param {Object} [params] - 查询参数
-   * @returns {Promise<Array>} 活动列表
-   */
+  /** 获取活动列表 */
   async function fetchEvents(params = {}) {
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await calendarService.getEvents(params)
       events.value = response.data || []
       return events.value
-    } catch (err) {
-      error.value = err.message || '获取活动失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '获取活动失败')
   }
 
-  /**
-   * 获取单个活动详情
-   * @param {string} eventId - 活动ID
-   * @returns {Promise<Object>} 活动详情
-   */
+  /** 获取单个活动详情 */
   async function fetchEvent(eventId) {
     if (!eventId) throw new Error('eventId is required')
-
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await calendarService.getEvent(eventId)
       selectedEvent.value = response.data
       return response.data
-    } catch (err) {
-      error.value = err.message || '获取活动详情失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '获取活动详情失败')
   }
 
-  /**
-   * 创建活动
-   * @param {Object} eventData - 活动数据
-   * @returns {Promise<Object>} 创建的活动
-   */
+  /** 创建活动 */
   async function createEvent(eventData) {
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await calendarService.createEvent(eventData)
       events.value.push(response.data)
       return response.data
-    } catch (err) {
-      error.value = err.message || '创建活动失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '创建活动失败')
   }
 
-  /**
-   * 更新活动
-   * @param {string} eventId - 活动ID
-   * @param {Object} updates - 更新数据
-   * @returns {Promise<Object>} 更新后的活动
-   */
+  /** 更新活动 */
   async function updateEvent(eventId, updates) {
     if (!eventId) throw new Error('eventId is required')
-
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await calendarService.updateEvent(eventId, updates)
       const index = events.value.findIndex(e => e.id === eventId)
       if (index !== -1) {
@@ -163,170 +116,85 @@ export const useCalendarStore = defineStore('calendar', () => {
         selectedEvent.value = { ...selectedEvent.value, ...response.data }
       }
       return response.data
-    } catch (err) {
-      error.value = err.message || '更新活动失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '更新活动失败')
   }
 
-  /**
-   * 删除活动
-   * @param {string} eventId - 活动ID
-   * @returns {Promise<void>}
-   */
+  /** 删除活动 */
   async function deleteEvent(eventId) {
     if (!eventId) throw new Error('eventId is required')
-
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       await calendarService.deleteEvent(eventId)
       events.value = events.value.filter(e => e.id !== eventId)
       if (selectedEvent.value?.id === eventId) {
         selectedEvent.value = null
       }
-    } catch (err) {
-      error.value = err.message || '删除活动失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '删除活动失败')
   }
 
-  /**
-   * 取消报名
-   * @param {string} eventId - 活动ID
-   * @returns {Promise<Object>} 更新后的活动
-   */
-  async function leaveEvent(eventId) {
-    if (!eventId) throw new Error('eventId is required')
-
-    loading.value = true
-    error.value = null
-
-    try {
-      const response = await calendarService.leaveEvent(eventId)
-      const index = events.value.findIndex(e => e.id === eventId)
-      if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...response.data }
-      }
-      return response.data
-    } catch (err) {
-      error.value = err.message || '取消报名失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
-   * 报名参加活动
-   * @param {string} eventId - 活动ID
-   * @returns {Promise<Object>} 更新后的活动
-   */
+  /** 报名参加活动 */
   async function joinEvent(eventId) {
     if (!eventId) throw new Error('eventId is required')
-
-    loading.value = true
-    error.value = null
-
-    try {
+    return withLoading(async () => {
       const response = await calendarService.joinEvent(eventId)
       const index = events.value.findIndex(e => e.id === eventId)
       if (index !== -1) {
         events.value[index] = { ...events.value[index], ...response.data }
       }
       return response.data
-    } catch (err) {
-      error.value = err.message || '报名失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    }, '报名失败')
   }
 
-  /**
-   * 设置视图模式
-   * @param {string} mode - 视图模式
-   */
-  function setViewMode(mode) {
-    viewMode.value = mode
+  /** 取消报名 */
+  async function leaveEvent(eventId) {
+    if (!eventId) throw new Error('eventId is required')
+    return withLoading(async () => {
+      const response = await calendarService.leaveEvent(eventId)
+      const index = events.value.findIndex(e => e.id === eventId)
+      if (index !== -1) {
+        events.value[index] = { ...events.value[index], ...response.data }
+      }
+      return response.data
+    }, '取消报名失败')
   }
 
-  /**
-   * 设置筛选条件
-   * @param {string} newFilter - 筛选条件
-   */
-  function setFilter(newFilter) {
-    filter.value = newFilter
-  }
+  /** 设置视图模式 */
+  function setViewMode(mode) { viewMode.value = mode }
 
-  /**
-   * 跳转到指定日期
-   * @param {Date} date - 目标日期
-   */
-  function goToDate(date) {
-    currentDate.value = new Date(date)
-  }
+  /** 设置筛选条件 */
+  function setFilter(newFilter) { filter.value = newFilter }
 
-  /**
-   * 跳转到下一天/周/月
-   */
+  /** 跳转到指定日期 */
+  function goToDate(date) { currentDate.value = new Date(date) }
+
+  /** 跳转到下一天/周/月 */
   function goNext() {
     const date = new Date(currentDate.value)
     switch (viewMode.value) {
-      case 'month':
-        date.setMonth(date.getMonth() + 1)
-        break
-      case 'week':
-        date.setDate(date.getDate() + 7)
-        break
-      case 'list':
-        date.setDate(date.getDate() + 1)
-        break
+      case 'month': date.setMonth(date.getMonth() + 1); break
+      case 'week': date.setDate(date.getDate() + 7); break
+      case 'list': date.setDate(date.getDate() + 1); break
     }
     currentDate.value = date
   }
 
-  /**
-   * 跳转到前一天/周/月
-   */
+  /** 跳转到前一天/周/月 */
   function goPrev() {
     const date = new Date(currentDate.value)
     switch (viewMode.value) {
-      case 'month':
-        date.setMonth(date.getMonth() - 1)
-        break
-      case 'week':
-        date.setDate(date.getDate() - 7)
-        break
-      case 'list':
-        date.setDate(date.getDate() - 1)
-        break
+      case 'month': date.setMonth(date.getMonth() - 1); break
+      case 'week': date.setDate(date.getDate() - 7); break
+      case 'list': date.setDate(date.getDate() - 1); break
     }
     currentDate.value = date
   }
 
-  /**
-   * 跳转到今天
-   */
-  function goToday() {
-    currentDate.value = new Date()
-  }
+  /** 跳转到今天 */
+  function goToday() { currentDate.value = new Date() }
 
-  /**
-   * 清除错误状态
-   */
-  function clearError() {
-    error.value = null
-  }
+  /** 清除错误状态 */
+  function clearError() { error.value = null }
 
-  /**
-   * 重置状态
-   */
+  /** 重置状态 */
   function resetState() {
     events.value = []
     loading.value = false
@@ -337,40 +205,11 @@ export const useCalendarStore = defineStore('calendar', () => {
     filter.value = 'all'
   }
 
-  // 返回所有状态和方法
   return {
-    // 状态
-    events,
-    loading,
-    error,
-    currentDate,
-    viewMode,
-    selectedEvent,
-    filter,
-
-    // 计算属性
-    upcomingEvents,
-    pastEvents,
-    myEvents,
-    filteredEvents,
-    eventsByDate,
-    currentMonthEvents,
-
-    // 方法
-    fetchEvents,
-    fetchEvent,
-    createEvent,
-    updateEvent,
-    deleteEvent,
-    joinEvent,
-    leaveEvent,
-    setViewMode,
-    setFilter,
-    goToDate,
-    goNext,
-    goPrev,
-    goToday,
-    clearError,
-    resetState
+    events, loading, error, currentDate, viewMode, selectedEvent, filter,
+    upcomingEvents, pastEvents, myEvents, filteredEvents, eventsByDate, currentMonthEvents,
+    fetchEvents, fetchEvent, createEvent, updateEvent, deleteEvent,
+    joinEvent, leaveEvent, setViewMode, setFilter,
+    goToDate, goNext, goPrev, goToday, clearError, resetState
   }
 })

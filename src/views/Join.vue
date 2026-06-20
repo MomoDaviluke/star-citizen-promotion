@@ -92,6 +92,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { dataService } from '@/services/dataService'
 
 const requirements = ref([
   '年满 16 周岁',
@@ -119,8 +120,7 @@ async function handleSubmit() {
   isSubmitting.value = true
   submitMessage.value = ''
   try {
-    const { httpClient } = await import('@/services/http')
-    await httpClient.post('/api/applications', form)
+    await dataService.submitApplication(form)
     submitSuccess.value = true
     submitMessage.value = '申请提交成功！我们将在 1-3 天内审核。'
     Object.assign(form, { name: '', email: '', discord: '', experience: '', reason: '' })

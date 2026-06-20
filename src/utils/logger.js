@@ -19,11 +19,9 @@ export function createLogger(module = 'App') {
       if (isDev) console.warn(...formatMsg(module, ...args))
     },
     error(...args) {
-      // 生产环境错误日志静默输出，避免泄露敏感信息到浏览器控制台
-      // 建议生产环境接入 Sentry 等错误监控服务进行上报
-      if (isDev) {
-        console.error(...formatMsg(module, ...args))
-      }
+      // 生产环境保留 error 级别输出，确保异常可被 Sentry 等监控捕获
+      // 同时避免 info/warn 级别日志泄露到浏览器控制台
+      console.error(...formatMsg(module, ...args))
     },
     debug(...args) {
       if (isDev) console.debug(...formatMsg(module, ...args))
