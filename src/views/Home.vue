@@ -9,15 +9,16 @@
 
     <!-- ═══ 1. HERO — 100vh 全屏沉浸 ═══ -->
     <section class="hero">
-      <!-- 星空粒子背景 -->
+      <!-- 星空粒子背景 — 3层深度，移动端自动减量 -->
       <div class="hero__stars">
-        <div v-for="n in 100" :key="n" class="star" :style="starStyle(n)"></div>
+        <div v-for="n in starCount" :key="n" class="star" :class="starClass(n)" :style="starStyle(n)"></div>
       </div>
 
       <div class="hero__bg">
         <img src="/images/sc/sc-matte-painting.jpg" alt="" class="hero__bg-img" />
         <div class="hero__bg-overlay"></div>
         <div class="hero__bg-gradient"></div>
+        <div class="hero__bg-glow"></div>
       </div>
 
       <div class="hero__content">
@@ -76,7 +77,7 @@
             @click="toggleCard(idx)"
           >
             <div class="fleet-card__img-wrap">
-              <img :src="ship.image" :alt="ship.name" class="fleet-card__img" loading="lazy" />
+              <img :src="ship.image" :alt="ship.name" class="fleet-card__img" :style="ship.imgFilter ? { filter: ship.imgFilter } : {}" loading="lazy" />
               <div class="fleet-card__img-overlay"></div>
             </div>
             <div class="fleet-card__body">
@@ -94,7 +95,7 @@
                 <div v-for="(spec, si) in ship.specs" :key="si" class="spec-row">
                   <span class="spec-row__label">{{ spec.label }}</span>
                   <div class="spec-bar">
-                    <div class="spec-bar__fill" :style="{ width: spec.value + '%' }"></div>
+                    <div class="spec-bar__fill" :style="{ '--fill-width': spec.value + '%' }"></div>
                   </div>
                   <span class="spec-row__value">{{ spec.value }}</span>
                 </div>
@@ -135,25 +136,44 @@
 import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
 
+// 移动端粒子减量
+const isMobile = ref(false)
+const starCount = computed(() => isMobile.value ? 80 : 200)
+
 // 预生成星星样式，避免 Math.random() 导致每次渲染结果不同
-const starStyles = Array.from({ length: 100 }, () => {
-  const size = Math.random() * 2 + 1
-  const x = Math.random() * 100
-  const y = Math.random() * 100
-  const delay = Math.random() * 3
-  const duration = Math.random() * 2 + 2
-  return {
-    width: `${size}px`,
-    height: `${size}px`,
-    left: `${x}%`,
-    top: `${y}%`,
-    animationDelay: `${delay}s`,
-    animationDuration: `${duration}s`,
+// 3层深度粒子系统 — far(小慢多) / mid / near(大快少)
+const starLayers = [
+  { count: 120, sizeRange: [0.8, 1.5], speedRange: [4, 7], cls: 'star--far' },
+  { count: 60,  sizeRange: [1.5, 2.5], speedRange: [3, 5], cls: 'star--mid' },
+  { count: 20,  sizeRange: [2.5, 3.5], speedRange: [2, 3.5], cls: 'star--near' },
+]
+
+const starStyles = []
+const starClassMap = []
+for (const layer of starLayers) {
+  for (let i = 0; i < layer.count; i++) {
+    const size = layer.sizeRange[0] + Math.random() * (layer.sizeRange[1] - layer.sizeRange[0])
+    const x = Math.random() * 100
+    const y = Math.random() * 100
+    const delay = Math.random() * layer.speedRange[1]
+    const duration = layer.speedRange[0] + Math.random() * (layer.speedRange[1] - layer.speedRange[0])
+    starStyles.push({
+      width: `${size}px`,
+      height: `${size}px`,
+      left: `${x}%`,
+      top: `${y}%`,
+      animationDelay: `${delay}s`,
+      animationDuration: `${duration}s`,
+    })
+    starClassMap.push(layer.cls)
   }
-})
+}
 
 function starStyle(n) {
   return starStyles[n - 1] || {}
+}
+function starClass(n) {
+  return starClassMap[n - 1] || ''
 }
 
 const fleetShips = ref([
@@ -161,6 +181,7 @@ const fleetShips = ref([
     name: 'Aegis Hammerhead',
     role: '重型护卫舰 · Capital',
     image: '/images/sc/sc-bengal.jpg',
+    imgFilter: 'brightness(1.15)',
     specs: [
       { label: '火力', value: 92 },
       { label: '防御', value: 88 },
@@ -180,7 +201,7 @@ const fleetShips = ref([
   {
     name: 'Anvil Arrow',
     role: '轻型战斗机 · Small',
-    image: '/images/sc/sc-buccaneer.jpg',
+    image: '/images/ships/arrow.webp',
     specs: [
       { label: '火力', value: 55 },
       { label: '防御', value: 30 },
@@ -200,8 +221,11 @@ function toggleCard(idx) {
   }
 }
 
-// 入场动画 — IntersectionObserver
+// 入场动画 — IntersectionObserver + 移动端检测
 onMounted(() => {
+  isMobile.value = window.innerWidth <= 768
+  window.addEventListener('resize', () => { isMobile.value = window.innerWidth <= 768 })
+
   const sections = document.querySelectorAll('[data-animate]')
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -368,7 +392,7 @@ onMounted(() => {
 
 .btn-ghost:hover {
   background: var(--color-accent-muted);
-  box-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-accent);
   transform: translateY(-2px);
 }
 
@@ -426,7 +450,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 星空粒子 */
+/* 星空粒子 — 3层深度 */
 .hero__stars {
   position: absolute;
   inset: 0;
@@ -438,13 +462,37 @@ onMounted(() => {
   position: absolute;
   background: #ffffff;
   border-radius: 50%;
-  animation: starTwinkle 3s ease-in-out infinite;
   opacity: 0;
 }
 
-@keyframes starTwinkle {
-  0%, 100% { opacity: 0.2; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.2); }
+.star--far {
+  animation: starFar 5s ease-in-out infinite;
+  box-shadow: none;
+}
+
+.star--mid {
+  animation: starMid 4s ease-in-out infinite;
+  box-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.star--near {
+  animation: starNear 3s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(74, 158, 255, 0.4), 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes starFar {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+@keyframes starMid {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+@keyframes starNear {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
 }
 
 .hero__bg {
@@ -457,28 +505,67 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.4) saturate(0.8);
+  filter: brightness(0.38) saturate(0.75);
+  animation: bgDrift 32s ease-in-out infinite;
+}
+
+@keyframes bgDrift {
+  0%, 100% { transform: scale(1.02) translate(0, 0); }
+  33% { transform: scale(1.04) translate(-0.3%, 0.2%); }
+  66% { transform: scale(1.03) translate(0.2%, -0.15%); }
 }
 
 .hero__bg-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    var(--color-bg) 0%,
-    rgba(5, 5, 8, 0.7) 40%,
-    transparent 100%
-  );
+  background:
+    linear-gradient(
+      to top,
+      var(--color-bg) 0%,
+      rgba(5, 5, 8, 0.6) 35%,
+      rgba(5, 5, 8, 0.2) 60%,
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(5, 5, 8, 0.4) 0%,
+      transparent 50%
+    );
 }
 
 .hero__bg-gradient {
   position: absolute;
   inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 30% 50%,
+      rgba(74, 158, 255, 0.08) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(167, 139, 250, 0.03) 0%,
+      transparent 50%
+    );
+}
+
+/* 主光源 — 左下角偏亮光束 */
+.hero__bg-glow {
+  position: absolute;
+  inset: 0;
   background: radial-gradient(
-    ellipse at 30% 50%,
-    rgba(74, 158, 255, 0.1) 0%,
+    ellipse at 15% 85%,
+    rgba(74, 158, 255, 0.12) 0%,
+    rgba(74, 158, 255, 0.04) 30%,
     transparent 60%
   );
+  animation: glowBreathe 8s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes glowBreathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 .hero__content {
@@ -493,14 +580,48 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1.25rem;
-  background: rgba(74, 158, 255, 0.1);
-  border: 1px solid rgba(74, 158, 255, 0.2);
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid rgba(74, 158, 255, 0.15);
   border-radius: 9999px;
   font-family: var(--font-data);
   font-size: var(--text-xs);
   letter-spacing: 0.15em;
   color: var(--color-accent);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ═══ Mobile — 粒子减半 + 去重特效 ═══ */
+@media (max-width: 768px) {
+  .star--far {
+    display: none;
+  }
+
+  .star--mid {
+    animation-duration: 6s;
+    box-shadow: none;
+  }
+
+  .star--near {
+    animation-duration: 5s;
+    box-shadow: 0 0 3px rgba(74, 158, 255, 0.3);
+  }
+
+  .hero__badge {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .hero__bg-img {
+    animation: none;
+    filter: brightness(0.35) saturate(0.7);
+  }
+
+  .hero__bg-glow {
+    animation: none;
+    opacity: 0.8;
+  }
 }
 
 .hero__badge-dot {
@@ -520,10 +641,11 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-hero);
   font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.04em;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
   color: #ffffff;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
+  text-shadow: 0 0 40px rgba(74, 158, 255, 0.15);
 }
 
 .hero__title-line {
@@ -535,14 +657,16 @@ onMounted(() => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(74, 158, 255, 0.25));
 }
 
 .hero__tagline {
   font-family: var(--font-data);
   font-size: var(--text-sm);
-  letter-spacing: 0.3em;
-  color: var(--color-text-label);
-  margin-bottom: var(--space-8);
+  letter-spacing: 0.35em;
+  color: var(--color-text-dim);
+  margin-bottom: var(--space-10);
+  text-shadow: 0 0 12px rgba(74, 158, 255, 0.1);
 }
 
 .hero__actions {
@@ -725,7 +849,8 @@ onMounted(() => {
 .fleet-card__specs {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s var(--ease-out);
+  transition: max-height 0.4s var(--ease-out), opacity 0.3s ease;
+  opacity: 0;
 }
 
 .fleet-card__hint {
@@ -736,7 +861,15 @@ onMounted(() => {
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   color: var(--color-accent);
+  opacity: 0.85;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(74, 158, 255, 0.3);
   transition: all 0.2s var(--ease-smooth);
+}
+
+.fleet-card__hint:hover {
+  opacity: 1;
+  border-bottom-color: var(--color-accent);
 }
 
 .fleet-card__hint svg {
@@ -758,6 +891,18 @@ onMounted(() => {
 .fleet-card:hover .fleet-card__specs,
 .fleet-card.is-tapped .fleet-card__specs {
   max-height: 200px;
+  opacity: 1;
+}
+
+/* spec条填充动画 — 容器展开后再填充 */
+.fleet-card .spec-bar__fill {
+  width: 0 !important;
+  transition: width 0.6s var(--ease-smooth) 0.15s;
+}
+
+.fleet-card:hover .spec-bar__fill,
+.fleet-card.is-tapped .spec-bar__fill {
+  width: var(--fill-width) !important;
 }
 
 .fleet-preview__more {
@@ -796,9 +941,40 @@ onMounted(() => {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-2xl);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+}
+
+/* 顶部渐变border */
+.cta-content::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(74, 158, 255, 0.3), transparent);
+  border-radius: 1px;
+}
+
+/* 底部微光呼应Hero方向 */
+.cta-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: radial-gradient(
+    ellipse at 15% 100%,
+    rgba(74, 158, 255, 0.06) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  border-radius: var(--radius-2xl);
+  z-index: -1;
 }
 
 .cta-title {
@@ -821,6 +997,15 @@ onMounted(() => {
 .cta-actions {
   display: flex;
   gap: var(--space-4);
+}
+
+/* CTA按钮加重glow */
+.cta-actions .btn-primary {
+  box-shadow: 0 0 24px rgba(74, 158, 255, 0.25), 0 4px 20px rgba(74, 158, 255, 0.3);
+}
+
+.cta-actions .btn-primary:hover {
+  box-shadow: 0 0 32px rgba(74, 158, 255, 0.4), 0 8px 30px rgba(74, 158, 255, 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════
