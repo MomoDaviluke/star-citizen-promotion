@@ -175,8 +175,8 @@ export const siteConfig = {
       warning: '#ff9f43'
     },
     fonts: {
-      primary: '"Rajdhani", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
-      mono: '"JetBrains Mono", "Fira Code", monospace'
+      // 字体由 src/styles/variables.css 统一管控，避免运行时冲突
+      source: 'variables.css'
     },
     animation: {
       enableScanline: true,
