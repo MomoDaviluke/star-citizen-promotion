@@ -214,8 +214,8 @@
    * Typography — 字体系统
    * ============================================================ */
 
-  --font-display: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
-  --font-body: 'Noto Sans SC', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-display: 'Rajdhani', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'Noto Sans SC', 'Rajdhani', system-ui, -apple-system, sans-serif;
   --font-data: 'JetBrains Mono', 'Consolas', monospace;
   --font-mono: 'JetBrains Mono', 'Consolas', monospace;
   --font-tech: 'JetBrains Mono', 'Consolas', monospace;
@@ -278,6 +278,12 @@
   --z-overlay: 10;
   --z-header: 100;
   --z-modal: 1000;
+
+  /* HUD 装饰系统 */
+  --color-hud-line: rgba(74, 158, 255, 0.12);
+  --color-starfield: rgba(255, 255, 255, 0.4);
+  --glow-hud: 0 0 20px rgba(74, 158, 255, 0.1);
+  --glow-hud-strong: 0 0 40px rgba(74, 158, 255, 0.15);
 }
 
 /* ============================================================
