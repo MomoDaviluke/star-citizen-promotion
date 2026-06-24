@@ -20,7 +20,7 @@ const shipDatabase = {
 
     role: '轻型战斗机 · 高机动空优战机，擅长快速拦截与近距格斗',
 
-    image: '/images/ships/arrow.svg',
+    image: '/images/ships/arrow.webp',
 
     specs: [
 
@@ -90,7 +90,7 @@ const shipDatabase = {
 
     role: '战斗截击机 · 精准火力与优雅设计的完美结合',
 
-    image: '/images/ships/325a.svg',
+    image: '/images/ships/325a.webp',
 
     specs: [
 
@@ -160,7 +160,7 @@ const shipDatabase = {
 
     role: '截击巡逻舰 · 执法级追捕与区域控制平台',
 
-    image: '/images/ships/avenger-stalker.svg',
+    image: '/images/ships/avenger-stalker.webp',
 
     specs: [
 
@@ -230,7 +230,7 @@ const shipDatabase = {
 
     role: '轻型运输机 · 灵活货运与快速部署两用平台。',
 
-    image: '/images/ships/avenger-titan.svg',
+    image: '/images/ships/avenger-titan.webp',
 
     specs: [
 
@@ -300,7 +300,7 @@ const shipDatabase = {
 
     role: '豪华探索舰 · 远距离深空探索与高端旅行',
 
-    image: '/images/ships/400i.svg',
+    image: '/images/ships/400i.webp',
 
     specs: [
 
@@ -370,7 +370,7 @@ const shipDatabase = {
 
     role: '路径探索船 · 小型深空探索与资源扫描。',
 
-    image: '/images/ships/315p.svg',
+    image: '/images/ships/315p.webp',
 
     specs: [
 
@@ -440,7 +440,7 @@ const shipDatabase = {
 
     role: '豪华巡游舰 · 多用途旅行与商务出行平台',
 
-    image: '/images/ships/300i.svg',
+    image: '/images/ships/300i.webp',
 
     specs: [
 
@@ -510,7 +510,7 @@ const shipDatabase = {
 
     role: '入门级多用途飞船 · 星际旅行与轻型运输的起点',
 
-    image: '/images/ships/aurora-es.svg',
+    image: '/images/ships/aurora-es.webp',
 
     specs: [
 
@@ -580,7 +580,7 @@ const shipDatabase = {
 
     role: '升级运输机 · 轻型战斗与货运双用途平台。',
 
-    image: '/images/ships/aurora-mk2.svg',
+    image: '/images/ships/aurora-mk2.webp',
 
     specs: [
 
@@ -650,7 +650,7 @@ const shipDatabase = {
 
     role: '竞速飞船 · 极速竞赛与高性能飞行体验',
 
-    image: '/images/ships/350r.svg',
+    image: '/images/ships/350r.webp',
 
     specs: [
 
@@ -720,7 +720,7 @@ const shipDatabase = {
 
     role: '入门级巡游舰 · 星际旅行与日常通勤的理想选择',
 
-    image: '/images/ships/100i.svg',
+    image: '/images/ships/100i.webp',
 
     specs: [
 
@@ -790,7 +790,7 @@ const shipDatabase = {
 
     role: '军用战斗车 · 地面防空与区域压制火力平台。',
 
-    image: '/images/ships/ballista.svg',
+    image: '/images/ships/ballista.webp',
 
     specs: [
 
