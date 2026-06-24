@@ -5,7 +5,10 @@
       <router-link to="/" class="site-header__logo" aria-label="返回首页">
         <span class="site-header__logo-white">STELLAR</span>
         <span class="site-header__logo-cyan">NEXUS</span>
+        <StatusPulse variant="online" size="sm" class="site-header__status" />
       </router-link>
+
+      <TechDivider vertical class="site-header__divider" />
 
       <!-- Navigation -->
       <nav class="site-header__nav" :class="{ 'site-header__nav--open': isMobileMenuOpen }">
@@ -21,6 +24,8 @@
           {{ link.label }}
         </router-link>
       </nav>
+
+      <TechDivider vertical class="site-header__divider site-header__divider--right" />
 
       <!-- Actions -->
       <div class="site-header__actions">
@@ -46,6 +51,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from '../../composables/useTheme'
+import { TechDivider, StatusPulse } from '../hud/index.js'
 
 const route = useRoute()
 const { isDark: isDarkFn, toggle } = useTheme()
@@ -124,6 +130,19 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   gap: 0.375rem;
   text-decoration: none;
   flex-shrink: 0;
+}
+
+.site-header__status {
+  margin-left: var(--space-2);
+}
+
+.site-header__divider {
+  height: 24px;
+  opacity: 0.6;
+}
+
+.site-header__divider--right {
+  margin-left: auto;
 }
 
 .site-header__logo-white {
