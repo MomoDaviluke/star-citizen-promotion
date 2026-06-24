@@ -8,40 +8,13 @@
   <div class="home">
 
     <!-- ═══ 1. HERO — 100vh 全屏沉浸 ═══ -->
-    <section class="hero">
-      <!-- 星空粒子背景 — 3层深度，移动端自动减量 -->
-      <div class="hero__stars">
-        <div v-for="n in starCount" :key="n" class="star" :class="starClass(n)" :style="starStyle(n)"></div>
-      </div>
+    <HeroSection>
+      <template #data-panel>
+        <HeroDataPanel />
+      </template>
+    </HeroSection>
 
-      <div class="hero__bg">
-        <img src="/images/sc/sc-matte-painting.jpg" alt="" class="hero__bg-img" />
-        <div class="hero__bg-overlay"></div>
-        <div class="hero__bg-gradient"></div>
-        <div class="hero__bg-glow"></div>
-      </div>
-
-      <div class="hero__content">
-        <div class="hero__badge">
-          <span class="hero__badge-dot"></span>
-          <span>RECRUITING NOW</span>
-        </div>
-        <h1 class="hero__title">
-          <span class="hero__title-line">STELLAR</span>
-          <span class="hero__title-line hero__title-line--accent">NEXUS</span>
-        </h1>
-        <p class="hero__tagline">EXPLORE · FIGHT · CONQUER</p>
-        <div class="hero__actions">
-          <RouterLink to="/join" class="btn-primary">START APPLICATION</RouterLink>
-          <RouterLink to="/fleet" class="btn-ghost">EXPLORE FLEET</RouterLink>
-        </div>
-      </div>
-
-      <div class="hero__scroll">
-        <div class="hero__scroll-line"></div>
-        <span class="hero__scroll-text">SCROLL</span>
-      </div>
-    </section>
+    <HeroTicker />
 
     <!-- ═══ 2. KEY NUMBERS — 两个核心数据 ═══ -->
     <section class="key-numbers" data-animate>
@@ -140,10 +113,13 @@ import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
+import HeroSection from '../components/home/HeroSection.vue'
+import HeroDataPanel from '../components/home/HeroDataPanel.vue'
+import HeroTicker from '../components/home/HeroTicker.vue'
 
 // 移动端粒子减量
 const isMobile = ref(false)
-const starCount = computed(() => isMobile.value ? 80 : 200)
+const starCount = computed(() => isMobile.value ? 40 : 100)
 
 // 预生成星星样式，避免 Math.random() 导致每次渲染结果不同
 // 3层深度粒子系统 — far(小慢多) / mid / near(大快少)
