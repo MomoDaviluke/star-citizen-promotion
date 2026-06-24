@@ -44,7 +44,7 @@
         </div>
         <div class="ship-hero__overlay"></div>
         <div class="ship-hero__content container">
-          <div class="ship-hero__badge font-data">{{ ship.categoryEn }}</div>
+          <ShipCategoryBadge :category="ship.category" class="ship-hero__badge" />
           <h1 class="ship-hero__name">{{ ship.name }}</h1>
           <p class="ship-hero__manufacturer font-data">{{ ship.manufacturer }}</p>
           <p class="ship-hero__role">{{ ship.role }}</p>
@@ -57,10 +57,13 @@
           <h2 class="section-title font-data">// 核心参数 · SPECIFICATIONS</h2>
           <div class="specs-grid">
             <div v-for="spec in ship.specs" :key="spec.label" class="spec-item">
+              <HudCorner position="top-left" size="sm" class="spec-item__corner spec-item__corner--tl" />
+              <HudCorner position="bottom-right" size="sm" class="spec-item__corner spec-item__corner--br" />
               <div class="spec-item__header">
                 <span class="spec-item__label font-data">{{ spec.label }}</span>
                 <span class="spec-item__value font-data">{{ spec.value }}%</span>
               </div>
+              <TechDivider direction="horizontal" class="spec-item__divider" />
               <div class="spec-bar-lg">
                 <div
                   class="spec-bar-lg__fill"
@@ -78,6 +81,8 @@
           <div class="info-grid">
             <!-- 左侧：基本参数 -->
             <div class="info-panel">
+              <HudCorner position="top-left" size="md" class="info-panel__corner info-panel__corner--tl" />
+              <HudCorner position="bottom-right" size="md" class="info-panel__corner info-panel__corner--br" />
               <h2 class="section-title font-data">// 基本参数 · GENERAL</h2>
               <div class="info-table">
                 <div v-for="item in ship.details" :key="item.label" class="info-row">
@@ -89,6 +94,8 @@
 
             <!-- 右侧：舰船描述 -->
             <div class="info-panel">
+              <HudCorner position="top-left" size="md" class="info-panel__corner info-panel__corner--tl" />
+              <HudCorner position="bottom-right" size="md" class="info-panel__corner info-panel__corner--br" />
               <h2 class="section-title font-data">// 舰船档案 · DOSSIER</h2>
               <div class="ship-description">
                 <p v-for="(para, i) in ship.description" :key="i">{{ para }}</p>
@@ -99,7 +106,11 @@
                 <h3 class="font-data" style="margin-bottom: var(--space-3);">// 系统状态 · STATUS</h3>
                 <div class="status-grid">
                   <div v-for="status in ship.systemStatus" :key="status.label" class="status-item">
-                    <span class="status-dot" :class="'status-dot--' + status.level"></span>
+                    <StatusPulse
+                      :variant="status.level === 'green' ? 'online' : status.level === 'yellow' ? 'warning' : 'danger'"
+                      size="sm"
+                      class="status-item__pulse"
+                    />
                     <span class="status-item__label font-data">{{ status.label }}</span>
                     <span class="status-item__value font-data">{{ status.value }}</span>
                   </div>
@@ -117,6 +128,7 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import shipDatabase, { getShipBySlug } from '../data/shipDatabase.js'
+import { HudCorner, TechDivider, ShipCategoryBadge, StatusPulse } from '../components/hud/index.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -297,15 +309,6 @@ watch(() => route.params.slug, loadShip)
 }
 
 .ship-hero__badge {
-  display: inline-block;
-  padding: 4px 14px;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  color: var(--color-accent);
-  border: 1px solid rgba(74, 158, 255, 0.3);
-  border-radius: 4px;
-  background: rgba(74, 158, 255, 0.1);
   margin-bottom: var(--space-3);
 }
 
@@ -353,10 +356,23 @@ watch(() => route.params.slug, loadShip)
 }
 
 .spec-item {
+  position: relative;
   padding: var(--space-4);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
+}
+
+.spec-item__corner {
+  position: absolute;
+  z-index: 1;
+}
+
+.spec-item__corner--tl { top: 0.75rem; left: 0.75rem; }
+.spec-item__corner--br { bottom: 0.75rem; right: 0.75rem; }
+
+.spec-item__divider {
+  margin: var(--space-2) 0;
 }
 
 .spec-item__header {
@@ -404,11 +420,20 @@ watch(() => route.params.slug, loadShip)
 }
 
 .info-panel {
+  position: relative;
   padding: var(--space-5);
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
 }
+
+.info-panel__corner {
+  position: absolute;
+  z-index: 1;
+}
+
+.info-panel__corner--tl { top: 1rem; left: 1rem; }
+.info-panel__corner--br { bottom: 1rem; right: 1rem; }
 
 .info-table {
   display: flex;
@@ -469,26 +494,8 @@ watch(() => route.params.slug, loadShip)
   border-radius: var(--radius-lg);
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.status-item__pulse {
   flex-shrink: 0;
-}
-
-.status-dot--green {
-  background: #00d084;
-  box-shadow: 0 0 8px rgba(0, 208, 132, 0.5);
-}
-
-.status-dot--yellow {
-  background: #ffb300;
-  box-shadow: 0 0 8px rgba(255, 179, 0, 0.5);
-}
-
-.status-dot--red {
-  background: #ff4757;
-  box-shadow: 0 0 8px rgba(255, 71, 87, 0.5);
 }
 
 .status-item__label {
@@ -500,19 +507,6 @@ watch(() => route.params.slug, loadShip)
   margin-left: auto;
   font-size: var(--text-xs);
   font-weight: 600;
-}
-
-.status-item__value:has(+ .status-dot--green),
-.status-dot--green + .status-item__value {
-  color: #00d084;
-}
-
-.status-dot--yellow + .status-item__value {
-  color: #ffb300;
-}
-
-.status-dot--red + .status-item__value {
-  color: #ff4757;
 }
 
 /* ── 响应式 ── */
