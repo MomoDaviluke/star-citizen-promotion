@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   @file 舰队展示视图组件
   @description Cinematic Sci-Fi — 展示战队所有飞船
   @version 10.0 - Cinematic Sci-Fi
@@ -14,7 +14,10 @@
       <div class="hero__content container">
         <span class="pill-badge">// FLEET REGISTRY</span>
         <h1>舰队展厅</h1>
+        <TechDivider class="hero__divider" />
       </div>
+      <HudCorner position="top-left" size="md" class="hero__corner hero__corner--tl" />
+      <HudCorner position="bottom-right" size="md" class="hero__corner hero__corner--br" />
     </section>
 
     <!-- Stats bar -->
@@ -49,7 +52,7 @@
     <!-- Ship grid -->
     <section class="fleet-grid-section section">
       <div class="container">
-        <div class="ship-grid">
+        <TransitionGroup name="ship-list" tag="div" class="ship-grid">
           <div
             v-for="ship in filteredShips"
             :key="ship.slug"
@@ -59,19 +62,22 @@
             @click="goToShip(ship.slug)"
             @keydown.enter="goToShip(ship.slug)"
           >
-            <!-- Double-Bezel outer shell -->
+            <!-- HUD 卡片外壳 -->
             <div class="bezel-shell">
-              <!-- Double-Bezel inner core -->
               <div class="bezel-core">
+                <HudCorner position="top-left" size="sm" class="ship-card__corner ship-card__corner--tl" />
+                <HudCorner position="bottom-right" size="sm" class="ship-card__corner ship-card__corner--br" />
+
                 <!-- Ship image area -->
                 <div class="ship-card__image">
                   <img :src="ship.image" :alt="ship.name" loading="lazy" />
+                  <div class="ship-card__scanline" aria-hidden="true"></div>
                 </div>
 
                 <div class="ship-card__content">
                   <div class="ship-card__meta">
                     <span class="ship-card__model font-data">{{ ship.manufacturer }}</span>
-                    <span class="amber-pill">{{ ship.category }}</span>
+                    <ShipCategoryBadge :category="ship.category" />
                   </div>
                   <h3 class="ship-card__name">{{ ship.name }}</h3>
                   <p class="ship-card__role">{{ ship.role }}</p>
@@ -89,7 +95,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
     </section>
   </div>
@@ -99,6 +105,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import shipDatabase, { shipList, getCategories } from '../data/shipDatabase.js'
+import { HudCorner, TechDivider, ShipCategoryBadge } from '../components/hud/index.js'
 
 const router = useRouter()
 
@@ -184,6 +191,19 @@ function goToShip(slug) {
   color: #fff;
   margin-top: var(--space-3);
 }
+
+.hero__divider {
+  width: 120px;
+  margin: var(--space-5) auto 0;
+}
+
+.hero__corner {
+  position: absolute;
+  z-index: 2;
+}
+
+.hero__corner--tl { top: 1.5rem; left: 1.5rem; }
+.hero__corner--br { bottom: 1.5rem; right: 1.5rem; }
 
 /* ── Pill Badge ── */
 .pill-badge {
@@ -288,10 +308,19 @@ function goToShip(slug) {
 }
 
 .bezel-core {
+  position: relative;
   background: var(--color-bg-card);
   border-radius: calc(var(--radius-2xl) - 4px);
   overflow: hidden;
 }
+
+.ship-card__corner {
+  position: absolute;
+  z-index: 3;
+}
+
+.ship-card__corner--tl { top: 0.75rem; left: 0.75rem; }
+.ship-card__corner--br { bottom: 0.75rem; right: 0.75rem; }
 
 /* ── Ship Grid ── */
 .ship-grid {
@@ -300,8 +329,26 @@ function goToShip(slug) {
   gap: var(--space-5);
 }
 
+/* ── TransitionGroup animations ── */
+.ship-list-move,
+.ship-list-enter-active,
+.ship-list-leave-active {
+  transition: all 0.5s var(--ease-smooth);
+}
+
+.ship-list-enter-from,
+.ship-list-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.96);
+}
+
+.ship-list-leave-active {
+  position: absolute;
+}
+
 /* ── Ship Card ── */
 .ship-card__image {
+  position: relative;
   height: 220px;
   overflow: hidden;
   background: var(--color-bg-deep);
@@ -314,8 +361,27 @@ function goToShip(slug) {
   transition: transform 0.6s var(--ease-smooth);
 }
 
+.ship-card__scanline {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(74, 158, 255, 0.03) 2px,
+    rgba(74, 158, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
 .ship-card:hover .ship-card__image img {
   transform: scale(1.06);
+}
+
+.ship-card:hover .ship-card__scanline {
+  opacity: 1;
 }
 
 .ship-card__content {
