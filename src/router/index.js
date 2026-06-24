@@ -1,8 +1,8 @@
 /**
  * @file 路由配置模块
- * @description Vue Router 路由配置，包含路由定义、导航守卫、组件预加载等功能
- *              实现单页面应用（SPA）的客户端路由管理
- *              认证检查通过 Pinia auth store 实现，Token 由 httpOnly cookie 管理
+ * @description Vue Router 路由配置，包含路由定义、导航守卫、组件预加载等功能。
+ *              实现单页面应用（SPA）的客户端路由管理。
+ *              认证检查通过 Pinia auth store 实现，Token 由 httpOnly cookie 管理。
  * @module router
  * @requires vue-router
  */
@@ -12,8 +12,8 @@ import { useAuthStore } from '../stores/auth.js'
 
 /**
  * 应用路由配置数组
- * @description 定义所有页面路由及其元信息
- *              每个路由对象包含路径、名称、组件和元数据
+ * @description 定义所有页面路由及其元信息。
+ *              每个路由对象包含路径、名称、组件和元数据。
  * @type {Array<Object>}
  */
 const routes = [
@@ -23,7 +23,7 @@ const routes = [
     component: () => import('../views/Home.vue'),
     meta: {
       preload: true,
-      title: '星际公民团队站 - 首页'
+      title: '星际公民团队官网 - 首页'
     }
   },
   {
@@ -32,44 +32,50 @@ const routes = [
     component: () => import('../views/About.vue'),
     meta: {
       preload: true,
-      title: '团队介绍 - 星际公民团队站'
+      title: '团队介绍 - 星际公民团队官网'
     }
   },
   {
     path: '/members',
     name: '核心成员',
     component: () => import('../views/Members.vue'),
-    meta: { title: '核心成员 - 星际公民团队站' }
+    meta: { title: '核心成员 - 星际公民团队官网' }
   },
   {
     path: '/projects',
     name: '活动项目',
     component: () => import('../views/Projects.vue'),
-    meta: { title: '活动项目 - 星际公民团队站' }
+    meta: { title: '活动项目 - 星际公民团队官网' }
   },
   {
     path: '/fleet',
     name: '舰队展示',
     component: () => import('../views/Fleet.vue'),
-    meta: { title: '舰队展示 - 星际公民团队站', preload: false }
+    meta: { title: '舰队展示 - 星际公民团队官网', preload: false }
+  },
+  {
+    path: '/fleet/:slug',
+    name: '舰船详情',
+    component: () => import('../views/ShipDetail.vue'),
+    meta: { title: '舰船详情 - 星际公民团队官网', preload: false }
   },
   {
     path: '/calendar',
     name: '活动日历',
     component: () => import('../views/Calendar.vue'),
-    meta: { title: '活动日历 - 星际公民团队站', preload: false }
+    meta: { title: '活动日历 - 星际公民团队官网', preload: false }
   },
   {
     path: '/join',
     name: '加入我们',
     component: () => import('../views/Join.vue'),
-    meta: { title: '加入我们 - 星际公民团队站' }
+    meta: { title: '加入我们 - 星际公民团队官网' }
   },
   {
     path: '/contact',
     name: '联系我们',
     component: () => import('../views/Contact.vue'),
-    meta: { title: '联系我们 - 星际公民团队站' }
+    meta: { title: '联系我们 - 星际公民团队官网' }
   },
   {
     path: '/login',
@@ -77,7 +83,7 @@ const routes = [
     component: () => import('../views/Login.vue'),
     meta: {
       guestOnly: true,
-      title: '登录 - 星际公民团队站'
+      title: '登录 - 星际公民团队官网'
     }
   },
   {
@@ -86,7 +92,7 @@ const routes = [
     component: () => import('../views/Register.vue'),
     meta: {
       guestOnly: true,
-      title: '注册 - 星际公民团队站'
+      title: '注册 - 星际公民团队官网'
     }
   },
   {
@@ -95,14 +101,14 @@ const routes = [
     component: () => import('../views/Profile.vue'),
     meta: {
       requiresAuth: true,
-      title: '个人中心 - 星际公民团队站'
+      title: '个人中心 - 星际公民团队官网'
     }
   },
   {
     path: '/application-status',
     name: '申请状态',
     component: () => import('../views/ApplicationStatus.vue'),
-    meta: { title: '申请状态 - 星际公民团队站' }
+    meta: { title: '申请状态 - 星际公民团队官网' }
   },
   {
     path: '/admin',
@@ -158,14 +164,14 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: '404',
     component: () => import('../views/NotFound.vue'),
-    meta: { title: '页面未找到 - 星际公民团队站' }
+    meta: { title: '页面未找到 - 星际公民团队官网' }
   }
 ]
 
 /**
  * 创建路由实例
- * @description 使用 HTML5 History 模式创建路由实例
- *              需要服务端配置支持，将所有路由指向 index.html
+ * @description 使用 HTML5 History 模式创建路由实例。
+ *              需要服务端配置支持，将所有路由指向 index.html。
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -183,8 +189,8 @@ const router = createRouter({
 
 /**
  * 全局前置导航守卫
- * @description 在每次路由切换前执行，用于权限检查和页面准备
- *              认证状态通过 Pinia auth store 获取，Token 由 httpOnly cookie 管理
+ * @description 在每次路由切换前执行，用于权限检查和页面准备。
+ *              认证状态通过 Pinia auth store 获取，Token 由 httpOnly cookie 管理。
  */
 router.beforeEach((to) => {
   if (to.meta.title) {

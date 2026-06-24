@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>舰船视觉风格 Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --raw-void-1: #050508;
+      --raw-void-2: #0a0a10;
+      --raw-void-3: #0f0f18;
+      --raw-cyan: #4a9eff;
+      --raw-cyan-rgb: 74, 158, 255;
+      --raw-cyan-bright: #6bb3ff;
+      --raw-amber: #ffb300;
+      --raw-amber-rgb: 255, 179, 0;
+      --text-heading: #ffffff;
+      --text-body: #b8b8cc;
+      --text-dim: #7a7a94;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans SC', 'Rajdhani', system-ui, sans-serif;
+      background: var(--raw-void-1);
+      color: var(--text-body);
+      min-height: 100vh;
+      padding: 4rem 2rem;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(var(--raw-cyan-rgb), 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(var(--raw-cyan-rgb), 0.08) 0%, transparent 60%);
+    }
+
+    .page-title {
+      font-family: 'Rajdhani', 'Noto Sans SC', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      font-size: 1rem;
+      color: var(--text-dim);
+      margin-bottom: 3rem;
+      max-width: 60ch;
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+    }
+
+    .ship-card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(15,15,24,0.95) 0%, rgba(10,10,16,0.98) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ship-card:hover {
+      border-color: rgba(var(--raw-cyan-rgb), 0.35);
+      box-shadow: 0 0 40px rgba(var(--raw-cyan-rgb), 0.12), 0 20px 60px rgba(0,0,0,0.6);
+      transform: translateY(-4px);
+    }
+
+    .ship-card__stage {
+      position: relative;
+      height: 260px;
+      background:
+        radial-gradient(ellipse 70% 50% at 30% 50%, rgba(var(--raw-cyan-rgb), 0.08) 0%, transparent 70%),
+        radial-gradient(circle at 75% 30%, rgba(var(--raw-amber-rgb), 0.06) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(15,15,24,0.4) 0%, rgba(5,5,8,0.9) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 远景星云 - 极淡 */
+    .ship-card__stage::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(var(--raw-cyan-rgb), 0.08), transparent 50%),
+        radial-gradient(circle at 85% 20%, rgba(167,139,250,0.05), transparent 45%);
+      filter: blur(20px);
+    }
+
+    /* 主光束 */
+    .ship-card__stage::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -20%;
+      width: 80%;
+      height: 160%;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 48%, transparent 52%);
+      transform: rotate(-15deg);
+      pointer-events: none;
+    }
+
+    .ship-svg {
+      position: relative;
+      z-index: 2;
+      width: 80%;
+      max-width: 360px;
+      filter: drop-shadow(0 0 30px rgba(var(--raw-cyan-rgb), 0.25)) drop-shadow(0 0 60px rgba(0,0,0,0.8));
+    }
+
+    .ship-card__body {
+      padding: 1.5rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .ship-card__meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ship-card__manufacturer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--raw-cyan-bright);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .ship-card__category {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--raw-amber);
+      border: 1px solid rgba(var(--raw-amber-rgb), 0.3);
+      padding: 0.2rem 0.75rem;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+    }
+
+    .ship-card__name {
+      font-family: 'Rajdhani', 'Noto Sans SC', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      letter-spacing: 0.02em;
+    }
+
+    .ship-card__role {
+      font-size: 0.9rem;
+      color: var(--text-body);
+      line-height: 1.6;
+    }
+
+    .ship-card__plaque {
+      margin-top: 0.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+
+    .ship-card__plaque span:first-child {
+      color: var(--raw-cyan);
+    }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .ship-card__stage { height: 220px; }
+      .page-title { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="page-title">Ship Visual Direction Demo</h1>
+  <p class="page-subtitle">
+    「舞台化产品目录」方向：以官方舰船为原型，深空黑底 + 单束侧光 + 青色边缘光 + 琥珀指示灯 +  faint 星云背景。
+    目标是让 12 艘舰船像一套高端海报，单张有戏剧感，整套摆在一起又足够统一。
+  </p>
+
+  <div class="grid">
+    <!-- Anvil Arrow -->
+    <div class="ship-card">
+      <div class="ship-card__stage">
+        <svg class="ship-svg" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="arrow-grad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#2a2a3e"/>
+              <stop offset="40%" stop-color="#4a4a64"/>
+              <stop offset="60%" stop-color="#5a5a72"/>
+              <stop offset="100%" stop-color="#2a2a3e"/>
+            </linearGradient>
+            <linearGradient id="arrow-cyan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="rgba(74,158,255,0)"/>
+              <stop offset="50%" stop-color="rgba(74,158,255,0.9)"/>
+              <stop offset="100%" stop-color="rgba(74,158,255,0)"/>
+            </linearGradient>
+          </defs>
+          <!-- 主舰体 -->
+          <path d="M60 130 L180 110 L340 100 L380 95 L360 105 L340 115 L180 125 L60 130Z" fill="url(#arrow-grad)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <path d="M180 110 L220 70 L240 68 L210 108Z" fill="#3a3a52" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+          <path d="M180 125 L200 150 L230 152 L210 126Z" fill="#3a3a52" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+          <!-- 驾驶舱 -->
+          <ellipse cx="245" cy="88" rx="14" ry="6" fill="rgba(255,179,0,0.8)"/>
+          <ellipse cx="245" cy="88" rx="14" ry="6" fill="rgba(255,179,0,0.3)" filter="blur(4px)"/>
+          <!-- 机翼 -->
+          <path d="M160 115 L80 160 L120 155 L170 120Z" fill="#232336" stroke="rgba(74,158,255,0.3)" stroke-width="0.8"/>
+          <path d="M160 118 L90 50 L130 55 L175 112Z" fill="#232336" stroke="rgba(74,158,255,0.3)" stroke-width="0.8"/>
+          <!-- 引擎 -->
+          <circle cx="70" cy="128" r="10" fill="#1a1a28" stroke="rgba(74,158,255,0.5)" stroke-width="1.5"/>
+          <circle cx="70" cy="128" r="5" fill="rgba(74,158,255,0.9)" filter="blur(2px)"/>
+          <!-- 边缘光 -->
+          <path d="M60 130 L180 110 L340 100 L380 95" stroke="url(#arrow-cyan)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="ship-card__body">
+        <div class="ship-card__meta">
+          <span class="ship-card__manufacturer">Anvil Aerospace</span>
+          <span class="ship-card__category">COMBAT</span>
+        </div>
+        <h2 class="ship-card__name">Anvil Arrow</h2>
+        <p class="ship-card__role">轻型战斗机 · 高机动空优战机，擅长快速拦截与近距格斗</p>
+        <div class="ship-card__plaque">
+          <span>REG: ANVL-ARROW-S2</span>
+          <span>18.5M / 1 CREW</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Origin 400i -->
+    <div class="ship-card">
+      <div class="ship-card__stage">
+        <svg class="ship-svg" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="400i-grad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#2a2a3e"/>
+              <stop offset="30%" stop-color="#5a5a72"/>
+              <stop offset="70%" stop-color="#4a4a64"/>
+              <stop offset="100%" stop-color="#2a2a3e"/>
+            </linearGradient>
+            <linearGradient id="400i-cyan" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(74,158,255,0)"/>
+              <stop offset="50%" stop-color="rgba(74,158,255,0.8)"/>
+              <stop offset="100%" stop-color="rgba(74,158,255,0)"/>
+            </linearGradient>
+          </defs>
+          <!-- 主舰体 -->
+          <path d="M80 120 C80 120 140 95 220 95 C300 95 360 105 360 105 L360 125 C360 125 300 135 220 135 C140 135 80 120 80 120Z" fill="url(#400i-grad)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <!-- 上层甲板 -->
+          <path d="M160 95 L180 70 L260 70 L280 95Z" fill="#3a3a52" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+          <!-- 驾驶舱窗 -->
+          <path d="M230 78 L270 80 L285 92 L235 90Z" fill="rgba(255,179,0,0.7)"/>
+          <path d="M230 78 L270 80 L285 92 L235 90Z" fill="rgba(255,179,0,0.2)" filter="blur(3px)"/>
+          <!-- 侧翼 -->
+          <path d="M150 110 L90 145 L130 140 L170 115Z" fill="#232336" stroke="rgba(74,158,255,0.25)" stroke-width="0.8"/>
+          <path d="M150 115 L100 55 L140 60 L175 110Z" fill="#232336" stroke="rgba(74,158,255,0.25)" stroke-width="0.8"/>
+          <!-- 引擎双喷口 -->
+          <ellipse cx="85" cy="115" rx="8" ry="12" fill="#1a1a28" stroke="rgba(74,158,255,0.5)" stroke-width="1.5"/>
+          <ellipse cx="85" cy="115" rx="3" ry="5" fill="rgba(74,158,255,0.9)" filter="blur(1px)"/>
+          <ellipse cx="85" cy="128" rx="8" ry="12" fill="#1a1a28" stroke="rgba(74,158,255,0.5)" stroke-width="1.5"/>
+          <ellipse cx="85" cy="128" rx="3" ry="5" fill="rgba(74,158,255,0.9)" filter="blur(1px)"/>
+          <!-- 边缘光 -->
+          <path d="M80 120 C140 95 220 95 360 105" stroke="url(#400i-cyan)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M160 95 L180 70 L260 70 L280 95" stroke="url(#400i-cyan)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="ship-card__body">
+        <div class="ship-card__meta">
+          <span class="ship-card__manufacturer">Origin Jumpworks</span>
+          <span class="ship-card__category">EXPLORATION</span>
+        </div>
+        <h2 class="ship-card__name">Origin 400i</h2>
+        <p class="ship-card__role">中型探索游艇 · 优雅外形与长距离航行能力的完美结合</p>
+        <div class="ship-card__plaque">
+          <span>REG: ORIG-400I-LX</span>
+          <span>48.5M / 2 CREW</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 简单的悬浮视差微交互
+    document.querySelectorAll('.ship-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        const svg = card.querySelector('.ship-svg');
+        svg.style.transform = `translate(${x * 12}px, ${y * 8}px) scale(1.02)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        const svg = card.querySelector('.ship-svg');
+        svg.style.transform = 'translate(0,0) scale(1)';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -50,7 +50,15 @@
     <section class="fleet-grid-section section">
       <div class="container">
         <div class="ship-grid">
-          <div v-for="ship in filteredShips" :key="ship.name" class="ship-card">
+          <div
+            v-for="ship in filteredShips"
+            :key="ship.slug"
+            class="ship-card"
+            role="button"
+            tabindex="0"
+            @click="goToShip(ship.slug)"
+            @keydown.enter="goToShip(ship.slug)"
+          >
             <!-- Double-Bezel outer shell -->
             <div class="bezel-shell">
               <!-- Double-Bezel inner core -->
@@ -89,96 +97,55 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import shipDatabase, { shipList, getCategories } from '../data/shipDatabase.js'
 
+const router = useRouter()
+
+// 分类：全部 + 数据库中实际存在的分类
 const activeCategory = ref('全部')
-const categories = ['全部', '战斗', '运输', '采矿', '侦察']
+const categories = computed(() => ['全部', ...getCategories()])
 
-const fleetStats = ref([
-  { value: '12', label: '在役舰船' },
-  { value: '4', label: '舰船类别' },
-  { value: '6', label: '制造商' },
-  { value: '100%', label: '战备率' },
-])
+// 根据真实舰船数据计算统计信息
+const fleetStats = computed(() => {
+  const ships = Object.values(shipDatabase)
+  const manufacturers = new Set(ships.map((s) => s.manufacturer.split('·')[0].trim()))
+  return [
+    { value: String(ships.length), label: '在役舰船' },
+    { value: String(getCategories().length), label: '舰船类别' },
+    { value: String(manufacturers.size), label: '制造商' },
+    { value: '100%', label: '战备率' },
+  ]
+})
 
-const ships = ref([
-  {
-    name: 'Aegis Hammerhead',
-    manufacturer: 'Aegis Dynamics',
-    category: '战斗',
-    role: '重型护卫舰 — 多炮塔反战斗机平台',
-    image: '/images/sc/sc-bengal.jpg',
-    specs: [
-      { label: '火力', value: 92 },
-      { label: '防御', value: 88 },
-      { label: '机动', value: 35 },
-    ]
-  },
-  {
-    name: 'RSI Constellation Andromeda',
-    manufacturer: 'Roberts Space Industries',
-    category: '运输',
-    role: '多功能巡洋舰 — 运输与战斗兼备',
-    image: '/images/sc/sc-constellation.jpg',
-    specs: [
-      { label: '火力', value: 70 },
-      { label: '防御', value: 65 },
-      { label: '货仓', value: 60 },
-    ]
-  },
-  {
-    name: 'Anvil Arrow',
-    manufacturer: 'Anvil Aerospace',
-    category: '战斗',
-    role: '轻型战斗机 — 高机动空优战机',
-    image: '/images/sc/sc-buccaneer.jpg',
-    specs: [
-      { label: '火力', value: 55 },
-      { label: '机动', value: 95 },
-      { label: '防御', value: 30 },
-    ]
-  },
-  {
-    name: 'MISC Prospector',
-    manufacturer: 'MISC',
-    category: '采矿',
-    role: '工业采矿船 — 小型矿物开采',
-    image: '/images/sc/sc-spaceship-4k.jpg',
-    specs: [
-      { label: '采矿', value: 85 },
-      { label: '防御', value: 25 },
-      { label: '机动', value: 60 },
-    ]
-  },
-  {
-    name: 'Drake Cutlass Black',
-    manufacturer: 'Drake Interplanetary',
-    category: '战斗',
-    role: '中型突击舰 — 多用途战斗运输',
-    image: '/images/sc/sc-bengal.jpg',
-    specs: [
-      { label: '火力', value: 72 },
-      { label: '防御', value: 50 },
-      { label: '货仓', value: 45 },
-    ]
-  },
-  {
-    name: 'Aegis Vanguard Sentinel',
-    manufacturer: 'Aegis Dynamics',
-    category: '侦察',
-    role: '电子战机 — 长距离拦截与电子战',
-    image: '/images/sc/sc-constellation.jpg',
-    specs: [
-      { label: '火力', value: 78 },
-      { label: '防御', value: 70 },
-      { label: '续航', value: 88 },
-    ]
-  },
-])
+// 从统一数据库构建展示列表，保留前三个 specs 作为卡片摘要
+const ships = computed(() =>
+  shipList.map((slug) => {
+    const s = shipDatabase[slug]
+    return {
+      slug,
+      name: s.name,
+      manufacturer: s.manufacturer,
+      category: s.category,
+      role: s.role,
+      image: s.image,
+      specs: s.specs.slice(0, 3),
+    }
+  })
+)
 
 const filteredShips = computed(() => {
   if (activeCategory.value === '全部') return ships.value
-  return ships.value.filter(s => s.category === activeCategory.value)
+  return ships.value.filter((s) => s.category === activeCategory.value)
 })
+
+/**
+ * 点击舰船卡片进入详情页
+ * @param {string} slug - 舰船唯一标识
+ */
+function goToShip(slug) {
+  router.push({ name: '舰船详情', params: { slug } })
+}
 </script>
 
 <style scoped>
@@ -309,6 +276,10 @@ const filteredShips = computed(() => {
   padding: 6px;
   transition: border-color var(--duration-normal) var(--ease-out),
               box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.ship-card {
+  cursor: pointer;
 }
 
 .ship-card:hover .bezel-shell {

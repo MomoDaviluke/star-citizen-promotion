@@ -71,13 +71,16 @@
         <div class="fleet-grid">
           <div
             v-for="(ship, idx) in fleetShips"
-            :key="idx"
+            :key="ship.slug"
             class="fleet-card glass-card"
             :class="{ 'is-tapped': tappedIndex === idx }"
-            @click="toggleCard(idx)"
+            role="button"
+            tabindex="0"
+            @click="handleCardClick(idx)"
+            @keydown.enter="handleCardClick(idx)"
           >
             <div class="fleet-card__img-wrap">
-              <img :src="ship.image" :alt="ship.name" class="fleet-card__img" :style="ship.imgFilter ? { filter: ship.imgFilter } : {}" loading="lazy" />
+              <img :src="ship.image" :alt="ship.name" class="fleet-card__img" loading="lazy" />
               <div class="fleet-card__img-overlay"></div>
             </div>
             <div class="fleet-card__body">
@@ -135,6 +138,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
 
 // 移动端粒子减量
 const isMobile = ref(false)
@@ -176,48 +181,38 @@ function starClass(n) {
   return starClassMap[n - 1] || ''
 }
 
-const fleetShips = ref([
-  {
-    name: 'Aegis Hammerhead',
-    role: '重型护卫舰 · Capital',
-    image: '/images/sc/sc-bengal.jpg',
-    imgFilter: 'brightness(1.15)',
-    specs: [
-      { label: '火力', value: 92 },
-      { label: '防御', value: 88 },
-      { label: '机动', value: 35 },
-    ]
-  },
-  {
-    name: 'RSI Constellation',
-    role: '多功能巡洋舰 · Large',
-    image: '/images/sc/sc-constellation.jpg',
-    specs: [
-      { label: '火力', value: 70 },
-      { label: '防御', value: 65 },
-      { label: '机动', value: 55 },
-    ]
-  },
-  {
-    name: 'Anvil Arrow',
-    role: '轻型战斗机 · Small',
-    image: '/images/ships/arrow.webp',
-    specs: [
-      { label: '火力', value: 55 },
-      { label: '防御', value: 30 },
-      { label: '机动', value: 95 },
-    ]
-  },
-])
+const router = useRouter()
+
+// 首页舰队预览：从统一数据库取推荐舰船，保持 3 张卡片
+const fleetShips = computed(() =>
+  recommendedShips.slice(0, 3).map((slug) => {
+    const s = shipDatabase[slug]
+    return {
+      slug,
+      name: s.name,
+      role: s.role,
+      image: s.image,
+      specs: s.specs.slice(0, 3),
+    }
+  })
+)
 
 const tappedIndex = ref(null)
 
-function toggleCard(idx) {
-  // accordion: 展开新卡片时自动收起其他
-  if (tappedIndex.value === idx) {
-    tappedIndex.value = null
-  } else {
-    tappedIndex.value = idx
+/**
+ * 点击首页舰队卡片：移动端保持展开收起效果，桌面端直接跳转舰船详情
+ * @param {number} idx - 卡片索引
+ */
+function handleCardClick(idx) {
+  if (window.innerWidth <= 768) {
+    // 移动端 accordion: 展开新卡片时自动收起其他
+    tappedIndex.value = tappedIndex.value === idx ? null : idx
+    return
+  }
+  // 桌面端点击跳转详情
+  const ship = fleetShips.value[idx]
+  if (ship && ship.slug) {
+    router.push({ name: '舰船详情', params: { slug: ship.slug } })
   }
 }
 

@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   @file 核心成员视图组件
   @description Cinematic Sci-Fi — 展示团队核心成员信息
   @version 10.0 - Cinematic Sci-Fi
@@ -39,7 +39,7 @@
                 <!-- Avatar with conic-gradient ring -->
                 <div class="member-card__avatar-ring">
                   <div class="member-card__avatar">
-                    <img :src="member.avatar || `https://picsum.photos/seed/${i}/200/200`" :alt="member.name" loading="lazy" />
+                    <img :src="member.avatar || '/images/pilots/default-avatar.svg'" :alt="member.name" loading="lazy" />
                   </div>
                 </div>
 

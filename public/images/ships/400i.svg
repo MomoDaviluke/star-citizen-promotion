@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="g-400i" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#1a233a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g-400i)"/>
+  <!-- 装饰网格 -->
+  <g stroke="rgba(74,158,255,0.08)" stroke-width="1">
+    <line x1="0" y1="112" x2="800" y2="112"/>
+    <line x1="0" y1="225" x2="800" y2="225"/>
+    <line x1="0" y1="338" x2="800" y2="338"/>
+    <line x1="200" y1="0" x2="200" y2="450"/>
+    <line x1="400" y1="0" x2="400" y2="450"/>
+    <line x1="600" y1="0" x2="600" y2="450"/>
+  </g>
+  <!-- 舰船剪影 -->
+  <path d="M180,260 L280,220 L520,220 L620,260 L580,280 L220,280 Z" fill="rgba(74,158,255,0.18)" stroke="rgba(74,158,255,0.45)" stroke-width="2"/>
+  <circle cx="400" cy="235" r="8" fill="rgba(255,179,0,0.8)"/>
+  <!-- 文字 -->
+  <text x="400" y="150" text-anchor="middle" font-family="system-ui, sans-serif" font-size="38" font-weight="700" fill="#e2e8f0">Origin 400i</text>
+  <text x="400" y="195" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#94a3b8">Origin Jumpworks · 探索</text>
+  <text x="400" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#64748b" letter-spacing="3">STAR CITIZEN TEAM</text>
+</svg>
