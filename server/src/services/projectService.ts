@@ -5,10 +5,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
-import { PoolConnection, RowDataPacket } from 'mysql2/promise'
-import { query, queryOne, transaction } from '../database/pool.js'
+import { PoolConnection } from 'mysql2/promise'
+import { query, transaction } from '../database/pool.js'
 import { paginatedQuery } from '../database/paginatedQuery.js'
 import { buildUpdateSet } from '../database/buildUpdateSet.js'
+import { findById, findByIdInTx, requireByIdInTx } from '../database/findById.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Project {
@@ -68,7 +69,7 @@ export async function getProjects({ status, limit, offset }: GetProjectsOptions)
  * 通过 ID 获取项目
  */
 export async function getProjectById(id: string): Promise<Project | null> {
-  return queryOne<Project>('SELECT * FROM projects WHERE id = ?', [id])
+  return findById<Project>('projects', id)
 }
 
 /**
@@ -83,14 +84,13 @@ export async function createProject(data: Partial<Project>): Promise<Project | n
     [id, name, period ?? null, description ?? null, status ?? 'planning', progress ?? 0, participants ?? 0]
   )
 
-  return queryOne<Project>('SELECT * FROM projects WHERE id = ?', [id])
+  return findById<Project>('projects', id)
 }
 
 /** 更新项目 */
 export async function updateProject(id: string, data: Partial<Project>): Promise<Project> {
   return transaction<Project>(async (conn: PoolConnection) => {
-    const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM projects WHERE id = ?', [id])
-    if (existingRows.length === 0) throw ApiError.notFound('项目不存在')
+    await requireByIdInTx<Project>(conn, 'projects', id, ApiError.notFound('项目不存在'))
 
     const allowedColumns = ['name', 'period', 'description', 'status', 'progress', 'participants']
     const { setClause, values } = buildUpdateSet(data as Record<string, unknown>, allowedColumns)
@@ -98,8 +98,7 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
 
     await conn.execute(`UPDATE projects SET ${setClause} WHERE id = ?`, [...values, id] as never)
 
-    const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM projects WHERE id = ?', [id])
-    return rows[0] as Project
+    return findByIdInTx<Project>(conn, 'projects', id) as Promise<Project>
   })
 }
 
@@ -107,7 +106,7 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
  * 删除项目
  */
 export async function deleteProject(id: string): Promise<void> {
-  const existingProject = await queryOne<Project>('SELECT * FROM projects WHERE id = ?', [id])
+  const existingProject = await findById<Project>('projects', id)
 
   if (!existingProject) {
     throw ApiError.notFound('项目不存在')

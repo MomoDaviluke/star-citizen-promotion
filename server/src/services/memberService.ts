@@ -5,10 +5,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
-import { PoolConnection, RowDataPacket } from 'mysql2/promise'
-import { query, queryOne, transaction } from '../database/pool.js'
+import { PoolConnection } from 'mysql2/promise'
+import { query, transaction } from '../database/pool.js'
 import { paginatedQuery } from '../database/paginatedQuery.js'
 import { buildUpdateSet } from '../database/buildUpdateSet.js'
+import { findById, findByIdInTx, requireByIdInTx } from '../database/findById.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Member {
@@ -68,7 +69,7 @@ export async function getMembers({ status, limit, offset }: GetMembersOptions): 
  * 通过 ID 获取成员
  */
 export async function getMemberById(id: string): Promise<Member | null> {
-  return queryOne<Member>('SELECT * FROM members WHERE id = ?', [id])
+  return findById<Member>('members', id)
 }
 
 /**
@@ -83,14 +84,13 @@ export async function createMember(data: Partial<Member>): Promise<Member | null
     [id, name, role, intro ?? null, avatar ?? null, joinDate ?? null, 'active']
   )
 
-  return queryOne<Member>('SELECT * FROM members WHERE id = ?', [id])
+  return findById<Member>('members', id)
 }
 
 /** 更新成员 */
 export async function updateMember(id: string, data: Partial<Member>): Promise<Member> {
   return transaction<Member>(async (conn: PoolConnection) => {
-    const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM members WHERE id = ?', [id])
-    if (existingRows.length === 0) throw ApiError.notFound('成员不存在')
+    await requireByIdInTx<Member>(conn, 'members', id, ApiError.notFound('成员不存在'))
 
     const allowedColumns = ['name', 'role', 'intro', 'avatar', 'status']
     const { setClause, values } = buildUpdateSet(data as Record<string, unknown>, allowedColumns)
@@ -98,8 +98,7 @@ export async function updateMember(id: string, data: Partial<Member>): Promise<M
 
     await conn.execute(`UPDATE members SET ${setClause} WHERE id = ?`, [...values, id] as never)
 
-    const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM members WHERE id = ?', [id])
-    return rows[0] as Member
+    return findByIdInTx<Member>(conn, 'members', id) as Promise<Member>
   })
 }
 
@@ -107,7 +106,7 @@ export async function updateMember(id: string, data: Partial<Member>): Promise<M
  * 删除成员
  */
 export async function deleteMember(id: string): Promise<void> {
-  const existingMember = await queryOne<Member>('SELECT * FROM members WHERE id = ?', [id])
+  const existingMember = await findById<Member>('members', id)
 
   if (!existingMember) {
     throw ApiError.notFound('成员不存在')

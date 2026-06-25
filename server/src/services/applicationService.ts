@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'
 import { paginatedQuery } from '../database/paginatedQuery.js'
+import { findById, findByIdInTx, requireByIdInTx } from '../database/findById.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Application {
@@ -115,8 +116,7 @@ export async function submitApplication(data: {
       [id, name, email, discord ?? null, experience ?? null, availability ?? null, reason ?? null, 'pending']
     )
 
-    const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM applications WHERE id = ?', [id])
-    return rows[0] as Application
+    return findByIdInTx<Application>(conn, 'applications', id) as Promise<Application>
   })
 }
 
@@ -130,11 +130,7 @@ export async function updateApplicationStatus(
   note?: string
 ): Promise<Application> {
   return transaction<Application>(async (conn: PoolConnection) => {
-    const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM applications WHERE id = ?', [id])
-
-    if (existingRows.length === 0) {
-      throw ApiError.notFound('申请不存在')
-    }
+    await requireByIdInTx<Application>(conn, 'applications', id, ApiError.notFound('申请不存在'))
 
     await conn.execute(
       `UPDATE applications
@@ -159,7 +155,7 @@ export async function updateApplicationStatus(
  * 删除申请
  */
 export async function deleteApplication(id: string): Promise<void> {
-  const existingApplication = await queryOne<Application>('SELECT * FROM applications WHERE id = ?', [id])
+  const existingApplication = await findById<Application>('applications', id)
 
   if (!existingApplication) {
     throw ApiError.notFound('申请不存在')

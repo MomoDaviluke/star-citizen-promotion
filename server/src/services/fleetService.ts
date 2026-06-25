@@ -6,9 +6,10 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
-import { query, queryOne, transaction } from '../database/pool.js'
+import { query, transaction } from '../database/pool.js'
 import { paginatedQuery } from '../database/paginatedQuery.js'
 import { buildUpdateSet } from '../database/buildUpdateSet.js'
+import { findById, findByIdInTx, requireByIdInTx } from '../database/findById.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface Ship {
@@ -92,7 +93,7 @@ export async function getShips({ category, status, sortBy, order, limit, offset 
 
 /** 通过 ID 获取飞船 */
 export async function getShipById(id: string): Promise<Ship | null> {
-  return queryOne<Ship>('SELECT * FROM ships WHERE id = ?', [id])
+  return findById<Ship>('ships', id)
 }
 
 /** 创建飞船 */
@@ -106,14 +107,13 @@ export async function createShip(data: Partial<Ship>): Promise<Ship | null> {
     [id, name, callsign ?? null, ship, category ?? 'combat', status ?? 'available', value ?? 0, image ?? null, description ?? null]
   )
 
-  return queryOne<Ship>('SELECT * FROM ships WHERE id = ?', [id])
+  return findById<Ship>('ships', id)
 }
 
 /** 更新飞船信息 */
 export async function updateShip(id: string, data: Partial<Ship>): Promise<Ship> {
   return transaction<Ship>(async (conn: PoolConnection) => {
-    const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM ships WHERE id = ?', [id])
-    if (existingRows.length === 0) throw ApiError.notFound('飞船不存在')
+    await requireByIdInTx<Ship>(conn, 'ships', id, ApiError.notFound('飞船不存在'))
 
     const allowedColumns = ['name', 'callsign', 'ship', 'category', 'status', 'value', 'image', 'description']
     const { setClause, values } = buildUpdateSet(data as Record<string, unknown>, allowedColumns)
@@ -121,14 +121,13 @@ export async function updateShip(id: string, data: Partial<Ship>): Promise<Ship>
 
     await conn.execute(`UPDATE ships SET ${setClause} WHERE id = ?`, [...values, id] as never)
 
-    const [rows] = await conn.execute<RowDataPacket[]>('SELECT * FROM ships WHERE id = ?', [id])
-    return rows[0] as Ship
+    return findByIdInTx<Ship>(conn, 'ships', id) as Promise<Ship>
   })
 }
 
 /** 删除飞船 */
 export async function deleteShip(id: string): Promise<void> {
-  const existingShip = await queryOne<Ship>('SELECT * FROM ships WHERE id = ?', [id])
+  const existingShip = await findById<Ship>('ships', id)
   if (!existingShip) throw ApiError.notFound('飞船不存在')
   await query('DELETE FROM ships WHERE id = ?', [id])
 }

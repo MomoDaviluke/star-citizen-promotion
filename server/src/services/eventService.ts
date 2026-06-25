@@ -7,6 +7,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { PoolConnection, RowDataPacket } from 'mysql2/promise'
 import { query, queryOne, transaction } from '../database/pool.js'
+import { findById, requireByIdInTx } from '../database/findById.js'
 import { ApiError } from '../middleware/errorHandler.js'
 
 export interface CalendarEvent {
@@ -110,7 +111,7 @@ export async function getEvents({ startDate, endDate, status, creatorId, limit, 
 }
 
 export async function getEventById(id: string): Promise<CalendarEvent | null> {
-  const event = await queryOne<CalendarEvent>('SELECT * FROM events WHERE id = ?', [id])
+  const event = await findById<CalendarEvent>('events', id)
 
   if (event) {
     const participants = await query<RowDataPacket[]>(
@@ -138,11 +139,7 @@ export async function createEvent(data: Partial<CalendarEvent> & { creatorId?: s
 
 export async function updateEvent(id: string, data: Partial<CalendarEvent>): Promise<CalendarEvent> {
   return transaction<CalendarEvent>(async (conn: PoolConnection) => {
-    const [existingRows] = await conn.execute<RowDataPacket[]>('SELECT * FROM events WHERE id = ?', [id])
-
-    if (existingRows.length === 0) {
-      throw ApiError.notFound('活动不存在')
-    }
+    await requireByIdInTx<CalendarEvent>(conn, 'events', id, ApiError.notFound('活动不存在'))
 
     const { title, description, start_time, end_time, location, status } = data
     const updates: string[] = []
@@ -181,7 +178,7 @@ export async function updateEvent(id: string, data: Partial<CalendarEvent>): Pro
 }
 
 export async function deleteEvent(id: string): Promise<void> {
-  const existingEvent = await queryOne<CalendarEvent>('SELECT * FROM events WHERE id = ?', [id])
+  const existingEvent = await findById<CalendarEvent>('events', id)
 
   if (!existingEvent) {
     throw ApiError.notFound('活动不存在')
@@ -191,7 +188,7 @@ export async function deleteEvent(id: string): Promise<void> {
 }
 
 export async function joinEvent(eventId: string, userId: string): Promise<CalendarEvent> {
-  const existingEvent = await queryOne<CalendarEvent>('SELECT * FROM events WHERE id = ?', [eventId])
+  const existingEvent = await findById<CalendarEvent>('events', eventId)
 
   if (!existingEvent) {
     throw ApiError.notFound('活动不存在')
@@ -213,7 +210,7 @@ export async function joinEvent(eventId: string, userId: string): Promise<Calend
 }
 
 export async function leaveEvent(eventId: string, userId: string): Promise<CalendarEvent> {
-  const existingEvent = await queryOne<CalendarEvent>('SELECT * FROM events WHERE id = ?', [eventId])
+  const existingEvent = await findById<CalendarEvent>('events', eventId)
 
   if (!existingEvent) {
     throw ApiError.notFound('活动不存在')
