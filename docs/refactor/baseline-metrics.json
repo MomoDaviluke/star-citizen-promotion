@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-06-25T08:05:31.181Z",
+  "codeQuality": {
+    "frontend": {
+      "files": 83,
+      "loc": 20189,
+      "dependencies": 27
+    },
+    "backend": {
+      "files": 80,
+      "loc": 12271,
+      "dependencies": 40
+    },
+    "totalFiles": 163,
+    "totalLoc": 32460,
+    "totalDependencies": 67
+  },
+  "testQuality": {
+    "frontend": {
+      "statements": 62.73,
+      "branches": 42.42,
+      "functions": 43.45,
+      "lines": 63.7,
+      "testCount": 314,
+      "coverageCommandSuccess": true,
+      "parseError": null
+    },
+    "backend": {
+      "statements": 71.91,
+      "branches": 74.91,
+      "functions": 89.34,
+      "lines": 71.91,
+      "testCount": 349,
+      "coverageCommandSuccess": false,
+      "parseError": null
+    },
+    "e2eSpecCount": 5,
+    "totalTestCount": 663
+  },
+  "performance": {
+    "bundleSize": 547.92,
+    "entryChunkSize": 49.21,
+    "jsTotal": 395.85,
+    "cssTotal": 152.07,
+    "assetCount": 55,
+    "note": "单位 KB，由 npm run build 后从 dist/assets 采集"
+  },
+  "engineeringStandards": {
+    "eslint": {
+      "frontend": {
+        "errors": 4,
+        "warnings": 58
+      },
+      "backend": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "totalErrors": 4,
+      "totalWarnings": 58
+    },
+    "typescript": {
+      "frontendErrors": 1,
+      "backendErrors": 0,
+      "totalErrors": 1
+    },
+    "todos": {
+      "frontend": {
+        "todo": 0,
+        "fixme": 0,
+        "total": 0
+      },
+      "backend": {
+        "todo": 0,
+        "fixme": 0,
+        "total": 0
+      },
+      "total": 0
+    },
+    "fileHeaderCoverage": {
+      "frontend": {
+        "total": 83,
+        "withHeader": 66,
+        "coverage": 79.52
+      },
+      "backend": {
+        "total": 80,
+        "withHeader": 77,
+        "coverage": 96.25
+      },
+      "overall": {
+        "total": 163,
+        "withHeader": 143,
+        "coverage": 87.73
+      }
+    }
+  }
+}

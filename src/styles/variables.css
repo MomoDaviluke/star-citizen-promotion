@@ -1,0 +1,328 @@
+/**
+ * Star Citizen Promotion — Design Token System
+ * @description Cinematic Sci-Fi Spectacle — OLED black, stellar blue, amber gold
+ * @version 10.0 - Cinematic Sci-Fi Spectacle
+ */
+
+:root {
+  /* ============================================================
+   * Raw Tokens — 原始值
+   * ============================================================ */
+
+  /* OLED Black — 深空底色 */
+  --raw-void-1: #050508;
+  --raw-void-2: #0a0a10;
+  --raw-void-3: #0f0f18;
+  --raw-void-4: #161622;
+  --raw-void-5: #1e1e2e;
+  --raw-void-6: #282840;
+
+  /* Stellar Blue — 星际蓝 */
+  --raw-cyan: #4a9eff;
+  --raw-cyan-rgb: 74, 158, 255;
+  --raw-cyan-bright: #6bb3ff;
+  --raw-cyan-dim: #2d7fd9;
+  --raw-cyan-muted: rgba(74, 158, 255, 0.12);
+
+  /* Amber Gold — 琥珀金（保留用于状态色/警告色） */
+  --raw-amber: #ffb300;
+  --raw-amber-rgb: 255, 179, 0;
+  --raw-amber-bright: #ffc733;
+  --raw-amber-dim: #cc8f00;
+  --raw-amber-muted: rgba(255, 179, 0, 0.12);
+  --amber-primary: var(--color-accent);
+
+  /* Nebula Purple — 星云紫 */
+  --nebula-purple: #a78bfa;
+
+  /* White — 用于 glass-card 等 */
+  --raw-white-rgb: 255, 255, 255;
+
+  /* Neutral Grays — 中性灰 */
+  --raw-gray-1: #f0f0f5;
+  --raw-gray-2: #c8c8d4;
+  --raw-gray-3: #8a8a9e;
+  --raw-gray-4: #5a5a72;
+  --raw-gray-5: #3a3a52;
+  --raw-gray-6: #2a2a3e;
+
+  /* Status — 状态色 */
+  --raw-online: #22c55e;
+  --raw-warning: #ffb300;
+  --raw-danger: #ef4444;
+  --raw-offline: #6b7280;
+
+  /* Text — 文字色 */
+  --raw-text-1: #ffffff;
+  --raw-text-2: #b8b8cc;
+  --raw-text-3: #7a7a94;
+  --raw-text-4: #4a4a64;
+
+  /* ============================================================
+   * Semantic Tokens — 语义层
+   * ============================================================ */
+
+  /* Background */
+  --color-bg: var(--raw-void-1);
+  --color-bg-deep: var(--raw-void-2);
+  --color-bg-mid: var(--raw-void-3);
+  --color-bg-surface: var(--raw-void-4);
+  --color-bg-elevated: var(--raw-void-5);
+  --color-bg-card: rgba(15, 15, 24, 0.7);
+  --color-bg-card-hover: rgba(22, 22, 34, 0.85);
+  --color-bg-glass: rgba(255, 255, 255, 0.03);
+  --color-bg-overlay: rgba(5, 5, 8, 0.92);
+
+  /* Accent — Stellar Blue */
+  --color-accent: var(--raw-cyan);
+  --color-accent-bright: var(--raw-cyan-bright);
+  --color-accent-dim: var(--raw-cyan-dim);
+  --color-accent-muted: var(--raw-cyan-muted);
+
+  /* Highlight — Amber Gold（状态/警告用途） */
+  --color-highlight: var(--raw-amber);
+  --color-highlight-bright: var(--raw-amber-bright);
+  --color-highlight-dim: var(--raw-amber-dim);
+  --color-highlight-muted: var(--raw-amber-muted);
+  --color-accent-secondary: var(--color-accent);
+
+  /* Border */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-strong: rgba(74, 158, 255, 0.3);
+  --color-border-accent: rgba(74, 158, 255, 0.2);
+  --color-border-amber: rgba(255, 179, 0, 0.2);
+
+  /* Backward Compatibility Aliases — raw */
+  --raw-gold-rgb: var(--raw-amber-rgb);
+  --raw-gold: var(--raw-amber);
+  --raw-gold-bright: var(--raw-amber-bright);
+  --raw-gold-dim: var(--raw-amber-dim);
+  --raw-gold-muted: var(--raw-amber-muted);
+  --raw-space-1: var(--raw-void-1);
+  --raw-space-2: var(--raw-void-2);
+  --raw-space-3: var(--raw-void-3);
+  --raw-space-4: var(--raw-void-4);
+  --raw-space-5: var(--raw-void-5);
+  --raw-space-6: var(--raw-void-6);
+  --raw-steel-rgb: var(--raw-cyan-rgb);
+  --raw-steel: var(--raw-cyan);
+  --raw-steel-bright: var(--raw-cyan-bright);
+  --raw-steel-dim: var(--raw-cyan-dim);
+  --color-border-steel: rgba(var(--raw-cyan-rgb), 0.15);
+
+  /* @deprecated-aliases — 旧版变量名，新代码请用上方语义化变量 */
+  --text: var(--color-text-body);
+  --text-primary: var(--color-text-heading);
+  --text-secondary: var(--color-text-label);
+  --text-muted: var(--color-text-dim);
+  --accent: var(--color-accent);
+  --accent-2: var(--color-highlight);
+  --color-primary: var(--color-accent);
+  --danger: var(--color-status-danger);
+  --warning: var(--color-status-warning);
+  --success: var(--color-status-online);
+  --color-danger: var(--color-status-danger);
+  --color-warning: var(--color-status-warning);
+  --color-success: var(--color-status-online);
+  --status-danger: var(--color-status-danger);
+  --status-warning: var(--color-status-warning);
+  --status-online: var(--color-status-online);
+  --status-offline: var(--color-status-offline);
+  --line: var(--color-border);
+  --border-medium: var(--color-border);
+  --border-subtle: var(--color-border-subtle);
+  --border-strong: var(--color-border-strong);
+  --border-light: var(--color-border-subtle);
+  --bg: var(--color-bg);
+  --bg-medium: var(--color-bg-mid);
+  --bg-deepest: var(--raw-void-1);
+  --bg-light: var(--color-bg-elevated);
+  --bg-card: var(--color-bg-card);
+  --bg-overlay: var(--color-bg-overlay);
+  --panel: var(--color-bg-surface);
+  --void-deepest: var(--raw-void-1);
+  --void-surface: var(--raw-void-4);
+  --transition-fast: var(--duration-fast);
+  --transition-normal: var(--duration-normal);
+  --transition-slow: var(--duration-slow);
+  --glow-primary: var(--glow-accent);
+  --glow-cyan: var(--glow-accent);
+  --glow-strong: var(--glow-accent);
+  --glow-danger: var(--glow-status-danger);
+  --glow-success: var(--glow-status-success);
+  --glow-nebula: 0 0 16px rgba(167, 139, 250, 0.3);
+  --nebula-glow: 0 0 16px rgba(167, 139, 250, 0.3);
+  --nebula-violet: var(--nebula-purple);
+  --glow-color: var(--nebula-purple);
+  --z-tooltip: 500;
+  --link-index: 10;
+  --duration-launch: 600ms;
+  --data-flow: var(--raw-cyan);
+  /* @end-deprecated */
+
+  /* Text */
+  --color-text-heading: var(--raw-text-1);
+  --color-text-body: var(--raw-text-2);
+  --color-text-label: var(--raw-text-3);
+  --color-text-dim: var(--raw-text-4);
+  --color-text-hint: rgba(255, 255, 255, 0.35);
+  --color-text-accent: var(--raw-cyan);
+  --color-text-highlight: var(--raw-amber);
+
+  /* Status */
+  --color-status-online: var(--raw-online);
+  --color-status-warning: var(--raw-warning);
+  --color-status-danger: var(--raw-danger);
+  --color-status-offline: var(--raw-offline);
+
+  /* ============================================================
+   * Effect Tokens — 效果层
+   * ============================================================ */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 24px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 40px rgba(0, 0, 0, 0.6);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* Glow */
+  --glow-accent: 0 0 20px rgba(74, 158, 255, 0.3), 0 0 60px rgba(74, 158, 255, 0.1);
+  --glow-amber: 0 0 20px rgba(255, 179, 0, 0.3), 0 0 60px rgba(255, 179, 0, 0.1);
+  --glow-card-hover: 0 0 30px rgba(74, 158, 255, 0.08);
+  --shadow-accent: 0 0 20px rgba(74, 158, 255, 0.15);
+  --glow-status-danger: 0 0 16px rgba(239, 68, 68, 0.3);
+  --glow-status-success: 0 0 16px rgba(34, 197, 94, 0.3);
+
+  /* Animation Duration */
+  --float-duration: 4s;
+
+  /* Blur */
+  --blur-card: 16px;
+  --blur-header: 20px;
+
+  /* Animation Easing */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --stagger-delay: 80ms;
+
+  /* ============================================================
+   * Typography — 字体系统
+   * ============================================================ */
+
+  --font-display: 'Rajdhani', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'Noto Sans SC', 'Rajdhani', system-ui, -apple-system, sans-serif;
+  --font-data: 'JetBrains Mono', 'Consolas', monospace;
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+  --font-tech: 'JetBrains Mono', 'Consolas', monospace;
+
+  /* Font Sizes — 模块化比例 (1.25) */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+  --text-4xl: 3.5rem;
+  --text-5xl: 4.5rem;
+  --text-hero: clamp(2.5rem, 6vw, 5rem);
+
+  /* ============================================================
+   * Spacing — 间距系统
+   * ============================================================ */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
+  --space-8: 3rem;
+  --space-9: 3.5rem;
+  --space-10: 4rem;
+  --space-12: 6rem;
+  --space-16: 8rem;
+  --space-20: 10rem;
+
+  /* ============================================================
+   * Radius — 圆角
+   * ============================================================ */
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* ============================================================
+   * Duration — 动画时长
+   * ============================================================ */
+
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* ============================================================
+   * Z-Index — 层级
+   * ============================================================ */
+
+  --z-bg: -1;
+  --z-content: 1;
+  --z-overlay: 10;
+  --z-header: 100;
+  --z-modal: 1000;
+
+  /* HUD 装饰系统 */
+  --color-hud-line: rgba(74, 158, 255, 0.12);
+  --color-starfield: rgba(255, 255, 255, 0.4);
+  --glow-hud: 0 0 20px rgba(74, 158, 255, 0.1);
+  --glow-hud-strong: 0 0 40px rgba(74, 158, 255, 0.15);
+}
+
+/* ============================================================
+ * Light Theme — 亮色主题
+ * ============================================================ */
+[data-theme="light"] {
+  --color-bg: #f5f6f8;
+  --color-bg-deep: #ecedf0;
+  --color-bg-mid: #e0e2e6;
+  --color-bg-surface: #ffffff;
+  --color-bg-elevated: #f8f9fa;
+  --color-bg-card: rgba(255, 255, 255, 0.85);
+  --color-bg-card-hover: rgba(255, 255, 255, 0.95);
+  --color-bg-glass: rgba(0, 0, 0, 0.02);
+  --color-bg-overlay: rgba(245, 246, 248, 0.95);
+
+  --color-text-heading: #111827;
+  --color-text-body: #374151;
+  --color-text-label: #6b7280;
+  --color-text-dim: #9ca3af;
+  --color-text-hint: rgba(0, 0, 0, 0.45);
+
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-hover: rgba(0, 0, 0, 0.15);
+  --color-border-subtle: rgba(0, 0, 0, 0.04);
+  --color-border-strong: rgba(74, 158, 255, 0.4);
+  --color-border-accent: rgba(74, 158, 255, 0.2);
+  --color-border-amber: rgba(255, 179, 0, 0.2);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-accent: 0 0 16px rgba(74, 158, 255, 0.1);
+
+  --blur-card: 8px;
+  --blur-header: 12px;
+}
+
+/* Theme Transition */
+html, body, #app {
+  transition: background-color var(--duration-slow) var(--ease-out),
+              color var(--duration-slow) var(--ease-out);
+}
