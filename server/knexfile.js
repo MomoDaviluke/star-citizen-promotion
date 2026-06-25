@@ -6,7 +6,12 @@
 
 import { config as appConfig } from './src/config/index.js'
 
-const dbConfig = {
+/**
+ * 基础数据库配置
+ * @description 各环境配置的模板，通过 deepClone 为每个环境生成独立副本，
+ *              避免共享引用导致 Knex 在某环境修改 pool/connection 时影响其他环境（TD-11）
+ */
+const baseConfig = {
   client: 'mysql2',
   connection: {
     host: appConfig.database.host,
@@ -30,14 +35,22 @@ const dbConfig = {
   }
 }
 
+/**
+ * 深拷贝配置对象
+ * @description 使用 structuredClone 实现真正的深拷贝，
+ *              确保每个环境获得完全独立的配置副本（含嵌套的 connection/pool/migrations/seeds）
+ * @returns 基础配置的深拷贝
+ */
+function cloneConfig() {
+  return structuredClone(baseConfig)
+}
+
 export default {
-  development: dbConfig,
-  production: dbConfig,
-  test: {
-    ...dbConfig,
-    connection: {
-      ...dbConfig.connection,
-      database: 'test_db'
-    }
-  }
+  development: cloneConfig(),
+  production: cloneConfig(),
+  test: (() => {
+    const cfg = cloneConfig()
+    cfg.connection.database = 'test_db'
+    return cfg
+  })()
 }
