@@ -19,13 +19,6 @@ vi.mock('@/services/calendarService', () => ({
   }
 }))
 
-// Mock authStore
-vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({
-    user: { id: 'user-1', role: 'member' }
-  })
-}))
-
 import { useCalendarStore } from '@/stores/calendar.js'
 import { calendarService } from '@/services/calendarService'
 
@@ -211,6 +204,8 @@ describe('useCalendarStore', () => {
       const store = useCalendarStore()
       store.events = [...mockEvents]
 
+      // 通过 setCurrentUserId 注入用户 ID（解耦后不再依赖 authStore）
+      store.setCurrentUserId('user-1')
       // user-1 参与了活动 1，创建了活动 2
       expect(store.myEvents.length).toBe(2)
     })

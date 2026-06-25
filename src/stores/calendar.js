@@ -6,7 +6,6 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useAuthStore } from './auth'
 import { calendarService } from '@/services/calendarService'
 import { createStoreHelpers } from '@/utils/storeHelpers'
 
@@ -19,6 +18,11 @@ export const useCalendarStore = defineStore('calendar', () => {
   const viewMode = ref('month') // month|week|list
   const selectedEvent = ref(null)
   const filter = ref('all') // all|upcoming|past|mine
+  /**
+   * 当前用户 ID（由组件层通过 setCurrentUserId 注入）
+   * @description 解耦对 useAuthStore 的直接依赖，store 不再反向依赖 auth store
+   */
+  const currentUserId = ref(null)
 
   const { withLoading } = createStoreHelpers(loading, error)
 
@@ -38,7 +42,7 @@ export const useCalendarStore = defineStore('calendar', () => {
   })
 
   const myEvents = computed(() => {
-    const userId = useAuthStore().user?.id
+    const userId = currentUserId.value
     if (!userId) return []
     return events.value.filter(
       event => event.participants?.includes(userId) || event.creatorId === userId
@@ -163,6 +167,12 @@ export const useCalendarStore = defineStore('calendar', () => {
   /** 设置筛选条件 */
   function setFilter(newFilter) { filter.value = newFilter }
 
+  /**
+   * 设置当前用户 ID（解耦 auth store 依赖）
+   * @param {string|null} id - 当前用户 ID，登出时传 null
+   */
+  function setCurrentUserId(id) { currentUserId.value = id }
+
   /** 跳转到指定日期 */
   function goToDate(date) { currentDate.value = new Date(date) }
 
@@ -209,7 +219,7 @@ export const useCalendarStore = defineStore('calendar', () => {
     events, loading, error, currentDate, viewMode, selectedEvent, filter,
     upcomingEvents, pastEvents, myEvents, filteredEvents, eventsByDate, currentMonthEvents,
     fetchEvents, fetchEvent, createEvent, updateEvent, deleteEvent,
-    joinEvent, leaveEvent, setViewMode, setFilter,
+    joinEvent, leaveEvent, setViewMode, setFilter, setCurrentUserId,
     goToDate, goNext, goPrev, goToday, clearError, resetState
   }
 })

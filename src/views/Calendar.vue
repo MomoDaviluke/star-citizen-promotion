@@ -336,7 +336,7 @@
  * @version 3.0
  */
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useCalendarStore } from '@/stores/calendar'
 import { useAuthStore } from '@/stores/auth'
 import { createLogger } from '../utils/logger.js'
@@ -349,6 +349,9 @@ import BaseModal from '@/components/common/BaseModal.vue'
 const logger = createLogger('Calendar')
 const calendarStore = useCalendarStore()
 const authStore = useAuthStore()
+
+// 解耦：将 authStore 的 userId 同步到 calendarStore，避免 store 间反向依赖
+watch(() => authStore.user?.id, (id) => calendarStore.setCurrentUserId(id ?? null), { immediate: true })
 
 // 弹窗状态
 const showAddDialog = ref(false)
