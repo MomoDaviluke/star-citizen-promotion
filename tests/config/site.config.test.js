@@ -166,7 +166,7 @@ describe('站点配置', () => {
 
     it('应包含字体配置', () => {
       expect(siteConfig.theme.fonts).toBeDefined()
-      expect(siteConfig.theme.fonts.primary).toBeDefined()
+      expect(siteConfig.theme.fonts.source).toBe('variables.css')
     })
 
     it('应包含动画配置', () => {

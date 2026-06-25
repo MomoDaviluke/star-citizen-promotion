@@ -44,8 +44,8 @@ describe('Home.vue', () => {
 
     it('应该渲染英雄区域', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.hero').exists()).toBe(true)
-      expect(wrapper.find('.hero__title').exists()).toBe(true)
+      expect(wrapper.find('.hero-section').exists()).toBe(true)
+      expect(wrapper.find('.hero-section__title').exists()).toBe(true)
     })
 
     it('应该渲染标题包含 STELLAR NEXUS', () => {
@@ -56,7 +56,7 @@ describe('Home.vue', () => {
 
     it('应该渲染 tagline', () => {
       const wrapper = mount(Home)
-      expect(wrapper.find('.hero__tagline').exists()).toBe(true)
+      expect(wrapper.find('.hero-section__tagline').exists()).toBe(true)
       expect(wrapper.html()).toContain('EXPLORE')
     })
   })
@@ -100,9 +100,9 @@ describe('Home.vue', () => {
 
     it('应该渲染舰船名称', () => {
       const wrapper = mount(Home)
-      expect(wrapper.html()).toContain('Aegis Hammerhead')
-      expect(wrapper.html()).toContain('RSI Constellation')
       expect(wrapper.html()).toContain('Anvil Arrow')
+      expect(wrapper.html()).toContain('Origin 400i')
+      expect(wrapper.html()).toContain('Aegis Avenger Stalker')
     })
 
     it('应该包含查看全部舰队链接', () => {

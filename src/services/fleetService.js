@@ -23,7 +23,7 @@ const BASE_URL = '/api/fleet'
  */
 async function getFleet(params = {}) {
   try {
-    const response = await httpClient.get(BASE_URL, params)
+    const response = await httpClient.get(BASE_URL, { params })
     return response.data
   } catch (error) {
     logger.warn('获取舰队列表失败:', error.response?.data || error.message)
