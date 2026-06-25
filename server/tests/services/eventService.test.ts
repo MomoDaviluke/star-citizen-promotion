@@ -261,5 +261,27 @@ describe('eventService', () => {
       expect(ics).not.toContain('LOCATION:')
       expect(ics).not.toContain('DTEND:')
     })
+
+    it('应转义 ICS 文本中的特殊字符（反斜杠、分号、逗号、换行）', () => {
+      const event = {
+        id: 'evt-003',
+        title: '会议; 重要, 部分',
+        description: '第一行\n第二行\\备注',
+        start_time: '2026-08-01T10:00:00Z',
+        end_time: null,
+        location: '地点\\1; 区, 域',
+        status: 'upcoming',
+        creator_id: null
+      }
+
+      const ics = generateICS(event)
+
+      // 分号和逗号应被转义
+      expect(ics).toContain('SUMMARY:会议\\; 重要\\, 部分')
+      // 换行和反斜杠应被转义（反斜杠先于换行处理）
+      expect(ics).toContain('DESCRIPTION:第一行\\n第二行\\\\备注')
+      // location 中的反斜杠、分号、逗号均需转义
+      expect(ics).toContain('LOCATION:地点\\\\1\\; 区\\, 域')
+    })
   })
 })

@@ -224,6 +224,21 @@ export async function leaveEvent(eventId: string, userId: string): Promise<Calen
   return (await getEventById(eventId))!
 }
 
+/**
+ * 转义 ICS 文本值
+ * @description 按 RFC 5545 规范转义特殊字符：反斜杠、分号、逗号、换行符
+ *              必须先转义反斜杠，否则后续转义插入的反斜杠会被二次转义
+ * @param text 原始文本
+ * @returns 转义后的文本
+ */
+function escapeICSText(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')   // 反斜杠 → \\（必须先处理）
+    .replace(/;/g, '\\;')     // 分号 → \;
+    .replace(/,/g, '\\,')     // 逗号 → \,
+    .replace(/\n/g, '\\n')    // 换行 → \n
+}
+
 export function generateICS(event: CalendarEvent): string {
   const formatDate = (d: string) => new Date(d).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
 
@@ -235,9 +250,9 @@ export function generateICS(event: CalendarEvent): string {
     `UID:${event.id}`,
     `DTSTART:${formatDate(event.start_time)}`,
     event.end_time ? `DTEND:${formatDate(event.end_time)}` : '',
-    `SUMMARY:${event.title}`,
-    event.description ? `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}` : '',
-    event.location ? `LOCATION:${event.location}` : '',
+    `SUMMARY:${escapeICSText(event.title)}`,
+    event.description ? `DESCRIPTION:${escapeICSText(event.description)}` : '',
+    event.location ? `LOCATION:${escapeICSText(event.location)}` : '',
     'END:VEVENT',
     'END:VCALENDAR'
   ].filter(Boolean)
