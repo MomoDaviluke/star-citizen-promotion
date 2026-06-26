@@ -156,11 +156,18 @@ function handleClick(e) {
   background: rgba(245, 158, 11, 0.1);
   border-color: var(--amber-primary);
   color: var(--amber-primary);
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.3),
+    0 0 24px rgba(245, 158, 11, 0.15);
+  transition: box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out), background 0.3s var(--ease-out);
 }
 
 .tech-button--primary:hover:not(:disabled) {
   background: rgba(245, 158, 11, 0.2);
-  box-shadow: var(--glow-amber);
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.6),
+    0 0 40px rgba(245, 158, 11, 0.35);
+  transform: translateY(-2px);
 }
 
 /* 副按钮 - 星云紫 */
