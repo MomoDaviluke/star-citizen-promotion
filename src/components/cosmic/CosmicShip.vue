@@ -1,16 +1,32 @@
 <!--
   @file CosmicShip 宇宙舰船组件
-  @description 具有未来科技感的 SVG 舰船，含边缘光、引擎灯、悬停姿态变化
+  @description 支持 SVG 程序化绘制与真实图片素材两种模式，含边缘光、引擎灯、悬停姿态变化
   @module components/cosmic/CosmicShip
 -->
 <template>
   <div
     class="cosmic-ship"
-    :class="{ 'cosmic-ship--hovered': isHovered }"
+    :class="{ 'cosmic-ship--hovered': isHovered, 'cosmic-ship--image': !!image }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
+    <!-- 图片素材模式：用于展示 Star Citizen 官方舰船渲染图 -->
+    <template v-if="image">
+      <div class="cosmic-ship__frame">
+        <img
+          :src="image"
+          :alt="alt || `Spaceship ${registry}`"
+          class="cosmic-ship__image"
+          loading="lazy"
+        />
+        <div class="cosmic-ship__image-overlay" aria-hidden="true"></div>
+        <div class="cosmic-ship__engine-glow" aria-hidden="true"></div>
+      </div>
+    </template>
+
+    <!-- SVG 程序化绘制模式：默认降级方案 -->
     <svg
+      v-else
       viewBox="0 0 240 80"
       class="cosmic-ship__svg"
       xmlns="http://www.w3.org/2000/svg"
@@ -110,11 +126,21 @@ import { ref, useId } from 'vue'
 /**
  * 组件 Props 定义
  * @property {string} registry - 舰船注册编号铭牌
+ * @property {string} image - 舰船图片素材路径，传入后使用图片模式
+ * @property {string} alt - 图片替代文本
  */
 defineProps({
   registry: {
     type: String,
     default: 'SNT-001'
+  },
+  image: {
+    type: String,
+    default: ''
+  },
+  alt: {
+    type: String,
+    default: ''
   }
 })
 
@@ -138,6 +164,83 @@ const engineGlowId = `engineGlow-${uid}`
 .cosmic-ship:hover,
 .cosmic-ship--hovered {
   transform: rotate(-3deg) translateY(-4px);
+}
+
+/* 图片素材模式：容器适配与遮罩光效 */
+.cosmic-ship--image {
+  width: min(100%, 520px);
+  filter: drop-shadow(0 0 16px rgba(74, 158, 255, 0.18));
+  transition: filter 0.4s var(--ease-out), transform 0.4s var(--ease-out);
+}
+
+.cosmic-ship--image:hover,
+.cosmic-ship--image.cosmic-ship--hovered {
+  filter: drop-shadow(0 0 28px rgba(74, 158, 255, 0.35));
+}
+
+.cosmic-ship__frame {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cosmic-ship__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.5s var(--ease-out), filter 0.5s var(--ease-out);
+}
+
+.cosmic-ship__image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(74, 158, 255, 0.08) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(74, 158, 255, 0.08) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+  pointer-events: none;
+}
+
+.cosmic-ship--image:hover .cosmic-ship__image,
+.cosmic-ship--image.cosmic-ship--hovered .cosmic-ship__image {
+  transform: scale(1.03);
+  filter: brightness(1.1) drop-shadow(0 0 12px rgba(74, 158, 255, 0.25));
+}
+
+.cosmic-ship--image:hover .cosmic-ship__image-overlay,
+.cosmic-ship--image.cosmic-ship--hovered .cosmic-ship__image-overlay {
+  opacity: 1;
+}
+
+.cosmic-ship__engine-glow {
+  position: absolute;
+  left: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(74, 158, 255, 0.55), transparent 70%);
+  filter: blur(8px);
+  opacity: 0.8;
+  animation: engine-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes engine-pulse {
+  0%, 100% { opacity: 0.7; transform: translateY(-50%) scaleX(1); }
+  50% { opacity: 1; transform: translateY(-50%) scaleX(1.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmic-ship__engine-glow {
+    animation: none;
+  }
 }
 
 .cosmic-ship__svg {
