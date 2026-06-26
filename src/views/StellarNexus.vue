@@ -1,15 +1,18 @@
 <!--
-  @file StellarNexus 宇宙航行落地页
-  @description 独立视觉落地页：星空、行星、舰船、全息 HUD、滚动叙事
+  @file StellarNexus 首页 / 宇宙航行落地页
+  @description 站点首页：星云、行星、Star Citizen 官方舰船、全息 HUD、滚动叙事
+  本页使用 NASA 公有领域行星纹理与 Star Citizen 官方宣传图作为视觉素材。
   @module views/StellarNexus
 -->
 <template>
   <main class="stellar-nexus">
+    <CosmicNebula class="stellar-nexus__nebula" />
     <CosmicStarfield quality="high" class="stellar-nexus__starfield" />
     <FilmGrain class="stellar-nexus__grain" />
 
     <!-- Hero / 深空起源 -->
     <section class="stellar-nexus__section stellar-nexus__hero">
+      <div class="stellar-nexus__hero-backdrop" aria-hidden="true"></div>
       <div class="stellar-nexus__hero-content">
         <h1 class="stellar-nexus__title">
           <span class="stellar-nexus__title-line">STELLAR</span>
@@ -32,47 +35,160 @@
           </HudPanel>
         </div>
       </div>
-      <CosmicShip registry="SNT-001" class="stellar-nexus__hero-ship" />
+      <div class="stellar-nexus__hero-planet">
+        <CosmicPlanet
+          size="large"
+          variant="purple"
+          texture="/assets/cosmic/planets/planet-blue.jpg"
+          rotation-duration="120"
+          class="stellar-nexus__hero-planet-body"
+        />
+      </div>
+      <CosmicShip
+        image="/assets/cosmic/ships/constellation-andromeda.jpg"
+        alt="RSI Constellation Andromeda"
+        registry="SNT-001"
+        class="stellar-nexus__hero-ship"
+      />
       <HudTicker class="stellar-nexus__ticker" />
     </section>
 
     <!-- Worlds / 行星探索 -->
     <section ref="worldsRef" class="stellar-nexus__section stellar-nexus__worlds">
-      <div class="stellar-nexus__section-content stellar-nexus__section-content--left">
+      <HudPanel class="stellar-nexus__worlds-panel">
         <span class="stellar-nexus__section-index">01</span>
         <h2 class="stellar-nexus__section-title">WORLDS</h2>
         <p class="stellar-nexus__section-desc">
           穿越已知星域，探索每一个可能藏匿资源与机遇的行星。
         </p>
+        <div class="stellar-nexus__worlds-data">
+          <div class="stellar-nexus__data-row">
+            <span class="stellar-nexus__data-key">GRAVITY</span>
+            <span class="stellar-nexus__data-value">1.12 G</span>
+          </div>
+          <div class="stellar-nexus__data-row">
+            <span class="stellar-nexus__data-key">ATMOSPHERE</span>
+            <span class="stellar-nexus__data-value">BREATHABLE</span>
+          </div>
+          <div class="stellar-nexus__data-row">
+            <span class="stellar-nexus__data-key">RESOURCES</span>
+            <span class="stellar-nexus__data-value">RICH</span>
+          </div>
+        </div>
+      </HudPanel>
+      <div class="stellar-nexus__worlds-planet-wrap">
+        <CosmicPlanet
+          size="large"
+          variant="purple"
+          texture="/assets/cosmic/planets/planet-blue.jpg"
+          rotation-duration="90"
+          class="stellar-nexus__worlds-planet"
+        >
+          <template #rings>
+            <OrbitalRing :size="520" :count="2" />
+          </template>
+        </CosmicPlanet>
       </div>
-      <CosmicPlanet size="large" variant="purple" class="stellar-nexus__worlds-planet" />
     </section>
 
     <!-- Route / 航线穿越 -->
     <section ref="routeRef" class="stellar-nexus__section stellar-nexus__route">
-      <CosmicShip registry="SNT-007" class="stellar-nexus__route-ship" />
-      <div class="stellar-nexus__section-content stellar-nexus__section-content--right">
+      <div class="stellar-nexus__route-visual">
+        <CosmicShip
+          image="/assets/cosmic/ships/gladius.jpg"
+          alt="Aegis Gladius"
+          registry="SNT-007"
+          class="stellar-nexus__route-ship"
+        />
+        <svg class="stellar-nexus__route-path" viewBox="0 0 400 200" aria-hidden="true">
+          <path
+            class="stellar-nexus__route-trail"
+            d="M20,100 C120,40 280,160 380,100"
+            fill="none"
+            stroke="rgba(74,158,255,0.35)"
+            stroke-width="1"
+            stroke-dasharray="6 6"
+          />
+          <g class="stellar-nexus__waypoint">
+            <circle cx="120" cy="70" r="4" fill="#4a9eff" />
+            <text x="120" y="55" fill="#7a7a94" font-size="10" text-anchor="middle">WP-01</text>
+          </g>
+          <g class="stellar-nexus__waypoint">
+            <circle cx="280" cy="130" r="4" fill="#4a9eff" />
+            <text x="280" y="155" fill="#7a7a94" font-size="10" text-anchor="middle">WP-02</text>
+          </g>
+        </svg>
+      </div>
+      <HudPanel class="stellar-nexus__route-panel">
         <span class="stellar-nexus__section-index">02</span>
         <h2 class="stellar-nexus__section-title">ROUTE</h2>
         <p class="stellar-nexus__section-desc">
           从深空集结点出发，沿既定航线穿越小行星带，抵达目标星区。
         </p>
-      </div>
+        <div class="stellar-nexus__route-data">
+          <div class="stellar-nexus__data-row">
+            <span class="stellar-nexus__data-key">ORIGIN</span>
+            <span class="stellar-nexus__data-value">STANTON</span>
+          </div>
+          <div class="stellar-nexus__data-row">
+            <span class="stellar-nexus__data-key">DESTINATION</span>
+            <span class="stellar-nexus__data-value">PYRO</span>
+          </div>
+          <div class="stellar-nexus__data-row">
+            <span class="stellar-nexus__data-key">DISTANCE</span>
+            <span class="stellar-nexus__data-value">47.8 AU</span>
+          </div>
+        </div>
+      </HudPanel>
     </section>
 
     <!-- Fleet / 舰队编队 -->
     <section ref="fleetRef" class="stellar-nexus__section stellar-nexus__fleet">
-      <div class="stellar-nexus__section-content stellar-nexus__section-content--center">
+      <HudPanel class="stellar-nexus__fleet-panel">
         <span class="stellar-nexus__section-index">03</span>
         <h2 class="stellar-nexus__section-title">FLEET</h2>
         <p class="stellar-nexus__section-desc">
           多舰种协同作战，从截击到重型轰炸，每一艘舰船都已整备完毕。
         </p>
-      </div>
+      </HudPanel>
       <div class="stellar-nexus__fleet-formation">
-        <CosmicShip registry="SNT-002" class="stellar-nexus__fleet-ship" />
-        <CosmicShip registry="SNT-003" class="stellar-nexus__fleet-ship stellar-nexus__fleet-ship--lead" />
-        <CosmicShip registry="SNT-004" class="stellar-nexus__fleet-ship" />
+        <TacticalGrid class="stellar-nexus__fleet-grid" />
+        <div class="stellar-nexus__fleet-ship-wrap">
+          <CosmicShip
+            image="/assets/cosmic/ships/gladius.jpg"
+            alt="Aegis Gladius"
+            registry="SNT-002"
+            class="stellar-nexus__fleet-ship"
+          />
+          <div class="stellar-nexus__ship-plate">
+            <span class="stellar-nexus__ship-class">AEGIS GLADIUS</span>
+            <span class="stellar-nexus__ship-registry">SNT-002 / INTERCEPTOR</span>
+          </div>
+        </div>
+        <div class="stellar-nexus__fleet-ship-wrap stellar-nexus__fleet-ship-wrap--lead">
+          <CosmicShip
+            image="/assets/cosmic/ships/hammerhead.png"
+            alt="Aegis Hammerhead"
+            registry="SNT-003"
+            class="stellar-nexus__fleet-ship stellar-nexus__fleet-ship--lead"
+          />
+          <div class="stellar-nexus__ship-plate">
+            <span class="stellar-nexus__ship-class">AEGIS HAMMERHEAD</span>
+            <span class="stellar-nexus__ship-registry">SNT-003 / COMBAT READY</span>
+          </div>
+        </div>
+        <div class="stellar-nexus__fleet-ship-wrap">
+          <CosmicShip
+            image="/assets/cosmic/ships/gladius.jpg"
+            alt="Aegis Gladius"
+            registry="SNT-004"
+            class="stellar-nexus__fleet-ship"
+          />
+          <div class="stellar-nexus__ship-plate">
+            <span class="stellar-nexus__ship-class">AEGIS GLADIUS</span>
+            <span class="stellar-nexus__ship-registry">SNT-004 / INTERCEPTOR</span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -80,7 +196,7 @@
     <section ref="enlistRef" class="stellar-nexus__section stellar-nexus__enlist">
       <HudPanel class="stellar-nexus__enlist-panel">
         <span class="stellar-nexus__section-index">04</span>
-        <h2 class="stellar-nexus__section-title">ENLIST</h2>
+        <h2 class="stellar-nexus__section-title stellar-nexus__section-title--large">ENLIST</h2>
         <p class="stellar-nexus__section-desc">
           加入 Stellar Nexus，与我们一起书写星际航行的下一章。
         </p>
@@ -94,6 +210,20 @@
         </div>
       </HudPanel>
     </section>
+
+    <!-- 页脚 / 素材声明 -->
+    <footer class="stellar-nexus__footer">
+      <TacticalGrid class="stellar-nexus__footer-grid" />
+      <p class="stellar-nexus__footer-line">
+        Star Citizen 舰船图片版权归 Cloud Imperium Games 与 Roberts Space Industries 所有。
+      </p>
+      <p class="stellar-nexus__footer-line">
+        行星纹理来自 NASA / JPL-Caltech 公有领域影像库。
+      </p>
+      <p class="stellar-nexus__footer-line stellar-nexus__footer-line--dim">
+        Stellar Nexus 是非官方粉丝组织，本站不以任何形式营利。
+      </p>
+    </footer>
   </main>
 </template>
 
@@ -102,9 +232,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import CosmicNebula from '../components/cosmic/CosmicNebula.vue'
 import CosmicStarfield from '../components/cosmic/CosmicStarfield.vue'
 import CosmicPlanet from '../components/cosmic/CosmicPlanet.vue'
 import CosmicShip from '../components/cosmic/CosmicShip.vue'
+import OrbitalRing from '../components/cosmic/OrbitalRing.vue'
+import TacticalGrid from '../components/cosmic/TacticalGrid.vue'
 import HudPanel from '../components/cosmic/HudPanel.vue'
 import HudTicker from '../components/cosmic/HudTicker.vue'
 import FilmGrain from '../components/cosmic/FilmGrain.vue'
@@ -140,13 +273,15 @@ onMounted(() => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (prefersReducedMotion) return
 
-  // Hero 入场动画
+  // Hero 入场动画：星云、行星、标题、舰船依次浮现
   const heroTl = gsap.timeline({ defaults: { ease: 'power2.out' } })
   heroTl
-    .from('.stellar-nexus__title-line', { y: 40, opacity: 0, duration: 1, stagger: 0.15 }, 0.2)
-    .from('.stellar-nexus__divider', { scaleX: 0, duration: 0.8 }, 0.6)
-    .from('.stellar-nexus__subtitle', { y: 20, opacity: 0, duration: 0.8 }, 0.8)
-    .from('.stellar-nexus__stat', { y: 30, opacity: 0, duration: 0.7, stagger: 0.1 }, 1)
+    .from('.stellar-nexus__nebula', { opacity: 0, duration: 2 }, 0)
+    .from('.stellar-nexus__hero-planet-body', { scale: 0.85, opacity: 0, duration: 1.8 }, 0.3)
+    .from('.stellar-nexus__title-line', { y: 40, opacity: 0, duration: 1, stagger: 0.15 }, 0.4)
+    .from('.stellar-nexus__divider', { scaleX: 0, duration: 0.8 }, 0.8)
+    .from('.stellar-nexus__subtitle', { y: 20, opacity: 0, duration: 0.8 }, 1)
+    .from('.stellar-nexus__stat', { y: 30, opacity: 0, duration: 0.7, stagger: 0.1 }, 1.2)
     .from('.stellar-nexus__hero-ship', { x: 200, opacity: 0, duration: 2.5, ease: 'power1.out' }, 0.8)
 
   // 章节滚动动画
@@ -155,16 +290,16 @@ onMounted(() => {
       trigger: worldsRef.value,
       start: 'top 80%',
       onEnter: () => gsap.fromTo(
-        worldsRef.value.querySelectorAll('.stellar-nexus__section-content > *'),
-        { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1 }
+        worldsRef.value.querySelector('.stellar-nexus__worlds-panel'),
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.9, ease: 'power2.out' }
       )
     }),
     ScrollTrigger.create({
       trigger: worldsRef.value,
       start: 'top 75%',
       onEnter: () => gsap.fromTo(
-        worldsRef.value.querySelector('.cosmic-planet'),
+        worldsRef.value.querySelector('.stellar-nexus__worlds-planet'),
         { scale: 0.8, opacity: 0 },
         { scale: 1, opacity: 1, duration: 1.2, ease: 'back.out(1.2)' }
       )
@@ -172,17 +307,25 @@ onMounted(() => {
     ScrollTrigger.create({
       trigger: routeRef.value,
       start: 'top 80%',
-      onEnter: () => gsap.fromTo(
-        routeRef.value.querySelector('.cosmic-ship'),
-        { x: -200, opacity: 0 },
-        { x: 0, opacity: 1, duration: 1.5, ease: 'power1.out' }
-      )
+      onEnter: () => {
+        const tl = gsap.timeline()
+        tl.fromTo(
+          routeRef.value.querySelector('.stellar-nexus__route-ship'),
+          { x: -200, opacity: 0 },
+          { x: 0, opacity: 1, duration: 1.5, ease: 'power1.out' }
+        ).fromTo(
+          routeRef.value.querySelector('.stellar-nexus__route-path'),
+          { opacity: 0 },
+          { opacity: 1, duration: 0.8 },
+          '-=1'
+        )
+      }
     }),
     ScrollTrigger.create({
       trigger: fleetRef.value,
       start: 'top 80%',
       onEnter: () => gsap.fromTo(
-        fleetRef.value.querySelectorAll('.stellar-nexus__fleet-ship'),
+        fleetRef.value.querySelectorAll('.stellar-nexus__fleet-ship-wrap'),
         { y: 60, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.8, stagger: 0.15 }
       )
@@ -191,7 +334,7 @@ onMounted(() => {
       trigger: enlistRef.value,
       start: 'top 80%',
       onEnter: () => gsap.fromTo(
-        enlistRef.value.querySelector('.hud-panel'),
+        enlistRef.value.querySelector('.stellar-nexus__enlist-panel'),
         { scale: 0.9, opacity: 0 },
         { scale: 1, opacity: 1, duration: 0.8 }
       )
@@ -214,10 +357,18 @@ onUnmounted(() => {
   overflow-x: hidden;
 }
 
-.stellar-nexus__starfield {
+.stellar-nexus__nebula {
   position: fixed;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
+}
+
+.stellar-nexus__starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .stellar-nexus__grain {
@@ -237,25 +388,39 @@ onUnmounted(() => {
 /* Hero 区域 */
 .stellar-nexus__hero {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
   grid-template-rows: 1fr auto;
   gap: 2rem;
   align-items: center;
+  overflow: hidden;
+}
+
+.stellar-nexus__hero-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, transparent 0%, rgba(2, 2, 5, 0.6) 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .stellar-nexus__hero-content {
+  position: relative;
   grid-column: 1;
   grid-row: 1;
   align-self: end;
+  z-index: 2;
 }
 
 .stellar-nexus__title {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-size: clamp(3.2rem, 9vw, 7.5rem);
   font-weight: 700;
   line-height: 0.95;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin: 0;
+  text-shadow:
+    0 0 20px rgba(74, 158, 255, 0.25),
+    0 0 60px rgba(74, 158, 255, 0.1);
 }
 
 .stellar-nexus__title-line {
@@ -271,12 +436,13 @@ onUnmounted(() => {
   height: 2px;
   background: var(--color-accent);
   margin: 1.5rem 0;
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.4);
 }
 
 .stellar-nexus__subtitle {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.25em;
   color: var(--color-text-body);
   margin: 0 0 2rem;
 }
@@ -305,11 +471,30 @@ onUnmounted(() => {
   margin-top: 0.25rem;
 }
 
-.stellar-nexus__hero-ship {
+.stellar-nexus__hero-planet {
+  position: relative;
   grid-column: 2;
   grid-row: 1;
-  justify-self: center;
+  justify-self: end;
   align-self: center;
+  width: min(36vw, 520px);
+  z-index: 1;
+}
+
+.stellar-nexus__hero-planet-body {
+  width: 100%;
+  height: auto;
+}
+
+.stellar-nexus__hero-ship {
+  position: relative;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-self: center;
+  align-self: end;
+  width: min(55vw, 720px);
+  z-index: 3;
+  transform: translateY(12%);
 }
 
 .stellar-nexus__ticker {
@@ -319,22 +504,16 @@ onUnmounted(() => {
 }
 
 /* 章节通用样式 */
-.stellar-nexus__section-content {
-  max-width: 480px;
+.stellar-nexus__section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0.5rem 0 1rem;
 }
 
-.stellar-nexus__section-content--left {
-  margin-right: auto;
-}
-
-.stellar-nexus__section-content--right {
-  margin-left: auto;
-  text-align: right;
-}
-
-.stellar-nexus__section-content--center {
-  margin: 0 auto;
-  text-align: center;
+.stellar-nexus__section-title--large {
+  font-size: clamp(2.8rem, 7vw, 5rem);
 }
 
 .stellar-nexus__section-index {
@@ -344,34 +523,97 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
 }
 
-.stellar-nexus__section-title {
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  margin: 0.5rem 0 1rem;
-}
-
 .stellar-nexus__section-desc {
   font-family: var(--font-body);
   font-size: var(--text-base);
   color: var(--color-text-body);
   line-height: 1.7;
-  margin: 0;
+  margin: 0 0 1.5rem;
+}
+
+.stellar-nexus__data-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(74, 158, 255, 0.1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+}
+
+.stellar-nexus__data-key {
+  color: var(--color-text-dim);
+}
+
+.stellar-nexus__data-value {
+  color: var(--color-text-heading);
 }
 
 /* Worlds 区域 */
 .stellar-nexus__worlds {
   justify-content: space-between;
+  gap: 3rem;
+}
+
+.stellar-nexus__worlds-panel {
+  max-width: 420px;
+}
+
+.stellar-nexus__worlds-planet-wrap {
+  position: relative;
+  margin-left: auto;
+  width: min(42vw, 520px);
 }
 
 .stellar-nexus__worlds-planet {
-  margin-left: auto;
+  width: 100%;
+  height: auto;
 }
 
 /* Route 区域 */
 .stellar-nexus__route {
   justify-content: space-between;
+  flex-direction: row-reverse;
+  gap: 3rem;
+}
+
+.stellar-nexus__route-visual {
+  position: relative;
+  width: min(45vw, 560px);
+}
+
+.stellar-nexus__route-ship {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.stellar-nexus__route-path {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: auto;
+  transform: translateY(-50%);
+  z-index: 1;
+  overflow: visible;
+}
+
+.stellar-nexus__route-trail {
+  animation: route-dash 3s linear infinite;
+}
+
+@keyframes route-dash {
+  to { stroke-dashoffset: -24; }
+}
+
+.stellar-nexus__route-panel {
+  max-width: 420px;
+  text-align: right;
+}
+
+.stellar-nexus__route-panel .stellar-nexus__data-row {
   flex-direction: row-reverse;
 }
 
@@ -382,16 +624,68 @@ onUnmounted(() => {
   gap: 3rem;
 }
 
+.stellar-nexus__fleet-panel {
+  max-width: 640px;
+  text-align: center;
+}
+
 .stellar-nexus__fleet-formation {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 2rem;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1000px;
+  padding: 3rem 2rem;
 }
 
-.stellar-nexus__fleet-ship--lead {
-  transform: scale(1.2);
+.stellar-nexus__fleet-grid {
+  border-radius: 12px;
+}
+
+.stellar-nexus__fleet-ship-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stellar-nexus__fleet-ship {
+  width: min(30vw, 240px);
+}
+
+.stellar-nexus__fleet-ship-wrap--lead {
+  order: 2;
+}
+
+.stellar-nexus__fleet-ship-wrap--lead .stellar-nexus__fleet-ship {
+  width: min(38vw, 340px);
+}
+
+.stellar-nexus__ship-plate {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  background: rgba(5, 5, 8, 0.6);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.stellar-nexus__ship-class {
+  display: block;
+  color: var(--color-text-heading);
+}
+
+.stellar-nexus__ship-registry {
+  display: block;
+  color: var(--color-text-dim);
+  margin-top: 0.25rem;
 }
 
 /* Enlist 区域 */
@@ -400,8 +694,10 @@ onUnmounted(() => {
 }
 
 .stellar-nexus__enlist-panel {
-  max-width: 600px;
+  max-width: 680px;
+  width: 100%;
   text-align: center;
+  padding: 3rem;
 }
 
 .stellar-nexus__actions {
@@ -412,15 +708,45 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
+/* 页脚 / 素材声明 */
+.stellar-nexus__footer {
+  position: relative;
+  z-index: 10;
+  padding: 3rem 8vw;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35));
+  overflow: hidden;
+}
+
+.stellar-nexus__footer-grid {
+  opacity: 0.4;
+}
+
+.stellar-nexus__footer-line {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.stellar-nexus__footer-line--dim {
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 0.5rem;
+}
+
 /* 响应式适配 */
 @media (max-width: 768px) {
   .stellar-nexus__hero {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     text-align: center;
   }
 
   .stellar-nexus__hero-content,
+  .stellar-nexus__hero-planet,
   .stellar-nexus__hero-ship {
     grid-column: 1;
   }
@@ -429,13 +755,21 @@ onUnmounted(() => {
     grid-row: 1;
   }
 
-  .stellar-nexus__hero-ship {
+  .stellar-nexus__hero-planet {
     grid-row: 2;
     justify-self: center;
+    width: min(70vw, 360px);
+  }
+
+  .stellar-nexus__hero-ship {
+    grid-row: 3;
+    justify-self: center;
+    width: min(90vw, 520px);
+    transform: translateY(0);
   }
 
   .stellar-nexus__ticker {
-    grid-row: 3;
+    grid-row: 4;
   }
 
   .stellar-nexus__divider {
@@ -453,10 +787,33 @@ onUnmounted(() => {
     text-align: center;
   }
 
-  .stellar-nexus__section-content--left,
-  .stellar-nexus__section-content--right,
-  .stellar-nexus__worlds-planet {
+  .stellar-nexus__worlds-panel,
+  .stellar-nexus__route-panel {
     margin: 0 auto;
+  }
+
+  .stellar-nexus__route-panel {
+    text-align: center;
+  }
+
+  .stellar-nexus__route-panel .stellar-nexus__data-row {
+    flex-direction: row;
+  }
+
+  .stellar-nexus__worlds-planet-wrap,
+  .stellar-nexus__route-visual {
+    width: min(80vw, 420px);
+    margin: 0 auto;
+  }
+
+  .stellar-nexus__fleet-ship-wrap--lead {
+    order: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stellar-nexus__route-trail {
+    animation: none;
   }
 }
 </style>
