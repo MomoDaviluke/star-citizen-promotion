@@ -60,6 +60,12 @@ const routes = [
     meta: { title: '舰船详情 - 星际公民团队官网', preload: false }
   },
   {
+    path: '/stellar-nexus',
+    name: 'Stellar Nexus',
+    component: () => import('../views/StellarNexus.vue'),
+    meta: { title: 'Stellar Nexus - 星际公民团队官网', preload: false }
+  },
+  {
     path: '/calendar',
     name: '活动日历',
     component: () => import('../views/Calendar.vue'),

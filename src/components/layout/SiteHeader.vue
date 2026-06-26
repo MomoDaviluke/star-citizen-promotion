@@ -70,6 +70,7 @@ const navLinks = [
   { path: '/', label: '首页' },
   { path: '/about', label: '关于' },
   { path: '/fleet', label: '舰队' },
+  { path: '/stellar-nexus', label: 'Stellar Nexus' },
   { path: '/members', label: '成员' },
   { path: '/join', label: '加入' },
   { path: '/contact', label: '联系' },
