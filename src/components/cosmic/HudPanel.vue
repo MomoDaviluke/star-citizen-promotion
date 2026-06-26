@@ -5,6 +5,8 @@
 -->
 <template>
   <div class="hud-panel" :class="{ 'hud-panel--skewed': skewed }">
+    <div class="hud-panel__accent-bar" aria-hidden="true"></div>
+    <div class="hud-panel__scanline" aria-hidden="true"></div>
     <HudCorner position="top-left" :size="cornerSize" />
     <HudCorner position="top-right" :size="cornerSize" />
     <HudCorner position="bottom-left" :size="cornerSize" />
@@ -61,5 +63,31 @@ defineProps({
 .hud-panel__content {
   position: relative;
   z-index: 1;
+}
+
+.hud-panel__accent-bar {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, var(--color-accent), transparent);
+  opacity: 0.7;
+  z-index: 0;
+}
+
+.hud-panel__scanline {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(74, 158, 255, 0.03) 2px,
+    rgba(74, 158, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  opacity: 0.5;
+  z-index: 0;
 }
 </style>
