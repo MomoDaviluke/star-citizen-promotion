@@ -29,4 +29,25 @@ describe('CosmicPlanet', () => {
     const element = wrapper.find('.cosmic-planet')
     expect(element.attributes('style')).toContain('--rotation-duration: 60s')
   })
+
+  it('renders textured mode when texture prop is provided', () => {
+    const wrapper = mount(CosmicPlanet, {
+      props: { texture: '/assets/cosmic/planets/planet-blue.jpg', variant: 'blue' }
+    })
+    expect(wrapper.find('.cosmic-planet--textured').exists()).toBe(true)
+    const element = wrapper.find('.cosmic-planet')
+    expect(element.attributes('style')).toContain('--planet-texture: url(/assets/cosmic/planets/planet-blue.jpg)')
+  })
+
+  it('renders orbital ring slot when provided', () => {
+    const wrapper = mount(CosmicPlanet, {
+      slots: { rings: '<div class="test-ring">ring</div>' }
+    })
+    expect(wrapper.find('.test-ring').exists()).toBe(true)
+  })
+
+  it('renders glow element for large size', () => {
+    const wrapper = mount(CosmicPlanet, { props: { size: 'large' } })
+    expect(wrapper.find('.cosmic-planet__glow').exists()).toBe(true)
+  })
 })
