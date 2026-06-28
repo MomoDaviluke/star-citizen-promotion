@@ -44,12 +44,11 @@
           class="stellar-nexus__hero-planet-body"
         />
       </div>
-      <CosmicShip
-        image="/assets/cosmic/ships/constellation-andromeda.jpg"
-        alt="RSI Constellation Andromeda"
-        registry="SNT-001"
-        class="stellar-nexus__hero-ship"
-      />
+      <div
+        class="stellar-nexus__hero-ship-bg"
+        role="img"
+        aria-label="RSI Constellation Andromeda"
+      ></div>
       <HudTicker class="stellar-nexus__ticker" />
     </section>
 
@@ -417,9 +416,10 @@ onUnmounted(() => {
 .stellar-nexus__hero-backdrop {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 30% 50%, transparent 0%, rgba(2, 2, 5, 0.6) 70%);
+  background:
+    linear-gradient(90deg, rgba(2, 2, 5, 0.92) 0%, rgba(2, 2, 5, 0.72) 35%, rgba(2, 2, 5, 0.25) 60%, rgba(2, 2, 5, 0.55) 100%);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 .stellar-nexus__hero-content {
@@ -427,7 +427,7 @@ onUnmounted(() => {
   grid-column: 1;
   grid-row: 1;
   align-self: end;
-  z-index: 2;
+  z-index: 3;
 }
 
 .stellar-nexus__title {
@@ -497,7 +497,7 @@ onUnmounted(() => {
   justify-self: end;
   align-self: center;
   width: min(36vw, 520px);
-  z-index: 1;
+  z-index: 2;
 }
 
 .stellar-nexus__hero-planet-body {
@@ -505,15 +505,16 @@ onUnmounted(() => {
   height: auto;
 }
 
-.stellar-nexus__hero-ship {
-  position: relative;
-  grid-column: 1 / -1;
-  grid-row: 1;
-  justify-self: center;
-  align-self: end;
-  width: min(55vw, 720px);
-  z-index: 3;
-  transform: translateY(12%);
+.stellar-nexus__hero-ship-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/cosmic/ships/constellation-andromeda.jpg');
+  background-size: cover;
+  background-position: 60% 40%;
+  background-repeat: no-repeat;
+  filter: brightness(0.55) contrast(1.1) saturate(0.7) sepia(0.2) hue-rotate(165deg);
+  opacity: 0.85;
+  z-index: 0;
 }
 
 .stellar-nexus__ticker {
@@ -792,18 +793,18 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .stellar-nexus__hero {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto;
     text-align: center;
   }
 
   .stellar-nexus__hero-content,
-  .stellar-nexus__hero-planet,
-  .stellar-nexus__hero-ship {
+  .stellar-nexus__hero-planet {
     grid-column: 1;
   }
 
   .stellar-nexus__hero-content {
     grid-row: 1;
+    padding-top: 4rem;
   }
 
   .stellar-nexus__hero-planet {
@@ -812,15 +813,18 @@ onUnmounted(() => {
     width: min(70vw, 360px);
   }
 
-  .stellar-nexus__hero-ship {
-    grid-row: 3;
-    justify-self: center;
-    width: min(90vw, 520px);
-    transform: translateY(0);
+  .stellar-nexus__hero-ship-bg {
+    background-position: 55% 20%;
+    filter: brightness(0.45) contrast(1.1) saturate(0.7) sepia(0.2) hue-rotate(165deg);
+  }
+
+  .stellar-nexus__hero-backdrop {
+    background:
+      linear-gradient(180deg, rgba(2, 2, 5, 0.95) 0%, rgba(2, 2, 5, 0.72) 25%, rgba(2, 2, 5, 0.35) 55%, rgba(2, 2, 5, 0.75) 100%);
   }
 
   .stellar-nexus__ticker {
-    grid-row: 4;
+    grid-row: 3;
   }
 
   .stellar-nexus__divider {
