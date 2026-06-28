@@ -15,9 +15,9 @@
     :style="planetStyle"
   >
     <div class="cosmic-planet__glow"></div>
-    <!-- Canvas 火星：用于绘制高细节程序化表面 -->
+    <!-- Canvas 火星：用于绘制真实 NASA 纹理球体或程序化表面 -->
     <canvas
-      v-if="variant === 'mars' && !texture"
+      v-if="variant === 'mars'"
       ref="marsCanvas"
       class="cosmic-planet__canvas"
       :width="canvasSize"
@@ -421,11 +421,155 @@ function generateMarsSurface(width, height) {
 
 /**
  * 初始化并持续绘制 Canvas 火星
+ * 如果传入了 texture，则使用 NASA 真实纹理进行球面映射；
+ * 否则使用上面定义的程序化生成表面。
  */
 function initMarsCanvas() {
   const canvas = marsCanvas.value
   if (!canvas) return
 
+  if (props.texture) {
+    initTexturedSphere(canvas)
+  } else {
+    initProceduralMars(canvas)
+  }
+}
+
+/**
+ * 使用真实 NASA 等距圆柱纹理绘制 3D 球体
+ */
+function initTexturedSphere(canvas) {
+  const ctx = canvas.getContext('2d')
+  const size = canvasSize.value
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  canvas.width = size * dpr
+  canvas.height = size * dpr
+  ctx.scale(dpr, dpr)
+
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  img.src = props.texture
+
+  img.onload = () => {
+    const textureCanvas = document.createElement('canvas')
+    // 限制纹理解析度，减少每帧采样开销
+    const maxTextureSize = 2048
+    const scale = Math.min(1, maxTextureSize / Math.max(img.width, img.height))
+    textureCanvas.width = Math.floor(img.width * scale)
+    textureCanvas.height = Math.floor(img.height * scale)
+    const texCtx = textureCanvas.getContext('2d')
+    texCtx.drawImage(img, 0, 0, textureCanvas.width, textureCanvas.height)
+    const textureData = texCtx.getImageData(0, 0, textureCanvas.width, textureCanvas.height).data
+
+    // 用于移动端/低性能设备的降采样渲染
+    const renderSize = size <= 320 ? size : Math.floor(size * 0.9)
+    const renderCanvas = document.createElement('canvas')
+    renderCanvas.width = renderSize
+    renderCanvas.height = renderSize
+    const renderCtx = renderCanvas.getContext('2d')
+
+    let rotation = 0
+    isActive = true
+
+    const center = renderSize / 2
+    const radius = renderSize / 2 - 1
+    const lightDir = { x: 0.65, y: -0.25, z: 0.72 }
+    // 归一化光源
+    const lightLen = Math.sqrt(lightDir.x ** 2 + lightDir.y ** 2 + lightDir.z ** 2)
+    lightDir.x /= lightLen
+    lightDir.y /= lightLen
+    lightDir.z /= lightLen
+
+    const imageData = renderCtx.createImageData(renderSize, renderSize)
+    const data = imageData.data
+    const tw = textureCanvas.width
+    const th = textureCanvas.height
+
+    const render = () => {
+      if (!isActive) return
+
+      rotation += (2 * Math.PI) / (props.rotationDuration * 60)
+
+      // 清空输出像素为透明
+      data.fill(0)
+
+      for (let y = 0; y < renderSize; y++) {
+        for (let x = 0; x < renderSize; x++) {
+          const dx = (x - center) / radius
+          const dy = (y - center) / radius
+          const dist2 = dx * dx + dy * dy
+          if (dist2 > 1) continue
+
+          const dz = Math.sqrt(1 - dist2)
+
+          // 球面法线
+          const nx = dx
+          const ny = -dy
+          const nz = dz
+
+          // 经纬度采样坐标
+          const lon = Math.atan2(nx, nz) + rotation
+          const lat = Math.asin(ny)
+
+          let u = lon / (2 * Math.PI)
+          u = ((u % 1) + 1) % 1
+          const v = 0.5 - lat / Math.PI
+
+          const tx = Math.floor(u * (tw - 1))
+          const ty = Math.floor(v * (th - 1))
+          const tidx = (ty * tw + tx) * 4
+
+          // 简单漫反射光照 + 边缘补光
+          const dot = nx * lightDir.x + ny * lightDir.y + nz * lightDir.z
+          const light = Math.max(0.22, Math.min(1, dot * 0.9 + 0.25))
+
+          // 边缘消隐（模拟大气薄雾）
+          const edge = Math.sqrt(dist2)
+          const edgeAlpha = 1 - Math.pow(edge, 12)
+
+          const idx = (y * renderSize + x) * 4
+          data[idx] = textureData[tidx] * light
+          data[idx + 1] = textureData[tidx + 1] * light
+          data[idx + 2] = textureData[tidx + 2] * light
+          data[idx + 3] = 255 * edgeAlpha
+        }
+      }
+
+      renderCtx.putImageData(imageData, 0, 0)
+
+      // 绘制到最终画布并缩放到目标尺寸
+      ctx.clearRect(0, 0, size, size)
+      ctx.drawImage(renderCanvas, 0, 0, size, size)
+
+      // 叠加边缘大气辉光
+      const atmosphere = ctx.createRadialGradient(
+        size * 0.45, size * 0.42, size * 0.35,
+        size * 0.5, size * 0.5, size * 0.55
+      )
+      atmosphere.addColorStop(0, 'rgba(255, 210, 170, 0.08)')
+      atmosphere.addColorStop(0.7, 'rgba(220, 120, 70, 0.12)')
+      atmosphere.addColorStop(1, 'rgba(220, 120, 70, 0)')
+      ctx.fillStyle = atmosphere
+      ctx.beginPath()
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+      ctx.fill()
+
+      rafId = requestAnimationFrame(render)
+    }
+
+    render()
+  }
+
+  img.onerror = () => {
+    // 纹理加载失败时回退到程序化生成
+    initProceduralMars(canvas)
+  }
+}
+
+/**
+ * 使用程序化生成的表面绘制火星
+ */
+function initProceduralMars(canvas) {
   const ctx = canvas.getContext('2d')
   const size = canvasSize.value
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -511,7 +655,7 @@ function initMarsCanvas() {
 }
 
 onMounted(() => {
-  if (props.variant === 'mars' && !props.texture) {
+  if (props.variant === 'mars') {
     initMarsCanvas()
   }
 })
@@ -522,13 +666,10 @@ onUnmounted(() => {
 })
 
 watch(() => [props.variant, props.texture], () => {
-  if (props.variant === 'mars' && !props.texture) {
-    isActive = false
-    if (rafId) cancelAnimationFrame(rafId)
+  isActive = false
+  if (rafId) cancelAnimationFrame(rafId)
+  if (props.variant === 'mars') {
     initMarsCanvas()
-  } else {
-    isActive = false
-    if (rafId) cancelAnimationFrame(rafId)
   }
 })
 </script>
@@ -604,26 +745,12 @@ watch(() => [props.variant, props.texture], () => {
   box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
 }
 
-/* 火星变体：Canvas 绘制高细节表面，此处仅保留边缘阴影与辉光 */
-.cosmic-planet--mars:not(.cosmic-planet--textured) .cosmic-planet__canvas {
-  box-shadow:
-    inset -40px -40px 100px rgba(0, 0, 0, 0.92),
-    inset 20px 20px 60px rgba(0, 0, 0, 0.35);
-}
-
-.cosmic-planet--textured.cosmic-planet--mars .cosmic-planet__body {
-  filter: hue-rotate(-140deg) saturate(1.2) contrast(1.15) brightness(1.05);
-}
-
-.cosmic-planet--textured.cosmic-planet--mars .cosmic-planet__body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+/* 火星变体：Canvas 绘制真实 NASA 纹理球体 */
+.cosmic-planet--mars .cosmic-planet__canvas {
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 35% 35%, rgba(210, 90, 50, 0.3), transparent 55%),
-    radial-gradient(circle at 75% 75%, rgba(70, 20, 15, 0.25), transparent 60%);
-  mix-blend-mode: overlay;
+  box-shadow:
+    inset -40px -40px 100px rgba(0, 0, 0, 0.85),
+    inset 15px 15px 50px rgba(0, 0, 0, 0.35);
 }
 
 /* 冰封变体：苍白冻土 */

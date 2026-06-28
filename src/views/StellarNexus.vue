@@ -71,6 +71,7 @@
           size="large"
           variant="mars"
           rotation-duration="110"
+          texture="/assets/cosmic/planets/mars.jpg"
           class="stellar-nexus__worlds-planet"
         >
           <template #rings>
