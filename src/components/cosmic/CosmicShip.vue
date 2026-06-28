@@ -20,7 +20,11 @@
           loading="lazy"
         />
         <div class="cosmic-ship__image-overlay" aria-hidden="true"></div>
-        <div class="cosmic-ship__engine-glow" aria-hidden="true"></div>
+        <div
+          class="cosmic-ship__engine-glow"
+          :class="`cosmic-ship__engine-glow--${enginePosition}`"
+          aria-hidden="true"
+        ></div>
       </div>
     </template>
 
@@ -141,6 +145,11 @@ defineProps({
   alt: {
     type: String,
     default: ''
+  },
+  enginePosition: {
+    type: String,
+    default: 'left',
+    validator: (value) => ['left', 'right', 'center'].includes(value)
   }
 })
 
@@ -189,19 +198,28 @@ const engineGlowId = `engineGlow-${uid}`
   width: 100%;
   height: auto;
   display: block;
+  filter: contrast(1.15) saturate(0.85) sepia(0.15) hue-rotate(165deg) brightness(1.05);
   transition: transform 0.5s var(--ease-out), filter 0.5s var(--ease-out);
 }
 
 .cosmic-ship__image-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(74, 158, 255, 0.08) 0%,
-    transparent 40%,
-    transparent 60%,
-    rgba(74, 158, 255, 0.08) 100%
-  );
+  background:
+    linear-gradient(
+      105deg,
+      rgba(74, 158, 255, 0.12) 0%,
+      transparent 35%,
+      transparent 65%,
+      rgba(74, 158, 255, 0.1) 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 24px,
+      rgba(74, 158, 255, 0.04) 24px,
+      rgba(74, 158, 255, 0.04) 25px
+    );
   opacity: 0;
   transition: opacity 0.4s var(--ease-out);
   pointer-events: none;
@@ -210,7 +228,7 @@ const engineGlowId = `engineGlow-${uid}`
 .cosmic-ship--image:hover .cosmic-ship__image,
 .cosmic-ship--image.cosmic-ship--hovered .cosmic-ship__image {
   transform: scale(1.03);
-  filter: brightness(1.1) drop-shadow(0 0 12px rgba(74, 158, 255, 0.25));
+  filter: contrast(1.2) saturate(0.9) sepia(0.1) hue-rotate(165deg) brightness(1.15) drop-shadow(0 0 16px rgba(74, 158, 255, 0.35));
 }
 
 .cosmic-ship--image:hover .cosmic-ship__image-overlay,
@@ -220,21 +238,34 @@ const engineGlowId = `engineGlow-${uid}`
 
 .cosmic-ship__engine-glow {
   position: absolute;
-  left: 8%;
   top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 60%;
-  background: radial-gradient(ellipse at center, rgba(74, 158, 255, 0.55), transparent 70%);
+  width: 6%;
+  min-width: 12px;
+  height: 55%;
+  background: radial-gradient(ellipse at center, rgba(74, 158, 255, 0.6), transparent 70%);
   filter: blur(8px);
   opacity: 0.8;
   animation: engine-pulse 2s ease-in-out infinite;
   pointer-events: none;
+  --engine-translate-x: 0%;
+}
+
+.cosmic-ship__engine-glow--left {
+  left: 6%;
+}
+
+.cosmic-ship__engine-glow--right {
+  right: 6%;
+}
+
+.cosmic-ship__engine-glow--center {
+  left: 50%;
+  --engine-translate-x: -50%;
 }
 
 @keyframes engine-pulse {
-  0%, 100% { opacity: 0.7; transform: translateY(-50%) scaleX(1); }
-  50% { opacity: 1; transform: translateY(-50%) scaleX(1.3); }
+  0%, 100% { opacity: 0.7; transform: translate(var(--engine-translate-x), -50%) scaleX(1); }
+  50% { opacity: 1; transform: translate(var(--engine-translate-x), -50%) scaleX(1.3); }
 }
 
 @media (prefers-reduced-motion: reduce) {

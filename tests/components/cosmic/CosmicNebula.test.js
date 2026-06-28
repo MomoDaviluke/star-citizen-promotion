@@ -4,13 +4,15 @@ import CosmicNebula from '../../../src/components/cosmic/CosmicNebula.vue'
 
 describe('CosmicNebula', () => {
   function createMockContext() {
+    const gradientMock = {
+      addColorStop: vi.fn()
+    }
     return {
       clearRect: vi.fn(),
       fillRect: vi.fn(),
       scale: vi.fn(),
-      createRadialGradient: vi.fn(() => ({
-        addColorStop: vi.fn()
-      })),
+      createRadialGradient: vi.fn(() => gradientMock),
+      createLinearGradient: vi.fn(() => gradientMock),
       beginPath: vi.fn(),
       arc: vi.fn(),
       fill: vi.fn()

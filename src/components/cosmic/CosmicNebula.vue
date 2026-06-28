@@ -17,9 +17,9 @@ let width = 0
 let height = 0
 
 const layers = [
-  { color: 'rgba(138, 43, 226, 0.18)', count: 4, radius: 0.45, speed: 0.0003 },
-  { color: 'rgba(74, 158, 255, 0.14)', count: 5, radius: 0.35, speed: 0.0005 },
-  { color: 'rgba(6, 182, 212, 0.10)', count: 4, radius: 0.28, speed: 0.0007 }
+  { color: 'rgba(138, 43, 226, 0.23)', count: 5, radius: 0.45, speed: 0.0003 },
+  { color: 'rgba(74, 158, 255, 0.18)', count: 7, radius: 0.35, speed: 0.0005 },
+  { color: 'rgba(6, 182, 212, 0.13)', count: 6, radius: 0.28, speed: 0.0007 }
 ]
 
 const blobs = []
@@ -68,6 +68,15 @@ function draw(time) {
   gradient.addColorStop(0.5, '#05070d')
   gradient.addColorStop(1, '#020205')
   ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, width, height)
+
+  // 极淡星尘带：增加背景层次，避免纯黑
+  const dustGradient = ctx.createLinearGradient(0, 0, width, height * 0.7)
+  dustGradient.addColorStop(0, 'rgba(74, 158, 255, 0.0)')
+  dustGradient.addColorStop(0.35, 'rgba(74, 158, 255, 0.025)')
+  dustGradient.addColorStop(0.55, 'rgba(138, 43, 226, 0.02)')
+  dustGradient.addColorStop(1, 'rgba(74, 158, 255, 0.0)')
+  ctx.fillStyle = dustGradient
   ctx.fillRect(0, 0, width, height)
 
   const parallaxX = (mouseX - width * 0.5) * 0.02

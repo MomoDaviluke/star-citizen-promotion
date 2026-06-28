@@ -40,10 +40,15 @@ defineProps({
 <style scoped>
 .hud-panel {
   position: relative;
-  background: rgba(5, 5, 8, 0.6);
-  border: 1px solid rgba(74, 158, 255, 0.2);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 25%),
+    rgba(5, 5, 8, 0.62);
+  border: 1px solid rgba(74, 158, 255, 0.35);
   padding: 1.25rem 1.5rem;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.06),
+    0 4px 24px rgba(0, 0, 0, 0.25);
   transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
 }
 
@@ -56,8 +61,10 @@ defineProps({
 }
 
 .hud-panel:hover {
-  border-color: rgba(74, 158, 255, 0.4);
-  box-shadow: 0 0 30px rgba(74, 158, 255, 0.08);
+  border-color: rgba(74, 158, 255, 0.55);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 0 40px rgba(74, 158, 255, 0.12);
 }
 
 .hud-panel__content {

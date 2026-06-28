@@ -40,4 +40,14 @@ describe('CosmicShip', () => {
     })
     expect(wrapper.find('.cosmic-ship__engine-glow').exists()).toBe(true)
   })
+
+  it('applies engine-position class', () => {
+    const wrapper = mount(CosmicShip, {
+      props: {
+        image: '/assets/cosmic/ships/gladius.jpg',
+        enginePosition: 'right'
+      }
+    })
+    expect(wrapper.find('.cosmic-ship__engine-glow--right').exists()).toBe(true)
+  })
 })

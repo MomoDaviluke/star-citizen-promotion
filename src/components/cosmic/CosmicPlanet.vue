@@ -101,9 +101,9 @@ const planetStyle = computed(() => ({
   box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.85);
 }
 
-/* 紫色变体在纹理模式下通过 hue-rotate + 紫色叠加层调出紫色调 */
+/* 紫色变体在纹理模式下通过 hue-rotate + 蓝紫叠加层调出深空色调 */
 .cosmic-planet--textured.cosmic-planet--purple .cosmic-planet__body {
-  filter: hue-rotate(60deg) saturate(1.3) contrast(1.15);
+  filter: hue-rotate(30deg) saturate(0.9) contrast(1.1);
 }
 
 .cosmic-planet--textured.cosmic-planet--purple .cosmic-planet__body::after {
@@ -112,17 +112,17 @@ const planetStyle = computed(() => ({
   inset: 0;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 35% 35%, rgba(138, 43, 226, 0.45), transparent 55%),
-    radial-gradient(circle at 75% 75%, rgba(75, 0, 130, 0.35), transparent 60%);
+    radial-gradient(circle at 35% 35%, rgba(74, 158, 255, 0.25), transparent 55%),
+    radial-gradient(circle at 75% 75%, rgba(138, 43, 226, 0.2), transparent 60%);
   mix-blend-mode: overlay;
 }
 
 /* 紫色变体：深空星云紫（程序化渐变） */
 .cosmic-planet--purple:not(.cosmic-planet--textured) .cosmic-planet__body {
   background:
-    radial-gradient(circle at 35% 30%, rgba(122, 106, 168, 0.9), transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(26, 18, 48, 1), transparent 60%),
-    linear-gradient(135deg, #2a1f4a 0%, #1a1230 50%, #0f0a1c 100%);
+    radial-gradient(circle at 35% 30%, rgba(122, 126, 188, 0.85), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(36, 28, 68, 1), transparent 60%),
+    linear-gradient(135deg, #26224a 0%, #181230 50%, #0d0818 100%);
   box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
 }
 
@@ -139,21 +139,21 @@ const planetStyle = computed(() => ({
   position: absolute;
   inset: -12%;
   border-radius: 50%;
-  filter: blur(28px);
-  opacity: 0.55;
+  filter: blur(32px);
+  opacity: 0.4;
   transition: opacity 0.6s var(--ease-out);
 }
 
 .cosmic-planet--purple .cosmic-planet__glow {
-  background: radial-gradient(circle, rgba(74, 46, 106, 0.7), transparent 70%);
+  background: radial-gradient(circle, rgba(80, 70, 160, 0.35), transparent 70%);
 }
 
 .cosmic-planet--blue .cosmic-planet__glow {
-  background: radial-gradient(circle, rgba(74, 158, 255, 0.35), transparent 70%);
+  background: radial-gradient(circle, rgba(74, 158, 255, 0.3), transparent 70%);
 }
 
 .cosmic-planet:hover .cosmic-planet__glow {
-  opacity: 0.9;
+  opacity: 0.7;
 }
 
 .cosmic-planet__rings {
@@ -166,8 +166,11 @@ const planetStyle = computed(() => ({
   position: absolute;
   inset: -4%;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 40px rgba(74, 158, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 0.08),
+    0 0 40px rgba(74, 158, 255, 0.08),
+    inset 0 0 30px rgba(255, 255, 255, 0.04);
   pointer-events: none;
 }
 

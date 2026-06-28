@@ -151,22 +151,22 @@ function handleClick(e) {
   white-space: nowrap;
 }
 
-/* 主按钮 - 琥珀色 */
+/* 主按钮 - 深空青蓝 */
 .tech-button--primary {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: var(--amber-primary);
-  color: var(--amber-primary);
+  background: rgba(74, 158, 255, 0.12);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
   box-shadow:
-    0 0 0 1px rgba(245, 158, 11, 0.3),
-    0 0 24px rgba(245, 158, 11, 0.15);
+    0 0 0 1px rgba(74, 158, 255, 0.3),
+    0 0 24px rgba(74, 158, 255, 0.15);
   transition: box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out), background 0.3s var(--ease-out);
 }
 
 .tech-button--primary:hover:not(:disabled) {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(74, 158, 255, 0.22);
   box-shadow:
-    0 0 0 1px rgba(245, 158, 11, 0.6),
-    0 0 40px rgba(245, 158, 11, 0.35);
+    0 0 0 1px rgba(74, 158, 255, 0.6),
+    0 0 40px rgba(74, 158, 255, 0.35);
   transform: translateY(-2px);
 }
 

@@ -101,21 +101,40 @@
           class="stellar-nexus__route-ship"
         />
         <svg class="stellar-nexus__route-path" viewBox="0 0 400 200" aria-hidden="true">
+          <defs>
+            <filter id="route-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           <path
             class="stellar-nexus__route-trail"
             d="M20,100 C120,40 280,160 380,100"
             fill="none"
-            stroke="rgba(74,158,255,0.35)"
-            stroke-width="1"
+            stroke="rgba(74,158,255,0.45)"
+            stroke-width="1.5"
             stroke-dasharray="6 6"
+            filter="url(#route-glow)"
           />
           <g class="stellar-nexus__waypoint">
-            <circle cx="120" cy="70" r="4" fill="#4a9eff" />
+            <circle class="stellar-nexus__waypoint-pulse" cx="120" cy="70" r="10" fill="none" stroke="#4a9eff" stroke-width="1" />
+            <circle cx="120" cy="70" r="4" fill="#4a9eff" filter="url(#route-glow)" />
             <text x="120" y="55" fill="#7a7a94" font-size="10" text-anchor="middle">WP-01</text>
           </g>
           <g class="stellar-nexus__waypoint">
-            <circle cx="280" cy="130" r="4" fill="#4a9eff" />
+            <circle class="stellar-nexus__waypoint-pulse" cx="280" cy="130" r="10" fill="none" stroke="#4a9eff" stroke-width="1" />
+            <circle cx="280" cy="130" r="4" fill="#4a9eff" filter="url(#route-glow)" />
             <text x="280" y="155" fill="#7a7a94" font-size="10" text-anchor="middle">WP-02</text>
+          </g>
+          <g class="stellar-nexus__route-trail-particles" filter="url(#route-glow)">
+            <circle cx="60" cy="90" r="1.5" fill="rgba(74,158,255,0.6)" />
+            <circle cx="100" cy="55" r="1.2" fill="rgba(74,158,255,0.5)" />
+            <circle cx="160" cy="95" r="1.5" fill="rgba(74,158,255,0.55)" />
+            <circle cx="240" cy="145" r="1.2" fill="rgba(74,158,255,0.5)" />
+            <circle cx="320" cy="115" r="1.5" fill="rgba(74,158,255,0.6)" />
           </g>
         </svg>
       </div>
@@ -527,7 +546,7 @@ onUnmounted(() => {
   font-family: var(--font-body);
   font-size: var(--text-base);
   color: var(--color-text-body);
-  line-height: 1.7;
+  line-height: 1.8;
   margin: 0 0 1.5rem;
 }
 
@@ -608,6 +627,32 @@ onUnmounted(() => {
   to { stroke-dashoffset: -24; }
 }
 
+.stellar-nexus__waypoint-pulse {
+  transform-origin: center;
+  animation: waypoint-pulse 2s ease-out infinite;
+  opacity: 0.6;
+}
+
+@keyframes waypoint-pulse {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  70% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.stellar-nexus__route-trail-particles circle {
+  animation: particle-twinkle 2.5s ease-in-out infinite;
+}
+
+.stellar-nexus__route-trail-particles circle:nth-child(2) { animation-delay: 0.4s; }
+.stellar-nexus__route-trail-particles circle:nth-child(3) { animation-delay: 0.8s; }
+.stellar-nexus__route-trail-particles circle:nth-child(4) { animation-delay: 1.2s; }
+.stellar-nexus__route-trail-particles circle:nth-child(5) { animation-delay: 1.6s; }
+
+@keyframes particle-twinkle {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+
 .stellar-nexus__route-panel {
   max-width: 420px;
   text-align: right;
@@ -634,11 +679,11 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 2rem;
-  flex-wrap: wrap;
+  gap: 3rem;
+  flex-wrap: nowrap;
   width: 100%;
-  max-width: 1000px;
-  padding: 3rem 2rem;
+  max-width: 1100px;
+  padding: 4rem 2rem;
 }
 
 .stellar-nexus__fleet-grid {
@@ -651,11 +696,16 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
+}
+
+/* 护航舰：两翼抬高，形成倒 V 编队 */
+.stellar-nexus__fleet-ship-wrap:not(.stellar-nexus__fleet-ship-wrap--lead) {
+  transform: translateY(-40px);
 }
 
 .stellar-nexus__fleet-ship {
-  width: min(30vw, 240px);
+  width: min(28vw, 220px);
 }
 
 .stellar-nexus__fleet-ship-wrap--lead {
@@ -663,18 +713,19 @@ onUnmounted(() => {
 }
 
 .stellar-nexus__fleet-ship-wrap--lead .stellar-nexus__fleet-ship {
-  width: min(38vw, 340px);
+  width: min(45vw, 420px);
 }
 
 .stellar-nexus__ship-plate {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid rgba(74, 158, 255, 0.2);
-  background: rgba(5, 5, 8, 0.6);
-  backdrop-filter: blur(4px);
+  padding: 0.625rem 1rem;
+  border: 1px solid rgba(74, 158, 255, 0.25);
+  background: rgba(5, 5, 8, 0.65);
+  backdrop-filter: blur(6px);
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-align: center;
+  box-shadow: 0 0 16px rgba(74, 158, 255, 0.08);
 }
 
 .stellar-nexus__ship-class {
@@ -780,7 +831,12 @@ onUnmounted(() => {
     justify-content: center;
   }
 
-  .stellar-nexus__worlds,
+  .stellar-nexus__worlds {
+    flex-direction: column-reverse;
+    gap: 2rem;
+    text-align: center;
+  }
+
   .stellar-nexus__route {
     flex-direction: column;
     gap: 3rem;
@@ -800,19 +856,43 @@ onUnmounted(() => {
     flex-direction: row;
   }
 
-  .stellar-nexus__worlds-planet-wrap,
+  .stellar-nexus__worlds-planet-wrap {
+    width: min(70vw, 320px);
+    margin: 0 auto;
+  }
+
   .stellar-nexus__route-visual {
     width: min(80vw, 420px);
     margin: 0 auto;
   }
 
-  .stellar-nexus__fleet-ship-wrap--lead {
-    order: 0;
+  .stellar-nexus__fleet-formation {
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 2rem 1rem;
+  }
+
+  .stellar-nexus__fleet-ship-wrap:not(.stellar-nexus__fleet-ship-wrap--lead) {
+    transform: translateY(0);
+  }
+
+  .stellar-nexus__fleet-ship {
+    width: min(40vw, 160px);
+  }
+
+  .stellar-nexus__fleet-ship-wrap--lead .stellar-nexus__fleet-ship {
+    width: min(55vw, 260px);
+  }
+
+  .stellar-nexus__ship-plate {
+    font-size: var(--text-xs);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stellar-nexus__route-trail {
+  .stellar-nexus__route-trail,
+  .stellar-nexus__waypoint-pulse,
+  .stellar-nexus__route-trail-particles circle {
     animation: none;
   }
 }
