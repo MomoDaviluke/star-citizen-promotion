@@ -490,11 +490,11 @@ onUnmounted(() => {
 .stellar-nexus__hero-ship-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/assets/cosmic/ships/constellation-andromeda.jpg');
+  /* 使用预过滤图片，避免浏览器每帧实时计算复杂 CSS filter */
+  background-image: url('/assets/cosmic/ships/constellation-andromeda-hero.jpg');
   background-size: cover;
   background-position: 60% 40%;
   background-repeat: no-repeat;
-  filter: brightness(0.55) contrast(1.1) saturate(0.7) sepia(0.2) hue-rotate(165deg);
   opacity: 0.85;
   z-index: 0;
 }
@@ -834,8 +834,8 @@ onUnmounted(() => {
   }
 
   .stellar-nexus__hero-ship-bg {
+    background-image: url('/assets/cosmic/ships/constellation-andromeda-hero-mobile.jpg');
     background-position: 55% 20%;
-    filter: brightness(0.45) contrast(1.1) saturate(0.7) sepia(0.2) hue-rotate(165deg);
   }
 
   .stellar-nexus__hero-backdrop {
