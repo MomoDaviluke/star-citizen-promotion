@@ -188,17 +188,17 @@
             <span class="stellar-nexus__ship-registry">SNT-003 / COMBAT READY</span>
           </div>
         </div>
-        <div class="stellar-nexus__fleet-ship-wrap stellar-nexus__fleet-ship-wrap--flipped">
+        <div class="stellar-nexus__fleet-ship-wrap">
           <CosmicShip
-            image="/assets/cosmic/ships/gladius.jpg"
-            alt="Aegis Gladius"
+            image="/assets/cosmic/ships/constellation-andromeda.jpg"
+            alt="RSI Constellation Andromeda"
             registry="SNT-004"
             engine-position="right"
             class="stellar-nexus__fleet-ship"
           />
           <div class="stellar-nexus__ship-plate">
-            <span class="stellar-nexus__ship-class">AEGIS GLADIUS</span>
-            <span class="stellar-nexus__ship-registry">SNT-004 / INTERCEPTOR</span>
+            <span class="stellar-nexus__ship-class">RSI CONSTELLATION</span>
+            <span class="stellar-nexus__ship-registry">SNT-004 / MULTI-ROLE</span>
           </div>
         </div>
       </div>
@@ -742,14 +742,6 @@ onUnmounted(() => {
   order: 2;
 }
 
-.stellar-nexus__fleet-ship-wrap--flipped {
-  transform: translateY(-40px) scaleX(-1);
-}
-
-.stellar-nexus__fleet-ship-wrap--flipped .stellar-nexus__ship-plate {
-  transform: scaleX(-1);
-}
-
 .stellar-nexus__fleet-ship-wrap--lead .stellar-nexus__fleet-ship {
   width: min(45vw, 420px);
 }
@@ -930,10 +922,6 @@ onUnmounted(() => {
 
   .stellar-nexus__fleet-ship-wrap:not(.stellar-nexus__fleet-ship-wrap--lead) {
     transform: translateY(0);
-  }
-
-  .stellar-nexus__fleet-ship-wrap--flipped {
-    transform: scaleX(-1);
   }
 
   .stellar-nexus__fleet-ship {
