@@ -43,21 +43,31 @@ describe('视图组件基础测试', () => {
     vi.clearAllMocks()
   })
 
-  describe('Home 视图', () => {
+  describe('StellarNexus 视图', () => {
     it('应能正确导入组件', async () => {
-      const { default: Home } = await import('@/views/Home.vue')
-      expect(Home).toBeDefined()
-      expect(Home.name || Home.__name || 'Home').toBeTruthy()
+      const { default: StellarNexus } = await import('@/views/StellarNexus.vue')
+      expect(StellarNexus).toBeDefined()
+      expect(StellarNexus.name || StellarNexus.__name || 'StellarNexus').toBeTruthy()
     })
 
     it('组件应包含必要的模板结构', async () => {
-      const { default: Home } = await import('@/views/Home.vue')
-      const wrapper = mount(Home, {
+      const { default: StellarNexus } = await import('@/views/StellarNexus.vue')
+      const wrapper = mount(StellarNexus, {
         global: {
           plugins: [mockRouter],
           stubs: {
             RouterLink: true,
-            RouterView: true
+            RouterView: true,
+            CosmicNebula: true,
+            CosmicStarfield: true,
+            CosmicPlanet: true,
+            CosmicShip: true,
+            OrbitalRing: true,
+            TacticalGrid: true,
+            HudPanel: true,
+            HudTicker: true,
+            FilmGrain: true,
+            TechButton: true
           }
         }
       })
@@ -118,14 +128,24 @@ describe('视图组件基础测试', () => {
 
 describe('视图组件响应式测试', () => {
   it('组件应在不同屏幕尺寸下正常渲染', async () => {
-    const { default: Home } = await import('@/views/Home.vue')
+    const { default: StellarNexus } = await import('@/views/StellarNexus.vue')
 
-    const wrapper = mount(Home, {
+    const wrapper = mount(StellarNexus, {
       global: {
         plugins: [mockRouter],
         stubs: {
           RouterLink: true,
-          RouterView: true
+          RouterView: true,
+          CosmicNebula: true,
+          CosmicStarfield: true,
+          CosmicPlanet: true,
+          CosmicShip: true,
+          OrbitalRing: true,
+          TacticalGrid: true,
+          HudPanel: true,
+          HudTicker: true,
+          FilmGrain: true,
+          TechButton: true
         }
       }
     })

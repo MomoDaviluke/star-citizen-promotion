@@ -60,6 +60,7 @@ vi.mock('vue-router', () => {
 })
 
 // Mock 所有页面组件
+vi.mock('@/views/StellarNexus.vue', () => ({ default: { name: 'StellarNexus' } }))
 vi.mock('@/views/Home.vue', () => ({ default: { name: 'Home' } }))
 vi.mock('@/views/About.vue', () => ({ default: { name: 'About' } }))
 vi.mock('@/views/Members.vue', () => ({ default: { name: 'Members' } }))
@@ -94,7 +95,7 @@ describe('Router', () => {
     it('应该定义所有公开路由', () => {
       const routeNames = router.getRoutes().map(r => r.name).filter(Boolean)
 
-      expect(routeNames).toContain('首页')
+      expect(routeNames).toContain('Stellar Nexus')
       expect(routeNames).toContain('团队介绍')
       expect(routeNames).toContain('核心成员')
       expect(routeNames).toContain('活动项目')
@@ -133,7 +134,7 @@ describe('Router', () => {
 
   describe('路由元信息', () => {
     it('首页应该标记 preload', () => {
-      const route = router.getRoutes().find(r => r.name === '首页')
+      const route = router.getRoutes().find(r => r.name === 'Stellar Nexus')
 
       expect(route?.meta?.preload).toBe(true)
     })

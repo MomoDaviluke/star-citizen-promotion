@@ -19,12 +19,16 @@ import { useAuthStore } from '../stores/auth.js'
 const routes = [
   {
     path: '/',
-    name: '首页',
-    component: () => import('../views/Home.vue'),
+    name: 'Stellar Nexus',
+    component: () => import('../views/StellarNexus.vue'),
     meta: {
       preload: true,
-      title: '星际公民团队官网 - 首页'
+      title: 'Stellar Nexus - 星际公民团队官网'
     }
+  },
+  {
+    path: '/home',
+    redirect: '/'
   },
   {
     path: '/about',
@@ -59,12 +63,7 @@ const routes = [
     component: () => import('../views/ShipDetail.vue'),
     meta: { title: '舰船详情 - 星际公民团队官网', preload: false }
   },
-  {
-    path: '/stellar-nexus',
-    name: 'Stellar Nexus',
-    component: () => import('../views/StellarNexus.vue'),
-    meta: { title: 'Stellar Nexus - 星际公民团队官网', preload: false }
-  },
+
   {
     path: '/calendar',
     name: '活动日历',
