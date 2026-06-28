@@ -14,8 +14,36 @@
     ]"
     :style="planetStyle"
   >
+    <!-- SVG 噪点滤镜：为火星表面提供岩石与沙尘纹理 -->
+    <svg class="cosmic-planet__filters" width="0" height="0" aria-hidden="true">
+      <defs>
+        <filter id="mars-surface" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="5" seed="12" result="noise" />
+          <feDiffuseLighting in="noise" lighting-color="#e8c4a0" surfaceScale="2.5" result="light">
+            <feDistantLight azimuth="45" elevation="35" />
+          </feDiffuseLighting>
+          <feColorMatrix in="light" type="matrix" values="
+            0.55 0 0 0 0
+            0 0.35 0 0 0
+            0 0 0.25 0 0
+            0 0 0 0.7 0
+          " result="rock" />
+          <feTurbulence type="turbulence" baseFrequency="0.08" numOctaves="3" seed="4" result="dust" />
+          <feColorMatrix in="dust" type="matrix" values="
+            0.7 0 0 0 0
+            0 0.4 0 0 0
+            0 0 0.2 0 0
+            0 0 0 0.35 0
+          " result="dustColor" />
+          <feBlend in="rock" in2="dustColor" mode="multiply" result="surface" />
+        </filter>
+      </defs>
+    </svg>
     <div class="cosmic-planet__glow"></div>
     <div class="cosmic-planet__body"></div>
+    <div class="cosmic-planet__surface-details" v-if="variant === 'mars'"></div>
+    <div class="cosmic-planet__craters" v-if="variant === 'mars'"></div>
+    <div class="cosmic-planet__ice-caps" v-if="variant === 'mars'"></div>
     <div class="cosmic-planet__atmosphere"></div>
     <div class="cosmic-planet__rings">
       <slot name="rings"></slot>
@@ -138,10 +166,66 @@ const planetStyle = computed(() => ({
 /* 火星变体：赤红荒漠 */
 .cosmic-planet--mars:not(.cosmic-planet--textured) .cosmic-planet__body {
   background:
-    radial-gradient(circle at 35% 30%, rgba(210, 90, 50, 0.65), transparent 50%),
-    radial-gradient(circle at 70% 70%, rgba(70, 20, 15, 1), transparent 60%),
-    linear-gradient(135deg, #6d2418 0%, #3a120c 50%, #1a0806 100%);
-  box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
+    radial-gradient(circle at 30% 25%, rgba(210, 100, 55, 0.7), transparent 45%),
+    radial-gradient(circle at 75% 75%, rgba(90, 30, 18, 1), transparent 55%),
+    radial-gradient(circle at 50% 50%, rgba(160, 55, 30, 0.9), transparent 75%),
+    linear-gradient(135deg, #7a2a18 0%, #4a160c 40%, #200905 100%);
+  box-shadow:
+    inset -40px -40px 100px rgba(0, 0, 0, 0.92),
+    inset 20px 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(180, 60, 30, 0.15);
+}
+
+/* 火星表面纹理层：叠加噪点滤镜，产生岩石与沙尘质感 */
+.cosmic-planet--mars:not(.cosmic-planet--textured) .cosmic-planet__surface-details {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  clip-path: circle(50%);
+  filter: url(#mars-surface);
+  opacity: 0.8;
+  mix-blend-mode: overlay;
+  animation: planet-rotate var(--rotation-duration) linear infinite;
+  pointer-events: none;
+}
+
+/* 火星陨石坑：多个径向渐变模拟撞击坑与峡谷阴影 */
+.cosmic-planet--mars:not(.cosmic-planet--textured) .cosmic-planet__craters {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 22% 32%, rgba(40, 10, 6, 0.7) 0%, rgba(40, 10, 6, 0) 8%),
+    radial-gradient(circle at 28% 28%, rgba(120, 55, 35, 0.35) 0%, rgba(120, 55, 35, 0) 12%),
+    radial-gradient(circle at 65% 22%, rgba(30, 8, 5, 0.65) 0%, rgba(30, 8, 5, 0) 10%),
+    radial-gradient(circle at 72% 30%, rgba(110, 50, 30, 0.3) 0%, rgba(110, 50, 30, 0) 11%),
+    radial-gradient(circle at 45% 55%, rgba(25, 7, 4, 0.6) 0%, rgba(25, 7, 4, 0) 14%),
+    radial-gradient(circle at 52% 48%, rgba(130, 60, 38, 0.25) 0%, rgba(130, 60, 38, 0) 18%),
+    radial-gradient(circle at 18% 68%, rgba(35, 10, 6, 0.55) 0%, rgba(35, 10, 6, 0) 9%),
+    radial-gradient(circle at 80% 62%, rgba(28, 8, 5, 0.6) 0%, rgba(28, 8, 5, 0) 11%),
+    radial-gradient(circle at 35% 78%, rgba(100, 45, 28, 0.3) 0%, rgba(100, 45, 28, 0) 13%),
+    radial-gradient(circle at 62% 72%, rgba(22, 6, 4, 0.5) 0%, rgba(22, 6, 4, 0) 8%),
+    /* 大型峡谷/地貌阴影 */
+    radial-gradient(ellipse 30% 8% at 40% 40%, rgba(20, 5, 3, 0.45), transparent 70%),
+    radial-gradient(ellipse 25% 6% at 60% 65%, rgba(25, 7, 4, 0.4), transparent 70%),
+    radial-gradient(ellipse 20% 5% at 30% 60%, rgba(30, 8, 5, 0.35), transparent 70%);
+  opacity: 0.9;
+  animation: planet-rotate var(--rotation-duration) linear infinite;
+  pointer-events: none;
+}
+
+/* 火星极地冰冠 */
+.cosmic-planet--mars:not(.cosmic-planet--textured) .cosmic-planet__ice-caps {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 28% 14% at 50% 8%, rgba(230, 235, 240, 0.55), rgba(230, 235, 240, 0.15) 45%, transparent 70%),
+    radial-gradient(ellipse 22% 10% at 50% 92%, rgba(230, 235, 240, 0.4), rgba(230, 235, 240, 0.1) 40%, transparent 65%);
+  filter: blur(1px);
+  opacity: 0.85;
+  animation: planet-rotate var(--rotation-duration) linear infinite;
+  pointer-events: none;
 }
 
 .cosmic-planet--textured.cosmic-planet--mars .cosmic-planet__body {
@@ -239,6 +323,13 @@ const planetStyle = computed(() => ({
   opacity: 0.7;
 }
 
+.cosmic-planet__filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .cosmic-planet__rings {
   position: absolute;
   inset: -25%;
@@ -255,6 +346,13 @@ const planetStyle = computed(() => ({
     0 0 40px rgba(74, 158, 255, 0.08),
     inset 0 0 30px rgba(255, 255, 255, 0.04);
   pointer-events: none;
+}
+
+.cosmic-planet--mars .cosmic-planet__atmosphere {
+  box-shadow:
+    0 0 20px rgba(255, 200, 160, 0.08),
+    0 0 50px rgba(180, 70, 40, 0.12),
+    inset 0 0 30px rgba(255, 220, 190, 0.04);
 }
 
 @keyframes planet-rotate {
