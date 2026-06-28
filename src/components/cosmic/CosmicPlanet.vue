@@ -436,7 +436,8 @@ function initMarsCanvas() {
 }
 
 /**
- * 使用真实 NASA 等距圆柱纹理绘制 3D 球体
+ * 使用真实 NASA 等距圆柱纹理绘制高细节 3D 球体
+ * 包含：双线性采样、凹凸地形、镜面高光、极地冰冠、动态云层
  */
 function initTexturedSphere(canvas) {
   const ctx = canvas.getContext('2d')
@@ -459,16 +460,28 @@ function initTexturedSphere(canvas) {
     textureCanvas.height = Math.floor(img.height * scale)
     const texCtx = textureCanvas.getContext('2d')
     texCtx.drawImage(img, 0, 0, textureCanvas.width, textureCanvas.height)
-    const textureData = texCtx.getImageData(0, 0, textureCanvas.width, textureCanvas.height).data
+    const textureImage = texCtx.getImageData(0, 0, textureCanvas.width, textureCanvas.height)
+    const textureData = textureImage.data
 
-    // 用于移动端/低性能设备的降采样渲染
-    const renderSize = size <= 320 ? size : Math.floor(size * 0.9)
+    // 预计算高度图（用亮度），用于凹凸地形
+    const tw = textureCanvas.width
+    const th = textureCanvas.height
+    const heightMap = new Float32Array(tw * th)
+    for (let i = 0; i < tw * th; i++) {
+      const idx = i * 4
+      // 火星暗区（平原）视为低地，亮区（高地/沙漠）视为高地
+      heightMap[i] = (textureData[idx] * 0.299 + textureData[idx + 1] * 0.587 + textureData[idx + 2] * 0.114) / 255
+    }
+
+    // 以原始尺寸渲染，保证最清晰
+    const renderSize = size
     const renderCanvas = document.createElement('canvas')
     renderCanvas.width = renderSize
     renderCanvas.height = renderSize
     const renderCtx = renderCanvas.getContext('2d')
 
     let rotation = 0
+    let cloudRotation = 0
     isActive = true
 
     const center = renderSize / 2
@@ -480,15 +493,80 @@ function initTexturedSphere(canvas) {
     lightDir.y /= lightLen
     lightDir.z /= lightLen
 
+    // 观察者方向（固定朝前）
+    const viewDir = { x: 0, y: 0, z: 1 }
+
     const imageData = renderCtx.createImageData(renderSize, renderSize)
     const data = imageData.data
-    const tw = textureCanvas.width
-    const th = textureCanvas.height
+
+    /**
+     * 双线性采样纹理颜色
+     */
+    function sampleColor(u, v) {
+      u = ((u % 1) + 1) % 1
+      v = Math.max(0, Math.min(1, v))
+      const x = u * (tw - 1)
+      const y = v * (th - 1)
+      const x0 = Math.floor(x)
+      const y0 = Math.floor(y)
+      const x1 = Math.min(x0 + 1, tw - 1)
+      const y1 = Math.min(y0 + 1, th - 1)
+      const fx = x - x0
+      const fy = y - y0
+
+      const i00 = (y0 * tw + x0) * 4
+      const i10 = (y0 * tw + x1) * 4
+      const i01 = (y1 * tw + x0) * 4
+      const i11 = (y1 * tw + x1) * 4
+
+      return {
+        r: bilerp(textureData[i00], textureData[i10], textureData[i01], textureData[i11], fx, fy),
+        g: bilerp(textureData[i00 + 1], textureData[i10 + 1], textureData[i01 + 1], textureData[i11 + 1], fx, fy),
+        b: bilerp(textureData[i00 + 2], textureData[i10 + 2], textureData[i01 + 2], textureData[i11 + 2], fx, fy)
+      }
+    }
+
+    /**
+     * 双线性采样高度
+     */
+    function sampleHeight(u, v) {
+      u = ((u % 1) + 1) % 1
+      v = Math.max(0, Math.min(1, v))
+      const x = u * (tw - 1)
+      const y = v * (th - 1)
+      const x0 = Math.floor(x)
+      const y0 = Math.floor(y)
+      const x1 = Math.min(x0 + 1, tw - 1)
+      const y1 = Math.min(y0 + 1, th - 1)
+      const fx = x - x0
+      const fy = y - y0
+
+      const h00 = heightMap[y0 * tw + x0]
+      const h10 = heightMap[y0 * tw + x1]
+      const h01 = heightMap[y1 * tw + x0]
+      const h11 = heightMap[y1 * tw + x1]
+
+      return h00 * (1 - fx) * (1 - fy) + h10 * fx * (1 - fy) + h01 * (1 - fx) * fy + h11 * fx * fy
+    }
+
+    /**
+     * 云层密度采样（低频噪声）
+     */
+    function sampleClouds(lon, lat) {
+      const n1 = noise(lon * 3 + cloudRotation, 101, 3)
+      const n2 = noise(lat * 4, 202, 2)
+      const n3 = noise(lon * 8 + lat * 6, 303, 2)
+      const density = (n1 * 0.5 + n2 * 0.25 + n3 * 0.25) * 0.5 + 0.5
+      // 云层主要集中在赤道附近，极区较少
+      const latitudeFade = 1 - Math.pow(Math.abs(lat) / (Math.PI * 0.5), 3)
+      return Math.max(0, density - 0.62) * 2.5 * latitudeFade
+    }
 
     const render = () => {
       if (!isActive) return
 
       rotation += (2 * Math.PI) / (props.rotationDuration * 60)
+      cloudRotation += (2 * Math.PI) / (props.rotationDuration * 45)
 
       // 清空输出像素为透明
       data.fill(0)
@@ -503,41 +581,77 @@ function initTexturedSphere(canvas) {
           const dz = Math.sqrt(1 - dist2)
 
           // 球面法线
-          const nx = dx
-          const ny = -dy
-          const nz = dz
+          let nx = dx
+          let ny = -dy
+          let nz = dz
 
           // 经纬度采样坐标
           const lon = Math.atan2(nx, nz) + rotation
           const lat = Math.asin(ny)
 
-          let u = lon / (2 * Math.PI)
-          u = ((u % 1) + 1) % 1
+          const u = lon / (2 * Math.PI)
           const v = 0.5 - lat / Math.PI
 
-          const tx = Math.floor(u * (tw - 1))
-          const ty = Math.floor(v * (th - 1))
-          const tidx = (ty * tw + tx) * 4
+          // 凹凸地形：根据纹理亮度梯度扰动法线
+          const du = 1.5 / tw
+          const dv = 1.5 / th
+          const h = sampleHeight(u, v)
+          const hu = sampleHeight(u + du, v)
+          const hv = sampleHeight(u, v + dv)
+          const bumpStrength = 0.35
+          nx += (h - hu) * bumpStrength
+          ny += (h - hv) * bumpStrength
+          // 重新归一化
+          const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz)
+          nx /= nLen
+          ny /= nLen
+          nz /= nLen
 
-          // 简单漫反射光照 + 边缘补光
+          // 采样地表颜色
+          const color = sampleColor(u, v)
+
+          // 漫反射光照
           const dot = nx * lightDir.x + ny * lightDir.y + nz * lightDir.z
-          const light = Math.max(0.22, Math.min(1, dot * 0.9 + 0.25))
+          const diffuse = Math.max(0.18, Math.min(1, dot * 0.85 + 0.25))
+
+          // 镜面高光（沙尘/冰晶反光）
+          const reflectX = 2 * dot * nx - lightDir.x
+          const reflectY = 2 * dot * ny - lightDir.y
+          const reflectZ = 2 * dot * nz - lightDir.z
+          const specDot = reflectX * viewDir.x + reflectY * viewDir.y + reflectZ * viewDir.z
+          const specular = Math.max(0, specDot) > 0.7 ? Math.pow(Math.max(0, specDot), 25) * 0.25 : 0
+
+          // 极地冰冠增强（纹理已有冰冠，这里再加一层使其更醒目）
+          const poleDist = Math.PI / 2 - Math.abs(lat)
+          const iceCap = Math.max(0, 1 - poleDist / 0.35) * 0.55
+
+          // 云层
+          const cloud = sampleClouds(lon, lat)
+
+          let r = color.r * diffuse + specular * 255 + iceCap * 200
+          let g = color.g * diffuse + specular * 220 + iceCap * 210
+          let b = color.b * diffuse + specular * 180 + iceCap * 205
+
+          // 混入云层
+          r = r * (1 - cloud) + 235 * cloud
+          g = g * (1 - cloud) + 225 * cloud
+          b = b * (1 - cloud) + 215 * cloud
 
           // 边缘消隐（模拟大气薄雾）
           const edge = Math.sqrt(dist2)
           const edgeAlpha = 1 - Math.pow(edge, 12)
 
           const idx = (y * renderSize + x) * 4
-          data[idx] = textureData[tidx] * light
-          data[idx + 1] = textureData[tidx + 1] * light
-          data[idx + 2] = textureData[tidx + 2] * light
+          data[idx] = Math.min(255, r)
+          data[idx + 1] = Math.min(255, g)
+          data[idx + 2] = Math.min(255, b)
           data[idx + 3] = 255 * edgeAlpha
         }
       }
 
       renderCtx.putImageData(imageData, 0, 0)
 
-      // 绘制到最终画布并缩放到目标尺寸
+      // 绘制到最终画布
       ctx.clearRect(0, 0, size, size)
       ctx.drawImage(renderCanvas, 0, 0, size, size)
 
@@ -564,6 +678,13 @@ function initTexturedSphere(canvas) {
     // 纹理加载失败时回退到程序化生成
     initProceduralMars(canvas)
   }
+}
+
+/**
+ * 双线性插值辅助函数
+ */
+function bilerp(c00, c10, c01, c11, fx, fy) {
+  return c00 * (1 - fx) * (1 - fy) + c10 * fx * (1 - fy) + c01 * (1 - fx) * fy + c11 * fx * fy
 }
 
 /**
