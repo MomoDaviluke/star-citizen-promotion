@@ -78,6 +78,8 @@
             <OrbitalRing :size="560" :count="3" />
           </template>
         </CosmicPlanet>
+        <!-- 火卫一 Phobos：不规则小卫星 -->
+        <div class="stellar-nexus__mars-moon" aria-hidden="true" />
       </div>
     </section>
 
@@ -571,6 +573,53 @@ onUnmounted(() => {
   height: auto;
 }
 
+/* 火卫一 Phobos：不规则小卫星，沿椭圆轨道缓慢运行 */
+.stellar-nexus__mars-moon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 14px;
+  margin: -7px 0 0 -9px;
+  border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(140, 130, 120, 0.8), transparent 40%),
+    radial-gradient(circle at 70% 60%, rgba(60, 55, 50, 0.9), transparent 35%),
+    linear-gradient(145deg, #6d635a 0%, #3a3430 60%, #1f1c1a 100%);
+  box-shadow:
+    inset -3px -3px 6px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(0, 0, 0, 0.5);
+  opacity: 0.85;
+  pointer-events: none;
+  transform-origin: center center;
+  animation: phobos-orbit 28s linear infinite;
+}
+
+@keyframes phobos-orbit {
+  0% {
+    transform: rotate(0deg) translateX(230px) translateZ(20px) rotate(0deg);
+  }
+  25% {
+    transform: rotate(90deg) translateX(260px) translateZ(-40px) rotate(-90deg);
+  }
+  50% {
+    transform: rotate(180deg) translateX(230px) translateZ(20px) rotate(-180deg);
+  }
+  75% {
+    transform: rotate(270deg) translateX(200px) translateZ(80px) rotate(-270deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(230px) translateZ(20px) rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stellar-nexus__mars-moon {
+    animation: none;
+    transform: rotate(45deg) translateX(240px) translateZ(20px) rotate(-45deg);
+  }
+}
+
 /* Route 区域 */
 .stellar-nexus__route {
   justify-content: space-between;
@@ -842,6 +891,30 @@ onUnmounted(() => {
   .stellar-nexus__worlds-planet-wrap {
     width: min(70vw, 320px);
     margin: 0 auto;
+  }
+
+  .stellar-nexus__mars-moon {
+    width: 12px;
+    height: 10px;
+    margin: -5px 0 0 -6px;
+  }
+
+  @keyframes phobos-orbit {
+    0% {
+      transform: rotate(0deg) translateX(140px) translateZ(15px) rotate(0deg);
+    }
+    25% {
+      transform: rotate(90deg) translateX(160px) translateZ(-25px) rotate(-90deg);
+    }
+    50% {
+      transform: rotate(180deg) translateX(140px) translateZ(15px) rotate(-180deg);
+    }
+    75% {
+      transform: rotate(270deg) translateX(120px) translateZ(55px) rotate(-270deg);
+    }
+    100% {
+      transform: rotate(360deg) translateX(140px) translateZ(15px) rotate(-360deg);
+    }
   }
 
   .stellar-nexus__route-visual {
