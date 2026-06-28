@@ -35,15 +35,6 @@
           </HudPanel>
         </div>
       </div>
-      <div class="stellar-nexus__hero-planet">
-        <CosmicPlanet
-          size="large"
-          variant="purple"
-          texture="/assets/cosmic/planets/planet-blue.jpg"
-          rotation-duration="120"
-          class="stellar-nexus__hero-planet-body"
-        />
-      </div>
       <div
         class="stellar-nexus__hero-ship-bg"
         role="img"
@@ -78,13 +69,12 @@
       <div class="stellar-nexus__worlds-planet-wrap">
         <CosmicPlanet
           size="large"
-          variant="purple"
-          texture="/assets/cosmic/planets/planet-blue.jpg"
-          rotation-duration="90"
+          variant="mars"
+          rotation-duration="110"
           class="stellar-nexus__worlds-planet"
         >
           <template #rings>
-            <OrbitalRing :size="520" :count="2" />
+            <OrbitalRing :size="560" :count="3" />
           </template>
         </CosmicPlanet>
       </div>
@@ -195,11 +185,12 @@
             <span class="stellar-nexus__ship-registry">SNT-003 / COMBAT READY</span>
           </div>
         </div>
-        <div class="stellar-nexus__fleet-ship-wrap">
+        <div class="stellar-nexus__fleet-ship-wrap stellar-nexus__fleet-ship-wrap--flipped">
           <CosmicShip
             image="/assets/cosmic/ships/gladius.jpg"
             alt="Aegis Gladius"
             registry="SNT-004"
+            engine-position="right"
             class="stellar-nexus__fleet-ship"
           />
           <div class="stellar-nexus__ship-plate">
@@ -405,8 +396,9 @@ onUnmounted(() => {
 
 /* Hero 区域 */
 .stellar-nexus__hero {
+  position: relative;
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1fr;
   grid-template-rows: 1fr auto;
   gap: 2rem;
   align-items: center;
@@ -427,7 +419,9 @@ onUnmounted(() => {
   grid-column: 1;
   grid-row: 1;
   align-self: end;
+  justify-self: start;
   z-index: 3;
+  max-width: 720px;
 }
 
 .stellar-nexus__title {
@@ -488,21 +482,6 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
   color: var(--color-text-dim);
   margin-top: 0.25rem;
-}
-
-.stellar-nexus__hero-planet {
-  position: relative;
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: end;
-  align-self: center;
-  width: min(36vw, 520px);
-  z-index: 2;
-}
-
-.stellar-nexus__hero-planet-body {
-  width: 100%;
-  height: auto;
 }
 
 .stellar-nexus__hero-ship-bg {
@@ -713,6 +692,14 @@ onUnmounted(() => {
   order: 2;
 }
 
+.stellar-nexus__fleet-ship-wrap--flipped {
+  transform: translateY(-40px) scaleX(-1);
+}
+
+.stellar-nexus__fleet-ship-wrap--flipped .stellar-nexus__ship-plate {
+  transform: scaleX(-1);
+}
+
 .stellar-nexus__fleet-ship-wrap--lead .stellar-nexus__fleet-ship {
   width: min(45vw, 420px);
 }
@@ -793,24 +780,15 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .stellar-nexus__hero {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
     text-align: center;
   }
 
-  .stellar-nexus__hero-content,
-  .stellar-nexus__hero-planet {
-    grid-column: 1;
-  }
-
   .stellar-nexus__hero-content {
+    grid-column: 1;
     grid-row: 1;
-    padding-top: 4rem;
-  }
-
-  .stellar-nexus__hero-planet {
-    grid-row: 2;
     justify-self: center;
-    width: min(70vw, 360px);
+    padding-top: 4rem;
   }
 
   .stellar-nexus__hero-ship-bg {
@@ -824,7 +802,7 @@ onUnmounted(() => {
   }
 
   .stellar-nexus__ticker {
-    grid-row: 3;
+    grid-row: 2;
   }
 
   .stellar-nexus__divider {
@@ -878,6 +856,10 @@ onUnmounted(() => {
 
   .stellar-nexus__fleet-ship-wrap:not(.stellar-nexus__fleet-ship-wrap--lead) {
     transform: translateY(0);
+  }
+
+  .stellar-nexus__fleet-ship-wrap--flipped {
+    transform: scaleX(-1);
   }
 
   .stellar-nexus__fleet-ship {

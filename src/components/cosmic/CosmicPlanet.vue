@@ -42,7 +42,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'purple',
-    validator: (value) => ['purple', 'blue'].includes(value)
+    validator: (value) => ['purple', 'blue', 'mars', 'ice', 'gas-giant'].includes(value)
   },
   rotationDuration: {
     type: Number,
@@ -135,6 +135,77 @@ const planetStyle = computed(() => ({
   box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
 }
 
+/* 火星变体：赤红荒漠 */
+.cosmic-planet--mars:not(.cosmic-planet--textured) .cosmic-planet__body {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(210, 90, 50, 0.65), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(70, 20, 15, 1), transparent 60%),
+    linear-gradient(135deg, #6d2418 0%, #3a120c 50%, #1a0806 100%);
+  box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
+}
+
+.cosmic-planet--textured.cosmic-planet--mars .cosmic-planet__body {
+  filter: hue-rotate(-140deg) saturate(1.2) contrast(1.15) brightness(1.05);
+}
+
+.cosmic-planet--textured.cosmic-planet--mars .cosmic-planet__body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(210, 90, 50, 0.3), transparent 55%),
+    radial-gradient(circle at 75% 75%, rgba(70, 20, 15, 0.25), transparent 60%);
+  mix-blend-mode: overlay;
+}
+
+/* 冰封变体：苍白冻土 */
+.cosmic-planet--ice:not(.cosmic-planet--textured) .cosmic-planet__body {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(160, 210, 230, 0.6), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(25, 45, 65, 1), transparent 60%),
+    linear-gradient(135deg, #3a5a6a 0%, #1e3240 50%, #0d161c 100%);
+  box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
+}
+
+.cosmic-planet--textured.cosmic-planet--ice .cosmic-planet__body {
+  filter: hue-rotate(160deg) saturate(0.6) contrast(1.1) brightness(1.15);
+}
+
+.cosmic-planet--textured.cosmic-planet--ice .cosmic-planet__body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(160, 210, 230, 0.25), transparent 55%),
+    radial-gradient(circle at 75% 75%, rgba(25, 45, 65, 0.2), transparent 60%);
+  mix-blend-mode: overlay;
+}
+
+/* 气态巨星变体：条带状大气 */
+.cosmic-planet--gas-giant:not(.cosmic-planet--textured) .cosmic-planet__body {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(200, 150, 80, 0.55), transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(60, 40, 20, 1), transparent 60%),
+    repeating-linear-gradient(
+      180deg,
+      #4a3018 0%,
+      #7a5028 8%,
+      #a07038 16%,
+      #4a3018 24%,
+      #2a1a0c 32%,
+      #5a3818 40%,
+      #8a5a30 48%,
+      #3a240e 56%
+    );
+  box-shadow: inset -30px -30px 80px rgba(0, 0, 0, 0.9);
+}
+
+.cosmic-planet--textured.cosmic-planet--gas-giant .cosmic-planet__body {
+  filter: hue-rotate(-100deg) saturate(0.9) contrast(1.05) brightness(0.95);
+}
+
 .cosmic-planet__glow {
   position: absolute;
   inset: -12%;
@@ -150,6 +221,18 @@ const planetStyle = computed(() => ({
 
 .cosmic-planet--blue .cosmic-planet__glow {
   background: radial-gradient(circle, rgba(74, 158, 255, 0.3), transparent 70%);
+}
+
+.cosmic-planet--mars .cosmic-planet__glow {
+  background: radial-gradient(circle, rgba(180, 70, 40, 0.35), transparent 70%);
+}
+
+.cosmic-planet--ice .cosmic-planet__glow {
+  background: radial-gradient(circle, rgba(120, 180, 210, 0.3), transparent 70%);
+}
+
+.cosmic-planet--gas-giant .cosmic-planet__glow {
+  background: radial-gradient(circle, rgba(180, 130, 60, 0.3), transparent 70%);
 }
 
 .cosmic-planet:hover .cosmic-planet__glow {
