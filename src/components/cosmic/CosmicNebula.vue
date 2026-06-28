@@ -1,153 +1,61 @@
 <!--
   @file CosmicNebula 星云背景组件
-  @description 使用 Canvas 2D 绘制多层半透明星云，带缓慢漂移与鼠标视差
+  @description 使用 CSS 多层径向渐变模拟星云，GPU 合成，性能远高于 Canvas
   @module components/cosmic/CosmicNebula
 -->
 <template>
-  <canvas ref="canvasRef" class="cosmic-nebula" aria-hidden="true"></canvas>
+  <div class="cosmic-nebula" aria-hidden="true">
+    <div class="cosmic-nebula__layer cosmic-nebula__layer--back"></div>
+    <div class="cosmic-nebula__layer cosmic-nebula__layer--mid"></div>
+    <div class="cosmic-nebula__layer cosmic-nebula__layer--front"></div>
+    <div class="cosmic-nebula__dust"></div>
+  </div>
 </template>
-
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-
-const canvasRef = ref(null)
-let ctx = null
-let animationId = null
-let width = 0
-let height = 0
-
-const layers = [
-  { color: 'rgba(138, 43, 226, 0.23)', count: 5, radius: 0.45, speed: 0.0003 },
-  { color: 'rgba(74, 158, 255, 0.18)', count: 7, radius: 0.35, speed: 0.0005 },
-  { color: 'rgba(6, 182, 212, 0.13)', count: 6, radius: 0.28, speed: 0.0007 }
-]
-
-const blobs = []
-let mouseX = 0
-let mouseY = 0
-
-function initBlobs() {
-  blobs.length = 0
-  layers.forEach((layer, layerIndex) => {
-    for (let i = 0; i < layer.count; i++) {
-      blobs.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: Math.min(width, height) * layer.radius * (0.6 + Math.random() * 0.8),
-        layerIndex,
-        phase: Math.random() * Math.PI * 2
-      })
-    }
-  })
-}
-
-function resize() {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
-  width = window.innerWidth
-  height = window.innerHeight
-  canvas.width = width * dpr
-  canvas.height = height * dpr
-  canvas.style.width = `${width}px`
-  canvas.style.height = `${height}px`
-  ctx.scale(dpr, dpr)
-  initBlobs()
-}
-
-function draw(time) {
-  if (!ctx) return
-  ctx.clearRect(0, 0, width, height)
-
-  // 深空基底色
-  const gradient = ctx.createRadialGradient(
-    width * 0.3, height * 0.3, 0,
-    width * 0.5, height * 0.5, Math.max(width, height)
-  )
-  gradient.addColorStop(0, '#0a0f1a')
-  gradient.addColorStop(0.5, '#05070d')
-  gradient.addColorStop(1, '#020205')
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, width, height)
-
-  // 极淡星尘带：增加背景层次，避免纯黑
-  const dustGradient = ctx.createLinearGradient(0, 0, width, height * 0.7)
-  dustGradient.addColorStop(0, 'rgba(74, 158, 255, 0.0)')
-  dustGradient.addColorStop(0.35, 'rgba(74, 158, 255, 0.025)')
-  dustGradient.addColorStop(0.55, 'rgba(138, 43, 226, 0.02)')
-  dustGradient.addColorStop(1, 'rgba(74, 158, 255, 0.0)')
-  ctx.fillStyle = dustGradient
-  ctx.fillRect(0, 0, width, height)
-
-  const parallaxX = (mouseX - width * 0.5) * 0.02
-  const parallaxY = (mouseY - height * 0.5) * 0.02
-
-  blobs.forEach((blob) => {
-    const layer = layers[blob.layerIndex]
-    const driftX = Math.sin(time * layer.speed + blob.phase) * width * 0.05
-    const driftY = Math.cos(time * layer.speed * 0.7 + blob.phase) * height * 0.03
-
-    const g = ctx.createRadialGradient(
-      blob.x + driftX + parallaxX * (blob.layerIndex + 1) * 0.5,
-      blob.y + driftY + parallaxY * (blob.layerIndex + 1) * 0.5,
-      0,
-      blob.x + driftX + parallaxX * (blob.layerIndex + 1) * 0.5,
-      blob.y + driftY + parallaxY * (blob.layerIndex + 1) * 0.5,
-      blob.r
-    )
-    g.addColorStop(0, layer.color)
-    g.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.fillStyle = g
-    ctx.beginPath()
-    ctx.arc(
-      blob.x + driftX + parallaxX * (blob.layerIndex + 1) * 0.5,
-      blob.y + driftY + parallaxY * (blob.layerIndex + 1) * 0.5,
-      blob.r,
-      0,
-      Math.PI * 2
-    )
-    ctx.fill()
-  })
-
-  animationId = requestAnimationFrame(draw)
-}
-
-function onMouseMove(e) {
-  mouseX = e.clientX
-  mouseY = e.clientY
-}
-
-onMounted(() => {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  ctx = canvas.getContext('2d')
-  if (!ctx) return
-  resize()
-  window.addEventListener('resize', resize)
-  window.addEventListener('mousemove', onMouseMove, { passive: true })
-  animationId = requestAnimationFrame(draw)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', resize)
-  window.removeEventListener('mousemove', onMouseMove)
-  if (animationId) cancelAnimationFrame(animationId)
-})
-</script>
 
 <style scoped>
 .cosmic-nebula {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 30% 30%, #0a0f1a 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 80%, #05070d 0%, transparent 50%),
+    #020205;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .cosmic-nebula {
-    display: none;
-  }
+.cosmic-nebula__layer,
+.cosmic-nebula__dust {
+  position: absolute;
+  inset: 0;
+}
+
+/* 后层：大紫星云 */
+.cosmic-nebula__layer--back {
+  background:
+    radial-gradient(circle at 25% 35%, rgba(138, 43, 226, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 75% 25%, rgba(138, 43, 226, 0.14) 0%, transparent 40%);
+}
+
+/* 中层：蓝色星云 */
+.cosmic-nebula__layer--mid {
+  background:
+    radial-gradient(circle at 40% 60%, rgba(74, 158, 255, 0.16) 0%, transparent 38%),
+    radial-gradient(circle at 70% 40%, rgba(74, 158, 255, 0.12) 0%, transparent 35%);
+}
+
+/* 前层：青色星云 */
+.cosmic-nebula__layer--front {
+  background:
+    radial-gradient(circle at 60% 70%, rgba(6, 182, 212, 0.13) 0%, transparent 32%),
+    radial-gradient(circle at 30% 50%, rgba(6, 182, 212, 0.09) 0%, transparent 28%);
+}
+
+/* 尘埃带 */
+.cosmic-nebula__dust {
+  background:
+    linear-gradient(135deg, transparent 0%, rgba(74, 158, 255, 0.03) 35%, rgba(138, 43, 226, 0.02) 55%, transparent 100%);
+  opacity: 0.7;
 }
 </style>
