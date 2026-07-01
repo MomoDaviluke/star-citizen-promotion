@@ -57,7 +57,7 @@ jobs:
         run: npm run test:coverage
 
       - name: 上传覆盖率报告
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
           flags: frontend
@@ -119,7 +119,7 @@ jobs:
         run: npm test -- --runInBand --forceExit
 
       - name: 上传覆盖率报告
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: ./server/coverage/lcov.info
           flags: backend
