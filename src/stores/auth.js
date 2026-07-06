@@ -83,9 +83,9 @@ export const useAuthStore = defineStore('auth', () => {
   /** 更新用户信息 */
   async function updateProfile(updates) {
     return withLoading(async () => {
-      const response = await authService.updateProfile(updates)
-      user.value = { ...user.value, ...response.user }
-      return response
+      const data = await authService.updateProfile(updates)
+      user.value = { ...user.value, ...data }
+      return data
     }, '更新失败')
   }
 
