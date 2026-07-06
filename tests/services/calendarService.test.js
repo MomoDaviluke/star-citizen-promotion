@@ -42,7 +42,7 @@ describe('calendarService', () => {
 
       const result = await getEvents()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/events', { params: {} })
+      expect(httpClient.get).toHaveBeenCalledWith('/api/events', {})
       expect(result).toEqual(mockData)
     })
 
@@ -52,7 +52,7 @@ describe('calendarService', () => {
       await getEvents({ startDate: '2026-01-01', status: 'active' })
 
       expect(httpClient.get).toHaveBeenCalledWith('/api/events', {
-        params: { startDate: '2026-01-01', status: 'active' }
+        startDate: '2026-01-01', status: 'active'
       })
     })
 

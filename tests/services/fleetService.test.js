@@ -42,7 +42,7 @@ describe('fleetService', () => {
 
       const result = await getFleet()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/fleet', { params: {} })
+      expect(httpClient.get).toHaveBeenCalledWith('/api/fleet', {})
       expect(result).toEqual(mockData)
     })
 
@@ -52,7 +52,7 @@ describe('fleetService', () => {
       await getFleet({ category: 'combat', sortBy: 'value' })
 
       expect(httpClient.get).toHaveBeenCalledWith('/api/fleet', {
-        params: { category: 'combat', sortBy: 'value' }
+        category: 'combat', sortBy: 'value'
       })
     })
 

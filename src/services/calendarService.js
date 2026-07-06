@@ -23,7 +23,7 @@ const BASE_URL = '/api/events'
  */
 async function getEvents(params = {}) {
   try {
-    const response = await httpClient.get(BASE_URL, { params })
+    const response = await httpClient.get(BASE_URL, params)
     return response.data
   } catch (error) {
     logger.warn('获取活动列表失败:', error.response?.data || error.message)
