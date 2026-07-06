@@ -55,31 +55,46 @@
         <div class="feature-toggles">
           <div class="toggle-item">
             <div class="toggle-info">
-              <span class="toggle-label">AI 服务</span>
-              <span class="toggle-desc">启用 AI 辅助功能</span>
+              <span id="toggle-label-ai" class="toggle-label">AI 服务</span>
+              <span id="toggle-desc-ai" class="toggle-desc">启用 AI 辅助功能</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" v-model="features.enableAI" />
+              <input
+                type="checkbox"
+                v-model="features.enableAI"
+                aria-labelledby="toggle-label-ai"
+                aria-describedby="toggle-desc-ai"
+              />
               <span class="toggle-slider"></span>
             </label>
           </div>
           <div class="toggle-item">
             <div class="toggle-info">
-              <span class="toggle-label">用户认证</span>
-              <span class="toggle-desc">启用用户登录注册功能</span>
+              <span id="toggle-label-auth" class="toggle-label">用户认证</span>
+              <span id="toggle-desc-auth" class="toggle-desc">启用用户登录注册功能</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" v-model="features.enableAuth" />
+              <input
+                type="checkbox"
+                v-model="features.enableAuth"
+                aria-labelledby="toggle-label-auth"
+                aria-describedby="toggle-desc-auth"
+              />
               <span class="toggle-slider"></span>
             </label>
           </div>
           <div class="toggle-item">
             <div class="toggle-info">
-              <span class="toggle-label">实时通知</span>
-              <span class="toggle-desc">启用 WebSocket 实时通知</span>
+              <span id="toggle-label-notify" class="toggle-label">实时通知</span>
+              <span id="toggle-desc-notify" class="toggle-desc">启用 WebSocket 实时通知</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" v-model="features.enableNotifications" />
+              <input
+                type="checkbox"
+                v-model="features.enableNotifications"
+                aria-labelledby="toggle-label-notify"
+                aria-describedby="toggle-desc-notify"
+              />
               <span class="toggle-slider"></span>
             </label>
           </div>

@@ -15,20 +15,20 @@
 
         <form @submit.prevent="handleRegister" class="auth-form">
           <div class="form-group">
-            <label class="form-label">用户名</label>
-            <input v-model="form.username" class="form-input" placeholder="选择一个用户名" required maxlength="30" />
+            <label class="form-label" for="username">用户名</label>
+            <input id="username" v-model="form.username" class="form-input" placeholder="选择一个用户名" required maxlength="30" />
           </div>
           <div class="form-group">
-            <label class="form-label">邮箱</label>
-            <input v-model="form.email" type="email" class="form-input" placeholder="your@email.com" required />
+            <label class="form-label" for="email">邮箱</label>
+            <input id="email" v-model="form.email" type="email" class="form-input" placeholder="your@email.com" required />
           </div>
           <div class="form-group">
-            <label class="form-label">密码</label>
-            <input v-model="form.password" type="password" class="form-input" placeholder="至少 8 位字符" required minlength="8" />
+            <label class="form-label" for="password">密码</label>
+            <input id="password" v-model="form.password" type="password" class="form-input" placeholder="至少 8 位字符" required minlength="8" />
           </div>
           <div class="form-group">
-            <label class="form-label">确认密码</label>
-            <input v-model="form.confirmPassword" type="password" class="form-input" placeholder="再次输入密码" required />
+            <label class="form-label" for="confirmPassword">确认密码</label>
+            <input id="confirmPassword" v-model="form.confirmPassword" type="password" class="form-input" placeholder="再次输入密码" required />
           </div>
 
           <Transition name="fade">
