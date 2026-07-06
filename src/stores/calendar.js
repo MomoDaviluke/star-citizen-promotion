@@ -22,6 +22,14 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   const { withLoading } = createStoreHelpers(loading, error)
 
+  /**
+   * 解包服务端返回的 { data: ... } 包装结构
+   * @description 兼容直接返回实体与包装响应两种格式
+   * @param {any} res - 服务层返回值
+   * @returns {any} 实际业务数据
+   */
+  const unwrap = (res) => res?.data ?? res
+
   // ========== 计算属性 ==========
   const upcomingEvents = computed(() => {
     const now = new Date()
@@ -78,8 +86,8 @@ export const useCalendarStore = defineStore('calendar', () => {
   /** 获取活动列表 */
   async function fetchEvents(params = {}) {
     return withLoading(async () => {
-      const response = await calendarService.getEvents(params)
-      events.value = response.data || []
+      const data = await calendarService.getEvents(params)
+      events.value = unwrap(data) || []
       return events.value
     }, '获取活动失败')
   }
@@ -88,18 +96,18 @@ export const useCalendarStore = defineStore('calendar', () => {
   async function fetchEvent(eventId) {
     if (!eventId) throw new Error('eventId is required')
     return withLoading(async () => {
-      const response = await calendarService.getEvent(eventId)
-      selectedEvent.value = response.data
-      return response.data
+      const data = await calendarService.getEvent(eventId)
+      selectedEvent.value = unwrap(data)
+      return selectedEvent.value
     }, '获取活动详情失败')
   }
 
   /** 创建活动 */
   async function createEvent(eventData) {
     return withLoading(async () => {
-      const response = await calendarService.createEvent(eventData)
-      events.value.push(response.data)
-      return response.data
+      const data = unwrap(await calendarService.createEvent(eventData))
+      events.value.push(data)
+      return data
     }, '创建活动失败')
   }
 
@@ -107,15 +115,15 @@ export const useCalendarStore = defineStore('calendar', () => {
   async function updateEvent(eventId, updates) {
     if (!eventId) throw new Error('eventId is required')
     return withLoading(async () => {
-      const response = await calendarService.updateEvent(eventId, updates)
+      const data = unwrap(await calendarService.updateEvent(eventId, updates))
       const index = events.value.findIndex(e => e.id === eventId)
       if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...response.data }
+        events.value[index] = { ...events.value[index], ...data }
       }
       if (selectedEvent.value?.id === eventId) {
-        selectedEvent.value = { ...selectedEvent.value, ...response.data }
+        selectedEvent.value = { ...selectedEvent.value, ...data }
       }
-      return response.data
+      return data
     }, '更新活动失败')
   }
 
@@ -135,12 +143,12 @@ export const useCalendarStore = defineStore('calendar', () => {
   async function joinEvent(eventId) {
     if (!eventId) throw new Error('eventId is required')
     return withLoading(async () => {
-      const response = await calendarService.joinEvent(eventId)
+      const data = unwrap(await calendarService.joinEvent(eventId))
       const index = events.value.findIndex(e => e.id === eventId)
       if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...response.data }
+        events.value[index] = { ...events.value[index], ...data }
       }
-      return response.data
+      return data
     }, '报名失败')
   }
 
@@ -148,12 +156,12 @@ export const useCalendarStore = defineStore('calendar', () => {
   async function leaveEvent(eventId) {
     if (!eventId) throw new Error('eventId is required')
     return withLoading(async () => {
-      const response = await calendarService.leaveEvent(eventId)
+      const data = unwrap(await calendarService.leaveEvent(eventId))
       const index = events.value.findIndex(e => e.id === eventId)
       if (index !== -1) {
-        events.value[index] = { ...events.value[index], ...response.data }
+        events.value[index] = { ...events.value[index], ...data }
       }
-      return response.data
+      return data
     }, '取消报名失败')
   }
 

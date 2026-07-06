@@ -21,6 +21,14 @@ export const useFleetStore = defineStore('fleet', () => {
 
   const { withLoading } = createStoreHelpers(loading, error)
 
+  /**
+   * 解包服务端返回的 { data: ... } 包装结构
+   * @description 兼容直接返回实体与包装响应两种格式
+   * @param {any} res - 服务层返回值
+   * @returns {any} 实际业务数据
+   */
+  const unwrap = (res) => res?.data ?? res
+
   // ========== 计算属性 ==========
   const filteredShips = computed(() => {
     let result = [...ships.value]
@@ -88,8 +96,8 @@ export const useFleetStore = defineStore('fleet', () => {
   /** 获取舰队列表 */
   async function fetchShips(params = {}) {
     return withLoading(async () => {
-      const response = await fleetService.getFleet(params)
-      ships.value = response.data || []
+      const data = await fleetService.getFleet(params)
+      ships.value = unwrap(data) || []
       return ships.value
     }, '获取舰队数据失败')
   }
@@ -97,15 +105,15 @@ export const useFleetStore = defineStore('fleet', () => {
   /** 获取单艘飞船详情 */
   async function fetchShip(shipId) {
     if (!shipId) throw new Error('shipId is required')
-    return withLoading(() => fleetService.getShip(shipId).then(r => r.data), '获取飞船详情失败')
+    return withLoading(async () => unwrap(await fleetService.getShip(shipId)), '获取飞船详情失败')
   }
 
   /** 添加飞船 */
   async function addShip(shipData) {
     return withLoading(async () => {
-      const response = await fleetService.createShip(shipData)
-      ships.value.push(response.data)
-      return response.data
+      const data = unwrap(await fleetService.createShip(shipData))
+      ships.value.push(data)
+      return data
     }, '添加飞船失败')
   }
 
@@ -113,12 +121,12 @@ export const useFleetStore = defineStore('fleet', () => {
   async function updateShip(shipId, updates) {
     if (!shipId) throw new Error('shipId is required')
     return withLoading(async () => {
-      const response = await fleetService.updateShip(shipId, updates)
+      const data = unwrap(await fleetService.updateShip(shipId, updates))
       const index = ships.value.findIndex(s => s.id === shipId)
       if (index !== -1) {
-        ships.value[index] = { ...ships.value[index], ...response.data }
+        ships.value[index] = { ...ships.value[index], ...data }
       }
-      return response.data
+      return data
     }, '更新飞船失败')
   }
 
