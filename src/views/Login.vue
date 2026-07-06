@@ -128,6 +128,16 @@ const errors = reactive({
 const isSubmitting = ref(false)
 const loginError = ref('')
 
+/**
+ * 校验登录后的跳转目标，防止 Open Redirect 攻击
+ * @description 仅允许以 / 开头的站内相对路径，拒绝 // 协议头、javascript: 等危险值
+ * @param {unknown} path - 路由查询参数中的 redirect
+ * @returns {boolean}
+ */
+function isSafeRedirect(path) {
+  return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//') && !path.includes(':')
+}
+
 async function handleLogin() {
   errors.email = ''
   errors.password = ''
@@ -150,8 +160,9 @@ async function handleLogin() {
       password: form.password
     })
 
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
+    // 对 redirect 参数做白名单校验，防止 Open Redirect
+    const redirect = isSafeRedirect(route.query.redirect) ? route.query.redirect : '/'
+    await router.push(redirect)
   } catch (error) {
     loginError.value = error.message || '登录失败，请稍后重试'
   } finally {
