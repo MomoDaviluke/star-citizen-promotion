@@ -10,7 +10,7 @@ import { createLogger } from '../utils/logger.js'
 
 const logger = createLogger('CalendarService')
 
-const BASE_URL = '/api/events'
+const BASE_URL = '/events'
 
 /**
  * 获取活动列表

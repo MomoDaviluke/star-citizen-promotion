@@ -36,13 +36,13 @@ describe('fleetService', () => {
   // ---- getFleet ----
 
   describe('getFleet', () => {
-    it('应该调用 GET /api/fleet 并返回数据', async () => {
+    it('应该调用 GET /fleet 并返回数据', async () => {
       const mockData = { data: [{ id: '1', name: 'Aurora MR', ship: 'Aurora' }] }
       httpClient.get.mockResolvedValue({ data: mockData })
 
       const result = await getFleet()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/fleet', {})
+      expect(httpClient.get).toHaveBeenCalledWith('/fleet', {})
       expect(result).toEqual(mockData)
     })
 
@@ -51,7 +51,7 @@ describe('fleetService', () => {
 
       await getFleet({ category: 'combat', sortBy: 'value' })
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/fleet', {
+      expect(httpClient.get).toHaveBeenCalledWith('/fleet', {
         category: 'combat', sortBy: 'value'
       })
     })
@@ -74,13 +74,13 @@ describe('fleetService', () => {
   // ---- getShip ----
 
   describe('getShip', () => {
-    it('应该调用 GET /api/fleet/:id 并返回数据', async () => {
+    it('应该调用 GET /fleet/:id 并返回数据', async () => {
       const mockShip = { data: { id: '1', name: 'Aurora MR' } }
       httpClient.get.mockResolvedValue(mockShip)
 
       const result = await getShip('1')
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/fleet/1')
+      expect(httpClient.get).toHaveBeenCalledWith('/fleet/1')
       expect(result).toEqual(mockShip.data)
     })
 
@@ -93,14 +93,14 @@ describe('fleetService', () => {
   // ---- createShip ----
 
   describe('createShip', () => {
-    it('应该调用 POST /api/fleet 并返回创建的飞船', async () => {
+    it('应该调用 POST /fleet 并返回创建的飞船', async () => {
       const shipData = { name: '新飞船', ship: 'Hornet F7C' }
       const mockResponse = { data: { id: '2', ...shipData } }
       httpClient.post.mockResolvedValue(mockResponse)
 
       const result = await createShip(shipData)
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/fleet', shipData)
+      expect(httpClient.post).toHaveBeenCalledWith('/fleet', shipData)
       expect(result).toEqual(mockResponse.data)
     })
 
@@ -128,13 +128,13 @@ describe('fleetService', () => {
   // ---- updateShip ----
 
   describe('updateShip', () => {
-    it('应该调用 PATCH /api/fleet/:id', async () => {
+    it('应该调用 PATCH /fleet/:id', async () => {
       const updates = { name: '更新后的名称' }
       httpClient.patch.mockResolvedValue({ data: { id: '1', ...updates } })
 
       const result = await updateShip('1', updates)
 
-      expect(httpClient.patch).toHaveBeenCalledWith('/api/fleet/1', updates)
+      expect(httpClient.patch).toHaveBeenCalledWith('/fleet/1', updates)
       expect(result.name).toBe('更新后的名称')
     })
 
@@ -146,12 +146,12 @@ describe('fleetService', () => {
   // ---- deleteShip ----
 
   describe('deleteShip', () => {
-    it('应该调用 DELETE /api/fleet/:id', async () => {
+    it('应该调用 DELETE /fleet/:id', async () => {
       httpClient.delete.mockResolvedValue({})
 
       await deleteShip('1')
 
-      expect(httpClient.delete).toHaveBeenCalledWith('/api/fleet/1')
+      expect(httpClient.delete).toHaveBeenCalledWith('/fleet/1')
     })
 
     it('缺少 shipId 应该抛出错误', async () => {
@@ -168,13 +168,13 @@ describe('fleetService', () => {
   // ---- getFleetStats ----
 
   describe('getFleetStats', () => {
-    it('应该调用 GET /api/fleet/stats', async () => {
+    it('应该调用 GET /fleet/stats', async () => {
       const mockStats = { data: { total: 15, combat: 5, transport: 5, explore: 5 } }
       httpClient.get.mockResolvedValue(mockStats)
 
       const result = await getFleetStats()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/fleet/stats')
+      expect(httpClient.get).toHaveBeenCalledWith('/fleet/stats')
       expect(result).toEqual(mockStats.data)
     })
 

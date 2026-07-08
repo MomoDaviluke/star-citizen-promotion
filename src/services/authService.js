@@ -11,7 +11,7 @@ import { createLogger } from '../utils/logger.js'
 
 const logger = createLogger('AuthService')
 
-const BASE_URL = '/api/auth'
+const BASE_URL = '/auth'
 
 /**
  * 用户登录

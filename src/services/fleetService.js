@@ -10,7 +10,7 @@ import { createLogger } from '../utils/logger.js'
 const logger = createLogger('FleetService')
 
 
-const BASE_URL = '/api/fleet'
+const BASE_URL = '/fleet'
 
 /**
  * 获取舰队列表

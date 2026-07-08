@@ -36,13 +36,13 @@ describe('calendarService', () => {
   // ---- getEvents ----
 
   describe('getEvents', () => {
-    it('应该调用 GET /api/events 并返回数据', async () => {
+    it('应该调用 GET /events 并返回数据', async () => {
       const mockData = { data: [{ id: '1', title: '测试活动' }] }
       httpClient.get.mockResolvedValue({ data: mockData })
 
       const result = await getEvents()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/events', {})
+      expect(httpClient.get).toHaveBeenCalledWith('/events', {})
       expect(result).toEqual(mockData)
     })
 
@@ -51,7 +51,7 @@ describe('calendarService', () => {
 
       await getEvents({ startDate: '2026-01-01', status: 'active' })
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/events', {
+      expect(httpClient.get).toHaveBeenCalledWith('/events', {
         startDate: '2026-01-01', status: 'active'
       })
     })
@@ -66,13 +66,13 @@ describe('calendarService', () => {
   // ---- getEvent ----
 
   describe('getEvent', () => {
-    it('应该调用 GET /api/events/:id 并返回数据', async () => {
+    it('应该调用 GET /events/:id 并返回数据', async () => {
       const mockEvent = { data: { id: '1', title: '活动详情' } }
       httpClient.get.mockResolvedValue(mockEvent)
 
       const result = await getEvent('1')
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/events/1')
+      expect(httpClient.get).toHaveBeenCalledWith('/events/1')
       expect(result).toEqual(mockEvent.data)
     })
 
@@ -85,14 +85,14 @@ describe('calendarService', () => {
   // ---- createEvent ----
 
   describe('createEvent', () => {
-    it('应该调用 POST /api/events 并返回创建的活动', async () => {
+    it('应该调用 POST /events 并返回创建的活动', async () => {
       const eventData = { title: '新活动', startTime: '2026-06-01T10:00:00Z' }
       const mockResponse = { data: { id: '2', ...eventData } }
       httpClient.post.mockResolvedValue(mockResponse)
 
       const result = await createEvent(eventData)
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/events', eventData)
+      expect(httpClient.post).toHaveBeenCalledWith('/events', eventData)
       expect(result).toEqual(mockResponse.data)
     })
 
@@ -120,13 +120,13 @@ describe('calendarService', () => {
   // ---- updateEvent ----
 
   describe('updateEvent', () => {
-    it('应该调用 PATCH /api/events/:id', async () => {
+    it('应该调用 PATCH /events/:id', async () => {
       const updates = { title: '更新后的标题' }
       httpClient.patch.mockResolvedValue({ data: { id: '1', ...updates } })
 
       const result = await updateEvent('1', updates)
 
-      expect(httpClient.patch).toHaveBeenCalledWith('/api/events/1', updates)
+      expect(httpClient.patch).toHaveBeenCalledWith('/events/1', updates)
       expect(result.title).toBe('更新后的标题')
     })
 
@@ -138,12 +138,12 @@ describe('calendarService', () => {
   // ---- deleteEvent ----
 
   describe('deleteEvent', () => {
-    it('应该调用 DELETE /api/events/:id', async () => {
+    it('应该调用 DELETE /events/:id', async () => {
       httpClient.delete.mockResolvedValue({})
 
       await deleteEvent('1')
 
-      expect(httpClient.delete).toHaveBeenCalledWith('/api/events/1')
+      expect(httpClient.delete).toHaveBeenCalledWith('/events/1')
     })
 
     it('缺少 eventId 应该抛出错误', async () => {
@@ -160,12 +160,12 @@ describe('calendarService', () => {
   // ---- joinEvent ----
 
   describe('joinEvent', () => {
-    it('应该调用 POST /api/events/:id/join', async () => {
+    it('应该调用 POST /events/:id/join', async () => {
       httpClient.post.mockResolvedValue({ data: { id: '1', joined: true } })
 
       const result = await joinEvent('1')
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/events/1/join')
+      expect(httpClient.post).toHaveBeenCalledWith('/events/1/join')
       expect(result.joined).toBe(true)
     })
 
@@ -177,12 +177,12 @@ describe('calendarService', () => {
   // ---- leaveEvent ----
 
   describe('leaveEvent', () => {
-    it('应该调用 POST /api/events/:id/leave', async () => {
+    it('应该调用 POST /events/:id/leave', async () => {
       httpClient.post.mockResolvedValue({ data: { id: '1', joined: false } })
 
       const result = await leaveEvent('1')
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/events/1/leave')
+      expect(httpClient.post).toHaveBeenCalledWith('/events/1/leave')
       expect(result.joined).toBe(false)
     })
 
@@ -194,13 +194,13 @@ describe('calendarService', () => {
   // ---- exportCalendar ----
 
   describe('exportCalendar', () => {
-    it('应该调用 GET /api/events/export 获取全部活动', async () => {
+    it('应该调用 GET /events/export 获取全部活动', async () => {
       const mockBlob = new Blob(['test'])
       httpClient.get.mockResolvedValue({ data: mockBlob })
 
       const result = await exportCalendar()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/events/export', { responseType: 'blob' })
+      expect(httpClient.get).toHaveBeenCalledWith('/events/export', { responseType: 'blob' })
       expect(result).toBe(mockBlob)
     })
 
@@ -210,7 +210,7 @@ describe('calendarService', () => {
 
       await exportCalendar('1')
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/events/1/ics', { responseType: 'blob' })
+      expect(httpClient.get).toHaveBeenCalledWith('/events/1/ics', { responseType: 'blob' })
     })
   })
 

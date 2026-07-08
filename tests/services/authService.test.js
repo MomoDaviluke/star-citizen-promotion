@@ -43,7 +43,7 @@ describe('authService', () => {
         password: 'password123'
       })
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/login', {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/login', {
         email: 'test@example.com',
         password: 'password123'
       })
@@ -90,7 +90,7 @@ describe('authService', () => {
         password: 'password123'
       })
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/register', {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/register', {
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123'
@@ -126,7 +126,7 @@ describe('authService', () => {
 
       await authService.logout()
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/logout')
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/logout')
     })
 
     it('应派发 auth:logout 事件', async () => {
@@ -164,7 +164,7 @@ describe('authService', () => {
 
       const result = await authService.getProfile()
 
-      expect(httpClient.get).toHaveBeenCalledWith('/api/auth/me')
+      expect(httpClient.get).toHaveBeenCalledWith('/auth/me')
       expect(result.data).toEqual(mockUser)
     })
 
@@ -182,7 +182,7 @@ describe('authService', () => {
 
       const result = await authService.updateProfile({ username: 'newusername' })
 
-      expect(httpClient.put).toHaveBeenCalledWith('/api/auth/profile', { username: 'newusername' })
+      expect(httpClient.put).toHaveBeenCalledWith('/auth/profile', { username: 'newusername' })
       expect(result).toEqual(mockResponse)
     })
 
@@ -203,7 +203,7 @@ describe('authService', () => {
         newPassword: 'newpass'
       })
 
-      expect(httpClient.put).toHaveBeenCalledWith('/api/auth/password', {
+      expect(httpClient.put).toHaveBeenCalledWith('/auth/password', {
         currentPassword: 'oldpass',
         newPassword: 'newpass'
       })
@@ -225,7 +225,7 @@ describe('authService', () => {
 
       const result = await authService.refreshToken()
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/refresh')
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/refresh')
       expect(result.token).toBe('new-token')
     })
 
@@ -242,7 +242,7 @@ describe('authService', () => {
 
       await authService.requestPasswordReset('test@example.com')
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/password-reset', {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/password-reset', {
         email: 'test@example.com'
       })
     })
@@ -264,7 +264,7 @@ describe('authService', () => {
 
       await authService.resetPassword('reset-token-123', 'newpassword')
 
-      expect(httpClient.post).toHaveBeenCalledWith('/api/auth/password-reset/reset-token-123', {
+      expect(httpClient.post).toHaveBeenCalledWith('/auth/password-reset/reset-token-123', {
         password: 'newpassword'
       })
     })
