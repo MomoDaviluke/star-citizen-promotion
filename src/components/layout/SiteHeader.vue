@@ -44,6 +44,9 @@
         </button>
       </div>
     </div>
+
+    <HudCorner position="bottom-left" size="sm" class="site-header__corner site-header__corner--bl" />
+    <HudCorner position="bottom-right" size="sm" class="site-header__corner site-header__corner--br" />
   </header>
 </template>
 
@@ -51,7 +54,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from '../../composables/useTheme'
-import { TechDivider, StatusPulse } from '../hud/index.js'
+import { TechDivider, StatusPulse, HudCorner } from '../hud/index.js'
 
 const route = useRoute()
 const { isDark: isDarkFn, toggle } = useTheme()
@@ -95,6 +98,15 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   padding: 16px 0 0;
   pointer-events: none;
 }
+
+.site-header__corner {
+  position: absolute;
+  bottom: 0;
+  z-index: 1;
+}
+
+.site-header__corner--bl { left: 1rem; }
+.site-header__corner--br { right: 1rem; }
 
 .site-header__pill {
   display: flex;

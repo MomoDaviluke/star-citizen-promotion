@@ -117,46 +117,6 @@ import HeroSection from '../components/home/HeroSection.vue'
 import HeroDataPanel from '../components/home/HeroDataPanel.vue'
 import HeroTicker from '../components/home/HeroTicker.vue'
 
-// 移动端粒子减量
-const isMobile = ref(false)
-const starCount = computed(() => isMobile.value ? 40 : 100)
-
-// 预生成星星样式，避免 Math.random() 导致每次渲染结果不同
-// 3层深度粒子系统 — far(小慢多) / mid / near(大快少)
-const starLayers = [
-  { count: 120, sizeRange: [0.8, 1.5], speedRange: [4, 7], cls: 'star--far' },
-  { count: 60,  sizeRange: [1.5, 2.5], speedRange: [3, 5], cls: 'star--mid' },
-  { count: 20,  sizeRange: [2.5, 3.5], speedRange: [2, 3.5], cls: 'star--near' },
-]
-
-const starStyles = []
-const starClassMap = []
-for (const layer of starLayers) {
-  for (let i = 0; i < layer.count; i++) {
-    const size = layer.sizeRange[0] + Math.random() * (layer.sizeRange[1] - layer.sizeRange[0])
-    const x = Math.random() * 100
-    const y = Math.random() * 100
-    const delay = Math.random() * layer.speedRange[1]
-    const duration = layer.speedRange[0] + Math.random() * (layer.speedRange[1] - layer.speedRange[0])
-    starStyles.push({
-      width: `${size}px`,
-      height: `${size}px`,
-      left: `${x}%`,
-      top: `${y}%`,
-      animationDelay: `${delay}s`,
-      animationDuration: `${duration}s`,
-    })
-    starClassMap.push(layer.cls)
-  }
-}
-
-function starStyle(n) {
-  return starStyles[n - 1] || {}
-}
-function starClass(n) {
-  return starClassMap[n - 1] || ''
-}
-
 const router = useRouter()
 
 // 首页舰队预览：从统一数据库取推荐舰船，保持 3 张卡片
@@ -192,11 +152,8 @@ function handleCardClick(idx) {
   }
 }
 
-// 入场动画 — IntersectionObserver + 移动端检测
+// 入场动画 — IntersectionObserver 触发滚动显现
 onMounted(() => {
-  isMobile.value = window.innerWidth <= 768
-  window.addEventListener('resize', () => { isMobile.value = window.innerWidth <= 768 })
-
   const sections = document.querySelectorAll('[data-animate]')
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {

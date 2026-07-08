@@ -39,6 +39,8 @@ const categoryEn = computed(() => config.value.key)
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
   border: 1px solid currentColor;
   border-radius: var(--radius-sm);
   background: currentColor;
