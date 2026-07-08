@@ -148,13 +148,25 @@ describe('optionalAuth', () => {
     expect(next).toHaveBeenCalledWith()
   })
 
-  it('有效令牌应设置 req.user', async () => {
+  it('有效令牌且用户存在时应设置 req.user', async () => {
     req.headers.authorization = 'Bearer valid-token'
     mockVerify.mockReturnValue({ userId: 1 })
+    mockQueryOne.mockResolvedValue({ id: '1', role: 'member' })
 
     await optionalAuth(req, res, next)
 
-    expect(req.user).toEqual({ id: 1 })
+    expect(req.user).toEqual({ id: '1', role: 'member' })
+    expect(next).toHaveBeenCalledWith()
+  })
+
+  it('有效令牌但用户不存在时应继续处理但不设置 user', async () => {
+    req.headers.authorization = 'Bearer valid-token'
+    mockVerify.mockReturnValue({ userId: 99 })
+    mockQueryOne.mockResolvedValue(null)
+
+    await optionalAuth(req, res, next)
+
+    expect(req.user).toBeUndefined()
     expect(next).toHaveBeenCalledWith()
   })
 

@@ -26,7 +26,8 @@ async function getEvents(params = {}) {
     const response = await httpClient.get(BASE_URL, params)
     return response.data
   } catch (error) {
-    logger.warn('获取活动列表失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.warn('获取活动列表失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -43,7 +44,8 @@ async function getEvent(eventId) {
     const response = await httpClient.get(`${BASE_URL}/${eventId}`)
     return response.data
   } catch (error) {
-    logger.warn('获取活动详情失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.warn('获取活动详情失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -68,7 +70,8 @@ async function createEvent(eventData) {
     const response = await httpClient.post(BASE_URL, eventData)
     return response.data
   } catch (error) {
-    logger.error('创建活动失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.error('创建活动失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -86,7 +89,8 @@ async function updateEvent(eventId, updates) {
     const response = await httpClient.patch(`${BASE_URL}/${eventId}`, updates)
     return response.data
   } catch (error) {
-    logger.error('更新活动失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.error('更新活动失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -102,7 +106,8 @@ async function deleteEvent(eventId) {
   try {
     await httpClient.delete(`${BASE_URL}/${eventId}`)
   } catch (error) {
-    logger.error('删除活动失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.error('删除活动失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -119,7 +124,8 @@ async function joinEvent(eventId) {
     const response = await httpClient.post(`${BASE_URL}/${eventId}/join`)
     return response.data
   } catch (error) {
-    logger.error('报名失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.error('报名失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -136,7 +142,8 @@ async function leaveEvent(eventId) {
     const response = await httpClient.post(`${BASE_URL}/${eventId}/leave`)
     return response.data
   } catch (error) {
-    logger.error('取消报名失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.error('取消报名失败:', err.response?.data || err.message)
     throw error
   }
 }
@@ -154,7 +161,8 @@ async function exportCalendar(eventId) {
     })
     return response.data
   } catch (error) {
-    logger.error('导出日历失败:', error.response?.data || error.message)
+    const err = /** @type {any} */ (error)
+    logger.error('导出日历失败:', err.response?.data || err.message)
     throw error
   }
 }
