@@ -124,5 +124,8 @@ reasonix.toml
 # Claude local data
 .claude-crap/
 
+# Superpowers skill local data
+.superpowers/
+
 # Temporary scripts
 screenshot.cjs
