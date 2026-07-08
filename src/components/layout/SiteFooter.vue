@@ -28,9 +28,15 @@
       <div class="site-footer__links">
         <h4 class="site-footer__heading">CHANNELS</h4>
         <div class="site-footer__nav">
-          <a href="#">Discord</a>
-          <a href="#">QQ 群</a>
-          <a href="#">Bilibili</a>
+          <a
+            v-for="channel in channels"
+            :key="channel.label"
+            :href="channel.href"
+            :aria-disabled="channel.href === '#' ? 'true' : undefined"
+            :tabindex="channel.href === '#' ? -1 : undefined"
+          >
+            {{ channel.label }}
+          </a>
         </div>
       </div>
     </div>
@@ -44,7 +50,14 @@
 </template>
 
 <script setup>
+import { siteConfig } from '../../config/site.config.js'
+
 const year = new Date().getFullYear()
+const channels = [
+  { label: 'Discord', href: siteConfig.siteInfo.discord || '#' },
+  { label: 'QQ 群', href: siteConfig.siteInfo.qqGroup ? `https://qm.qq.com/cgi-bin/qm/qr?k=${siteConfig.siteInfo.qqGroup}` : '#' },
+  { label: 'Bilibili', href: siteConfig.contact.socialLinks.find((l) => l.platform === 'bilibili')?.url || '#' }
+]
 </script>
 
 <style scoped>

@@ -49,35 +49,96 @@
           <div class="join-form-area">
             <div class="bezel-card">
               <div class="bezel-card__inner">
-                <form @submit.prevent="handleSubmit" class="join-form">
+                <form
+                  @submit.prevent="handleSubmit"
+                  class="join-form"
+                  :aria-busy="isSubmitting"
+                >
                   <div class="form-group">
-                    <label class="form-label">姓名 <span class="required">*</span></label>
-                    <input v-model="form.name" class="form-input" placeholder="你的游戏内名称" required maxlength="50" />
+                    <label class="form-label" for="join-name">姓名 <span class="required">*</span></label>
+                    <input
+                      id="join-name"
+                      v-model="form.name"
+                      class="form-input"
+                      :class="{ 'form-input--error': errors.name }"
+                      :aria-invalid="errors.name ? 'true' : 'false'"
+                      :aria-describedby="errors.name ? 'join-name-error' : undefined"
+                      placeholder="你的游戏内名称"
+                      required
+                      maxlength="50"
+                    />
+                    <span v-if="errors.name" id="join-name-error" class="form-error" role="alert">{{ errors.name }}</span>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">邮箱 <span class="required">*</span></label>
-                    <input v-model="form.email" type="email" class="form-input" placeholder="your@email.com" required />
+                    <label class="form-label" for="join-email">邮箱 <span class="required">*</span></label>
+                    <input
+                      id="join-email"
+                      v-model="form.email"
+                      type="email"
+                      class="form-input"
+                      :class="{ 'form-input--error': errors.email }"
+                      :aria-invalid="errors.email ? 'true' : 'false'"
+                      :aria-describedby="errors.email ? 'join-email-error' : undefined"
+                      placeholder="your@email.com"
+                      required
+                    />
+                    <span v-if="errors.email" id="join-email-error" class="form-error" role="alert">{{ errors.email }}</span>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Discord</label>
-                    <input v-model="form.discord" class="form-input" placeholder="用户名#0000" maxlength="50" />
+                    <label class="form-label" for="join-discord">Discord</label>
+                    <input
+                      id="join-discord"
+                      v-model="form.discord"
+                      class="form-input"
+                      :class="{ 'form-input--error': errors.discord }"
+                      :aria-invalid="errors.discord ? 'true' : 'false'"
+                      :aria-describedby="errors.discord ? 'join-discord-error' : undefined"
+                      placeholder="用户名#0000"
+                      maxlength="50"
+                    />
+                    <span v-if="errors.discord" id="join-discord-error" class="form-error" role="alert">{{ errors.discord }}</span>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">游戏经验</label>
-                    <textarea v-model="form.experience" class="form-input form-textarea" placeholder="简述你的星际公民游戏经验..." rows="4" maxlength="500"></textarea>
+                    <label class="form-label" for="join-experience">游戏经验</label>
+                    <textarea
+                      id="join-experience"
+                      v-model="form.experience"
+                      class="form-input form-textarea"
+                      placeholder="简述你的星际公民游戏经验..."
+                      rows="4"
+                      maxlength="500"
+                    ></textarea>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">加入原因</label>
-                    <textarea v-model="form.reason" class="form-input form-textarea" placeholder="你为什么想加入我们？" rows="3" maxlength="500"></textarea>
+                    <label class="form-label" for="join-reason">加入原因</label>
+                    <textarea
+                      id="join-reason"
+                      v-model="form.reason"
+                      class="form-input form-textarea"
+                      placeholder="你为什么想加入我们？"
+                      rows="3"
+                      maxlength="500"
+                    ></textarea>
                   </div>
 
                   <Transition name="fade">
-                    <div v-if="submitMessage" class="form-message" :class="submitSuccess ? 'form-message--success' : 'form-message--error'">
+                    <div
+                      v-if="submitMessage"
+                      class="form-message"
+                      :class="submitSuccess ? 'form-message--success' : 'form-message--error'"
+                      role="alert"
+                      aria-live="polite"
+                    >
                       {{ submitMessage }}
                     </div>
                   </Transition>
 
-                  <button type="submit" class="join-submit" :disabled="isSubmitting">
+                  <button
+                    type="submit"
+                    class="join-submit"
+                    :disabled="isSubmitting"
+                    :aria-label="isSubmitting ? '正在提交申请' : '提交申请'"
+                  >
                     {{ isSubmitting ? '提交中...' : '提交申请' }}
                   </button>
                 </form>
@@ -112,13 +173,55 @@ const processSteps = ref([
 ])
 
 const form = reactive({ name: '', email: '', discord: '', experience: '', reason: '' })
+const errors = reactive({ name: '', email: '', discord: '' })
 const isSubmitting = ref(false)
 const submitMessage = ref('')
 const submitSuccess = ref(false)
 
+/**
+ * 校验邮箱格式
+ * @param {string} email - 邮箱地址
+ * @returns {boolean}
+ */
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+/**
+ * 客户端表单校验
+ * @returns {boolean}
+ */
+function validateForm() {
+  errors.name = ''
+  errors.email = ''
+  errors.discord = ''
+
+  if (!form.name.trim()) {
+    errors.name = '请输入姓名'
+  }
+
+  if (!form.email.trim()) {
+    errors.email = '请输入邮箱'
+  } else if (!isValidEmail(form.email)) {
+    errors.email = '请输入有效的邮箱地址'
+  }
+
+  if (form.discord.trim() && !/^[^#]+(#\d{4})?$/.test(form.discord.trim())) {
+    errors.discord = 'Discord 格式不正确'
+  }
+
+  return !errors.name && !errors.email && !errors.discord
+}
+
 async function handleSubmit() {
-  isSubmitting.value = true
   submitMessage.value = ''
+
+  if (!validateForm()) {
+    submitSuccess.value = false
+    return
+  }
+
+  isSubmitting.value = true
   try {
     await dataService.submitApplication(form)
     submitSuccess.value = true
@@ -288,6 +391,17 @@ async function handleSubmit() {
 }
 
 .required { color: var(--color-status-danger); }
+
+.form-input--error {
+  border-color: var(--color-status-danger) !important;
+  box-shadow: 0 0 0 1px var(--color-status-danger), 0 0 12px rgba(239, 68, 68, 0.1) !important;
+}
+
+.form-error {
+  font-size: var(--text-xs);
+  color: var(--color-status-danger);
+  padding-left: 2px;
+}
 
 .form-textarea {
   resize: vertical;

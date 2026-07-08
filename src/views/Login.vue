@@ -40,7 +40,11 @@
             <span class="login-id__text font-data">ACCESS TERMINAL v6.0</span>
           </div>
 
-          <form @submit.prevent="handleLogin" class="login-form">
+          <form
+            @submit.prevent="handleLogin"
+            class="login-form"
+            :aria-busy="isSubmitting"
+          >
             <div class="login-form__group">
               <label for="email" class="login-form__label font-data">EMAIL</label>
               <input
@@ -49,10 +53,12 @@
                 type="email"
                 class="holo-input"
                 :class="{ 'holo-input--error': errors.email }"
+                :aria-invalid="errors.email ? 'true' : 'false'"
+                :aria-describedby="errors.email ? 'email-error' : undefined"
                 placeholder="请输入邮箱"
                 required
               />
-              <span v-if="errors.email" class="login-form__error">{{ errors.email }}</span>
+              <span v-if="errors.email" id="email-error" class="login-form__error" role="alert">{{ errors.email }}</span>
             </div>
 
             <div class="login-form__group">
@@ -63,16 +69,23 @@
                 type="password"
                 class="holo-input"
                 :class="{ 'holo-input--error': errors.password }"
+                :aria-invalid="errors.password ? 'true' : 'false'"
+                :aria-describedby="errors.password ? 'password-error' : undefined"
                 placeholder="请输入密码"
                 required
               />
-              <span v-if="errors.password" class="login-form__error">{{ errors.password }}</span>
+              <span v-if="errors.password" id="password-error" class="login-form__error" role="alert">{{ errors.password }}</span>
             </div>
 
             <!-- Global Error -->
             <Transition name="holo-fade">
-              <div v-if="loginError" class="login-alert">
-                <svg class="login-alert__icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <div
+                v-if="loginError"
+                class="login-alert"
+                role="alert"
+                aria-live="polite"
+              >
+                <svg class="login-alert__icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M8 4.5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                   <circle cx="8" cy="11.5" r="0.75" fill="currentColor"/>
                 </svg>
@@ -84,6 +97,7 @@
               type="submit"
               class="login-submit"
               :disabled="isSubmitting"
+              :aria-label="isSubmitting ? '正在验证登录信息' : '登录'"
             >
               <span v-if="isSubmitting" class="btn-loading">
                 <span class="spinner"></span>

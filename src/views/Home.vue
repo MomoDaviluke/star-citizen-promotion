@@ -49,6 +49,7 @@
             :class="{ 'is-tapped': tappedIndex === idx }"
             role="button"
             tabindex="0"
+            :aria-label="`查看 ${ship.name} 详情`"
             @click="handleCardClick(idx)"
             @keydown.enter="handleCardClick(idx)"
           >
@@ -361,6 +362,23 @@ onMounted(() => {
 [data-animate].is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* 尊重减少动画偏好：禁用滚动入场动画，保持内容可见 */
+@media (prefers-reduced-motion: reduce) {
+  [data-animate] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* 无 JS 时保持内容可见 */
+@media (scripting: none) {
+  [data-animate] {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -720,6 +738,12 @@ onMounted(() => {
 }
 
 .fleet-card:hover {
+  transform: translateY(-8px);
+}
+
+.fleet-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
   transform: translateY(-8px);
 }
 

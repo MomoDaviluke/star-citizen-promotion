@@ -13,29 +13,88 @@
           <h2>创建账户</h2>
         </div>
 
-        <form @submit.prevent="handleRegister" class="auth-form">
+        <form
+          @submit.prevent="handleRegister"
+          class="auth-form"
+          :aria-busy="isSubmitting"
+        >
           <div class="form-group">
             <label class="form-label" for="username">用户名</label>
-            <input id="username" v-model="form.username" class="form-input" placeholder="选择一个用户名" required maxlength="30" />
+            <input
+              id="username"
+              v-model="form.username"
+              class="form-input"
+              :class="{ 'form-input--error': errors.username }"
+              :aria-invalid="errors.username ? 'true' : 'false'"
+              :aria-describedby="errors.username ? 'username-error' : undefined"
+              placeholder="选择一个用户名"
+              required
+              maxlength="30"
+            />
+            <span v-if="errors.username" id="username-error" class="form-error" role="alert">{{ errors.username }}</span>
           </div>
           <div class="form-group">
             <label class="form-label" for="email">邮箱</label>
-            <input id="email" v-model="form.email" type="email" class="form-input" placeholder="your@email.com" required />
+            <input
+              id="email"
+              v-model="form.email"
+              type="email"
+              class="form-input"
+              :class="{ 'form-input--error': errors.email }"
+              :aria-invalid="errors.email ? 'true' : 'false'"
+              :aria-describedby="errors.email ? 'email-error' : undefined"
+              placeholder="your@email.com"
+              required
+            />
+            <span v-if="errors.email" id="email-error" class="form-error" role="alert">{{ errors.email }}</span>
           </div>
           <div class="form-group">
             <label class="form-label" for="password">密码</label>
-            <input id="password" v-model="form.password" type="password" class="form-input" placeholder="至少 8 位字符" required minlength="8" />
+            <input
+              id="password"
+              v-model="form.password"
+              type="password"
+              class="form-input"
+              :class="{ 'form-input--error': errors.password }"
+              :aria-invalid="errors.password ? 'true' : 'false'"
+              :aria-describedby="errors.password ? 'password-error' : undefined"
+              placeholder="至少 8 位字符"
+              required
+              minlength="8"
+            />
+            <span v-if="errors.password" id="password-error" class="form-error" role="alert">{{ errors.password }}</span>
           </div>
           <div class="form-group">
             <label class="form-label" for="confirmPassword">确认密码</label>
-            <input id="confirmPassword" v-model="form.confirmPassword" type="password" class="form-input" placeholder="再次输入密码" required />
+            <input
+              id="confirmPassword"
+              v-model="form.confirmPassword"
+              type="password"
+              class="form-input"
+              :class="{ 'form-input--error': errors.confirmPassword }"
+              :aria-invalid="errors.confirmPassword ? 'true' : 'false'"
+              :aria-describedby="errors.confirmPassword ? 'confirmPassword-error' : undefined"
+              placeholder="再次输入密码"
+              required
+            />
+            <span v-if="errors.confirmPassword" id="confirmPassword-error" class="form-error" role="alert">{{ errors.confirmPassword }}</span>
           </div>
 
           <Transition name="fade">
-            <div v-if="errorMessage" class="form-message form-message--error">{{ errorMessage }}</div>
+            <div
+              v-if="errorMessage"
+              class="form-message form-message--error"
+              role="alert"
+              aria-live="polite"
+            >{{ errorMessage }}</div>
           </Transition>
 
-          <button type="submit" class="btn-primary form-submit" :disabled="isSubmitting">
+          <button
+            type="submit"
+            class="btn-primary form-submit"
+            :disabled="isSubmitting"
+            :aria-label="isSubmitting ? '正在创建账户' : '注册'"
+          >
             {{ isSubmitting ? '注册中...' : '注册' }}
           </button>
         </form>
@@ -57,13 +116,31 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 const form = reactive({ username: '', email: '', password: '', confirmPassword: '' })
+const errors = reactive({ username: '', email: '', password: '', confirmPassword: '' })
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
 async function handleRegister() {
   errorMessage.value = ''
+  errors.username = ''
+  errors.email = ''
+  errors.password = ''
+  errors.confirmPassword = ''
+
+  if (!form.username.trim()) {
+    errors.username = '请输入用户名'
+    return
+  }
+  if (!form.email.trim()) {
+    errors.email = '请输入邮箱'
+    return
+  }
+  if (!form.password) {
+    errors.password = '请输入密码'
+    return
+  }
   if (form.password !== form.confirmPassword) {
-    errorMessage.value = '两次输入的密码不一致'
+    errors.confirmPassword = '两次输入的密码不一致'
     return
   }
   isSubmitting.value = true

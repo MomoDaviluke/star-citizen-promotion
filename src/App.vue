@@ -9,8 +9,11 @@
     <!-- 站点头部导航 -->
     <SiteHeader />
 
+    <!-- 跳转至主内容链接（屏幕阅读器与键盘用户） -->
+    <a href="#main-content" class="skip-link">跳转至主内容</a>
+
     <!-- 主内容区域 -->
-    <main class="page-main">
+    <main id="main-content" class="page-main" tabindex="-1">
       <ErrorBoundary @error="handleGlobalError">
         <router-view v-slot="{ Component, route }">
           <PageTransition :key="route.path">
@@ -262,6 +265,29 @@ provide('loading', { showLoading, hideLoading })
 </script>
 
 <style scoped>
+/* 跳转主内容链接：默认隐藏，聚焦时显示 */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: calc(var(--z-header) + 10);
+  padding: 0.75rem 1rem;
+  background: var(--color-bg);
+  color: var(--color-text-heading);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 600;
+  transform: translateY(-150%);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Main content area */
 .page-main {
   padding-top: 64px;

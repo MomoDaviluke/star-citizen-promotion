@@ -41,6 +41,7 @@
             :key="cat"
             class="filter-btn"
             :class="{ 'filter-btn--active': activeCategory === cat }"
+            :aria-pressed="activeCategory === cat"
             @click="activeCategory = cat"
           >
             {{ cat }}
@@ -50,8 +51,9 @@
     </section>
 
     <!-- Ship grid -->
-    <section class="fleet-grid-section section">
+    <section class="fleet-grid-section section" aria-live="polite" aria-atomic="false">
       <div class="container">
+        <p class="visually-hidden">当前显示 {{ filteredShips.length }} 艘舰船</p>
         <TransitionGroup name="ship-list" tag="div" class="ship-grid">
           <ShipCard
             v-for="ship in filteredShips"
@@ -169,6 +171,19 @@ function goToShip(slug) {
 
 .hero__corner--tl { top: 1.5rem; left: 1.5rem; }
 .hero__corner--br { bottom: 1.5rem; right: 1.5rem; }
+
+/* 仅对辅助技术可见 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ── Pill Badge ── */
 .pill-badge {

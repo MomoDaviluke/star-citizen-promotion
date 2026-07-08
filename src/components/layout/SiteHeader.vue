@@ -11,7 +11,7 @@
       <TechDivider vertical class="site-header__divider" />
 
       <!-- Navigation -->
-      <nav class="site-header__nav" :class="{ 'site-header__nav--open': isMobileMenuOpen }">
+      <nav id="site-nav" class="site-header__nav" :class="{ 'site-header__nav--open': isMobileMenuOpen }">
         <router-link
           v-for="(link, index) in navLinks"
           :key="link.path"
@@ -19,6 +19,7 @@
           class="site-header__link"
           :class="{ 'site-header__link--active': isActive(link.path) }"
           :style="{ '--link-index': index }"
+          :aria-current="isActive(link.path) ? 'page' : undefined"
           @click="isMobileMenuOpen = false"
         >
           {{ link.label }}
@@ -37,7 +38,13 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-        <button class="site-header__menu-btn" @click="isMobileMenuOpen = !isMobileMenuOpen" aria-label="菜单">
+        <button
+          class="site-header__menu-btn"
+          @click="isMobileMenuOpen = !isMobileMenuOpen"
+          aria-label="菜单"
+          :aria-expanded="isMobileMenuOpen"
+          aria-controls="site-nav"
+        >
           <span class="hamburger" :class="{ 'hamburger--open': isMobileMenuOpen }">
             <span></span><span></span><span></span>
           </span>
