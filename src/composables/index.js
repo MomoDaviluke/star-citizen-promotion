@@ -5,6 +5,5 @@
  */
 
 export { useGSAPReveal } from './useGSAPReveal'
-export { ANIMATION_CONFIGS } from '@/utils/animationConfigs.js'
 export { usePwa } from './usePwa'
 export { useTheme } from './useTheme'

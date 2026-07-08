@@ -14,6 +14,10 @@ import { ANIMATION_CONFIGS } from '../composables/useGSAPReveal.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
+/**
+ * @typedef {HTMLElement & { _scrollRevealTrigger?: import('gsap/ScrollTrigger').ScrollTrigger | null }} ScrollRevealElement
+ */
+
 /** 检测用户是否偏好减少动画 */
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -31,12 +35,12 @@ function parseOptions(value) {
 
 /**
  * v-scroll-reveal 指令定义
- * @type {import('vue').Directive}
+ * @type {import('vue').ObjectDirective<ScrollRevealElement, any>}
  */
 export const vScrollReveal = {
   /**
    * 元素挂载时初始化 GSAP ScrollTrigger 动画
-   * @param {HTMLElement} el - 绑定指令的 DOM 元素
+   * @param {ScrollRevealElement} el - 绑定指令的 DOM 元素
    * @param {import('vue').DirectiveBinding} binding - 指令绑定对象
    */
   mounted(el, binding) {
@@ -76,7 +80,7 @@ export const vScrollReveal = {
 
   /**
    * 指令更新时重新创建 ScrollTrigger
-   * @param {HTMLElement} el - 绑定指令的 DOM 元素
+   * @param {ScrollRevealElement} el - 绑定指令的 DOM 元素
    * @param {import('vue').DirectiveBinding} binding - 新的指令绑定对象
    */
   updated(el, binding) {
@@ -90,12 +94,12 @@ export const vScrollReveal = {
     }
 
     /** 重新初始化（复用 mounted 逻辑） */
-    vScrollReveal.mounted(el, binding)
+    /** @type {any} */ (vScrollReveal.mounted)(el, binding)
   },
 
   /**
    * 元素卸载时销毁 ScrollTrigger 实例，防止内存泄漏
-   * @param {HTMLElement} el - 绑定指令的 DOM 元素
+   * @param {ScrollRevealElement} el - 绑定指令的 DOM 元素
    */
   unmounted(el) {
     if (el._scrollRevealTrigger) {

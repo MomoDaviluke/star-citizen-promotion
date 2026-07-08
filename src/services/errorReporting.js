@@ -35,7 +35,7 @@ export function initErrorReporting(app, router) {
         if (event.exception) {
           const values = event.exception.values || []
           for (const ex of values) {
-            if (ex.stacktrace) {
+            if (ex.stacktrace?.frames) {
               ex.stacktrace.frames = ex.stacktrace.frames.filter(
                 (frame) => !frame.filename?.includes('node_modules')
               )
@@ -69,7 +69,7 @@ export function captureException(error, context = {}) {
 export function captureMessage(message, level = 'info') {
   if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
     import('@sentry/vue').then((Sentry) => {
-      Sentry.captureMessage(message, level)
+      Sentry.captureMessage(message, /** @type {import('@sentry/vue').SeverityLevel} */ (level))
     })
   }
 }

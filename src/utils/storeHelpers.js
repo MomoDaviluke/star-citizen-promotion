@@ -10,7 +10,7 @@
  * @description 自动管理 loading 和 error 状态，避免在每个异步方法中重复 try/catch/finally
  * @param {import('vue').Ref<boolean>} loading - loading 状态引用
  * @param {import('vue').Ref<string|null>} error - error 状态引用
- * @returns {Function} withLoading 包装函数
+ * @returns {{ withLoading: function(Function, string=): Promise<any> }} withLoading 包装函数
  *
  * @example
  * const { withLoading } = createStoreHelpers(loading, error)
@@ -27,7 +27,7 @@ export function createStoreHelpers(loading, error) {
    * 执行异步操作并自动管理 loading/error 状态
    * @param {Function} fn - 异步操作函数
    * @param {string} [errorMsg='操作失败'] - 失败时的默认错误消息
-   * @returns {Promise<*>} fn 的返回值
+   * @returns {Promise<any>} fn 的返回值
    */
   async function withLoading(fn, errorMsg = '操作失败') {
     loading.value = true

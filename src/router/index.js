@@ -193,8 +193,9 @@ const router = createRouter({
  *              认证状态通过 Pinia auth store 获取，Token 由 httpOnly cookie 管理。
  */
 router.beforeEach((to) => {
-  if (to.meta.title) {
-    document.title = to.meta.title
+  const title = /** @type {string|undefined} */ (to.meta.title)
+  if (title) {
+    document.title = title
   }
 
   const authStore = useAuthStore()

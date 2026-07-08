@@ -11,6 +11,7 @@ import { createStoreHelpers } from '@/utils/storeHelpers'
 
 export const useFleetStore = defineStore('fleet', () => {
   // ========== 状态定义 ==========
+  /** @type {import('vue').Ref<Array<{ id: string, name: string, callsign?: string, ship: string, category: string, status: string, value?: number, addedAt?: string, image?: string, description?: string }>>} */
   const ships = ref([])
   const loading = ref(false)
   const error = ref(null)
@@ -60,7 +61,7 @@ export const useFleetStore = defineStore('fleet', () => {
           compare = (a.value || 0) - (b.value || 0)
           break
         case 'added':
-          compare = new Date(a.addedAt || 0) - new Date(b.addedAt || 0)
+          compare = new Date(a.addedAt || 0).getTime() - new Date(b.addedAt || 0).getTime()
           break
       }
 

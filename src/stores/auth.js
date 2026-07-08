@@ -13,6 +13,7 @@ import { createStoreHelpers } from '@/utils/storeHelpers'
 
 export const useAuthStore = defineStore('auth', () => {
   // ========== 状态定义 ==========
+  /** @type {import('vue').Ref<{ id: string, username: string, role: string, avatar?: string } | null>} */
   const user = ref(null)
   const loading = ref(false)
   const error = ref(null)
