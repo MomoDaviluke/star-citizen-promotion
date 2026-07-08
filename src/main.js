@@ -51,6 +51,7 @@ import BaseTooltip from './components/common/BaseTooltip.vue'
 import { createLogger } from './utils/logger.js'
 import { vScrollReveal } from './directives/scrollReveal.js'
 import { vRipple } from './directives/ripple.js'
+import { useWebVitals } from './composables/useWebVitals.js'
 const logger = createLogger('App')
 
 
@@ -136,7 +137,7 @@ initErrorReporting(app, router)
  * @description 捕获组件渲染和生命周期中的未处理错误
  *              作为最后一道防线，防止错误导致应用崩溃
  *              生产环境自动上报到 Sentry，并展示用户友好的错误提示
- * @param {Error} err - 错误对象
+ * @param {unknown} err - 错误对象
  * @param {import('vue').ComponentPublicInstance|null} instance - 发生错误的组件实例
  * @param {string} info - 错误信息，说明错误发生在哪个生命周期钩子或渲染阶段
  */
@@ -203,4 +204,18 @@ if (import.meta.env.PROD) {
   import('./composables/usePwa.js').then(({ registerPWA }) => {
     registerPWA()
   })
+}
+
+/**
+ * 初始化真实用户性能监控（RUM）
+ * @description 仅生产环境采集 LCP/CLS/INP/FCP/TTFB 等核心指标
+ *              默认采样率 100%，可通过 VITE_RUM_SAMPLE_RATE 环境变量调整
+ */
+if (import.meta.env.PROD && import.meta.env.VITE_RUM_ENABLED !== 'false') {
+  const sampleRate = parseFloat(import.meta.env.VITE_RUM_SAMPLE_RATE || '1')
+  const rum = useWebVitals({
+    enabled: true,
+    sampleRate: Number.isNaN(sampleRate) ? 1 : Math.max(0, Math.min(1, sampleRate))
+  })
+  rum.start()
 }

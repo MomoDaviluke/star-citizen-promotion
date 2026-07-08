@@ -38,6 +38,7 @@ import fleetRoutes from './routes/fleet.js'
 import eventRoutes from './routes/events.js'
 import settingsRoutes from './routes/settings.js'
 import adminRoutes from './routes/admin.js'
+import rumRoutes from './routes/rum.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -297,7 +298,8 @@ const routeMounts = [
   { path: '/fleet', router: fleetRoutes },
   { path: '/events', router: eventRoutes },
   { path: '/settings', router: settingsRoutes },
-  { path: '/admin', router: adminRoutes }
+  { path: '/admin', router: adminRoutes },
+  { path: '/rum', router: rumRoutes }
 ]
 
 for (const { path: routePath, router } of routeMounts) {
