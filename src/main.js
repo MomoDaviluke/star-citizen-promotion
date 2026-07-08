@@ -20,6 +20,8 @@ import './styles/base.css'
 import './styles/variables.css'
 // 导入动画关键帧库
 import './styles/animations.css'
+// 导入统一动效工具类
+import './styles/motion.css'
 
 /**
  * 预应用主题

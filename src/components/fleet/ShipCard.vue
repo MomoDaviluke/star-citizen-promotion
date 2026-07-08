@@ -47,7 +47,7 @@
 <script setup>
 import { HudCorner, ShipCategoryBadge } from '../hud/index.js'
 
-const props = defineProps({
+defineProps({
   ship: { type: Object, required: true }
 })
 
@@ -64,13 +64,16 @@ defineEmits(['click'])
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-2xl);
   padding: 6px;
-  transition: border-color var(--duration-normal) var(--ease-out),
-              box-shadow var(--duration-normal) var(--ease-out);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+    transform var(--motion-duration-fast) var(--motion-ease-spring);
 }
 
 .ship-card:hover .ship-card__shell {
   border-color: rgba(74, 158, 255, 0.3);
   box-shadow: 0 0 32px rgba(74, 158, 255, 0.15), 0 0 60px rgba(74, 158, 255, 0.06);
+  transform: translateY(-4px);
 }
 
 .ship-card__core {
@@ -99,7 +102,7 @@ defineEmits(['click'])
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s var(--ease-smooth);
+  transition: transform var(--motion-duration-slow) var(--motion-ease-smooth);
 }
 
 .ship-card:hover .ship-card__image img {
@@ -118,7 +121,7 @@ defineEmits(['click'])
   );
   pointer-events: none;
   opacity: 0;
-  transition: opacity var(--duration-normal) var(--ease-out);
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .ship-card:hover .ship-card__scanline {
@@ -189,7 +192,7 @@ defineEmits(['click'])
   height: 100%;
   background: linear-gradient(90deg, var(--color-accent), rgba(74, 158, 255, 0.4));
   border-radius: 2px;
-  transition: width 0.6s var(--ease-smooth);
+  transition: width var(--motion-duration-slow) var(--motion-ease-smooth);
   box-shadow: 0 0 8px rgba(74, 158, 255, 0.4), 0 0 16px rgba(74, 158, 255, 0.15);
 }
 </style>

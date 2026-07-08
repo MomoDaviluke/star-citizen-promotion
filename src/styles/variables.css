@@ -204,11 +204,48 @@
   --blur-card: 16px;
   --blur-header: 20px;
 
-  /* Animation Easing */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-  --stagger-delay: 80ms;
+  /* ============================================================
+   * Motion System — 统一动效编排 Token
+   * @description 参考 Apple / Linear / Vercel 的语义化动效命名，
+   *              将动画拆分为 duration / easing / stagger / distance 四层，
+   *              确保交互、入场、环境动画在视觉和性能上的一致性。
+   * ============================================================ */
+
+  /* Duration — 按场景语义化 */
+  --motion-duration-instant: 0ms;
+  --motion-duration-micro: 80ms;
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 250ms;
+  --motion-duration-slow: 400ms;
+  --motion-duration-emphasis: 600ms;
+  --motion-duration-ambient: 20000ms;
+
+  /* Easing — 按情绪语义化 */
+  --motion-ease-linear: linear;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-dramatic: cubic-bezier(0.87, 0, 0.13, 1);
+
+  /* Stagger — 组动画级联延迟 */
+  --motion-stagger-tight: 40ms;
+  --motion-stagger-normal: 80ms;
+  --motion-stagger-loose: 120ms;
+
+  /* Distance — 位移动画幅度 */
+  --motion-distance-sm: 8px;
+  --motion-distance-md: 24px;
+  --motion-distance-lg: 48px;
+
+  /* Legacy aliases — 保持旧代码兼容，新代码优先使用 motion-* */
+  --duration-fast: var(--motion-duration-fast);
+  --duration-normal: var(--motion-duration-normal);
+  --duration-slow: var(--motion-duration-slow);
+  --ease-out: var(--motion-ease-out);
+  --ease-spring: var(--motion-ease-spring);
+  --ease-smooth: var(--motion-ease-in-out);
+  --stagger-delay: var(--motion-stagger-normal);
 
   /* ============================================================
    * Typography — 字体系统

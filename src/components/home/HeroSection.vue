@@ -146,7 +146,12 @@ import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.j
   text-transform: uppercase;
   text-decoration: none;
   border-radius: var(--radius-md);
-  transition: all var(--duration-normal) var(--ease-out);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-out),
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-out),
+    transform var(--motion-duration-fast) var(--motion-ease-spring);
 }
 
 .hero-section__btn--primary {
