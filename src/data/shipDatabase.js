@@ -644,7 +644,7 @@ const shipDatabase = {
 
     manufacturer: 'Origin Jumpworks · 起源跳跃工坊',
 
-    category: '竞。',
+    category: '竞速',
 
     categoryEn: 'RACING',
 
