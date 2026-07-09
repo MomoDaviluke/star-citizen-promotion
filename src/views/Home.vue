@@ -32,7 +32,10 @@
       </div>
     </section>
 
-    <!-- ═══ 3. FLEET PREVIEW — 3 张舰船卡片 ═══ -->
+    <!-- ═══ 3. PLANET EXPLORATION — 火星预览板块 ═══ -->
+    <HomeWorldsSection />
+
+    <!-- ═══ 4. FLEET PREVIEW — 3 张舰船卡片 ═══ -->
     <section class="fleet-preview section" data-animate>
       <div class="container">
         <div class="fleet-preview__header">
@@ -117,6 +120,7 @@ import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
 import HeroSection from '../components/home/HeroSection.vue'
 import HeroDataPanel from '../components/home/HeroDataPanel.vue'
 import HeroTicker from '../components/home/HeroTicker.vue'
+import HomeWorldsSection from '../components/home/HomeWorldsSection.vue'
 
 const router = useRouter()
 
