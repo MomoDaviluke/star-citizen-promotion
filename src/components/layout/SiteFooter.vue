@@ -45,6 +45,9 @@
     <div class="site-footer__bottom container">
       <div class="site-footer__divider"></div>
       <p class="site-footer__copyright">&copy; {{ year }} Stellar Nexus. All rights reserved.</p>
+      <p class="site-footer__disclaimer">
+        Stellar Nexus 是 Star Citizen 玩家组织网站，所有官方素材版权归 Cloud Imperium Games 所有
+      </p>
     </div>
   </footer>
 </template>
@@ -171,6 +174,16 @@ const channels = [
   color: var(--color-text-dim);
   letter-spacing: 0.02em;
   text-align: center;
+}
+
+.site-footer__disclaimer {
+  max-width: 640px;
+  margin: var(--space-2) auto 0;
+  font-size: 11px;
+  color: var(--color-text-dim);
+  line-height: 1.6;
+  text-align: center;
+  opacity: 0.7;
 }
 
 /* Mobile */
