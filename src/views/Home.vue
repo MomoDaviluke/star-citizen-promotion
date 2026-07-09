@@ -41,7 +41,7 @@
         <div class="fleet-preview__header">
           <span class="section-label">// FLEET REGISTRY</span>
           <h2 class="section-title">舰队展厅</h2>
-          <p class="section-desc">我们的主力舰船阵容，每一艘都经过精心调校</p>
+          <p class="section-desc">第四舰队的主力舰船阵容，从轻型战斗机到豪华探索舰，每一艘都经过实战调校</p>
         </div>
 
         <div class="fleet-grid">
@@ -56,9 +56,20 @@
             @click="handleCardClick(idx)"
             @keydown.enter="handleCardClick(idx)"
           >
+            <HudCorner position="top-left" size="sm" class="fleet-card__corner fleet-card__corner--tl" />
+            <HudCorner position="bottom-right" size="sm" class="fleet-card__corner fleet-card__corner--br" />
+
             <div class="fleet-card__img-wrap">
               <img :src="ship.image" :alt="ship.name" class="fleet-card__img" loading="lazy" />
               <div class="fleet-card__img-overlay"></div>
+              <div class="fleet-card__img-vignette" aria-hidden="true"></div>
+              <div class="fleet-card__img-scanline" aria-hidden="true"></div>
+              <div class="fleet-card__img-frame" aria-hidden="true">
+                <span class="fleet-card__frame-corner fleet-card__frame-corner--tl" />
+                <span class="fleet-card__frame-corner fleet-card__frame-corner--tr" />
+                <span class="fleet-card__frame-corner fleet-card__frame-corner--bl" />
+                <span class="fleet-card__frame-corner fleet-card__frame-corner--br" />
+              </div>
             </div>
             <div class="fleet-card__body">
               <div class="fleet-card__header">
@@ -86,7 +97,7 @@
 
         <div class="fleet-preview__more">
           <RouterLink to="/fleet" class="link-arrow">
-            <span>查看全部舰队</span>
+            <span>进入舰队展厅 · ENTER HANGAR</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -121,6 +132,7 @@ import HeroSection from '../components/home/HeroSection.vue'
 import HeroDataPanel from '../components/home/HeroDataPanel.vue'
 import HeroTicker from '../components/home/HeroTicker.vue'
 import HomeWorldsSection from '../components/home/HomeWorldsSection.vue'
+import { HudCorner } from '../components/hud/index.js'
 
 const router = useRouter()
 
@@ -735,6 +747,7 @@ onMounted(() => {
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--duration-normal);
+  z-index: 2;
 }
 
 .fleet-card:hover::before {
@@ -743,6 +756,9 @@ onMounted(() => {
 
 .fleet-card:hover {
   transform: translateY(-8px);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.35),
+    0 0 32px rgba(74, 158, 255, 0.1);
 }
 
 .fleet-card:focus-visible {
@@ -750,6 +766,14 @@ onMounted(() => {
   outline-offset: 4px;
   transform: translateY(-8px);
 }
+
+.fleet-card__corner {
+  position: absolute;
+  z-index: 3;
+}
+
+.fleet-card__corner--tl { top: 0.75rem; left: 0.75rem; }
+.fleet-card__corner--br { bottom: 0.75rem; right: 0.75rem; }
 
 .fleet-card__img-wrap {
   width: 100%;
@@ -762,18 +786,100 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s var(--ease-smooth);
+  transition: transform 0.6s var(--ease-smooth), filter 0.6s var(--ease-smooth);
 }
 
 .fleet-card__img-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(15, 15, 24, 0.8) 0%, transparent 50%);
+  background: linear-gradient(to top, rgba(15, 15, 24, 0.85) 0%, transparent 55%);
   pointer-events: none;
+  z-index: 1;
+}
+
+/* 电影级暗角：强化图片视觉重心 */
+.fleet-card__img-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 5, 8, 0.5) 100%),
+    linear-gradient(180deg, transparent 50%, rgba(5, 5, 8, 0.7) 100%);
+  opacity: 0.85;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+/* HUD 扫描线：悬浮时显现 */
+.fleet-card__img-scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(74, 158, 255, 0.05) 2px,
+    rgba(74, 158, 255, 0.05) 4px
+  );
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.fleet-card:hover .fleet-card__img-scanline {
+  opacity: 1;
+}
+
+.fleet-card:hover .fleet-card__img-vignette {
+  opacity: 0.7;
 }
 
 .fleet-card:hover .fleet-card__img {
   transform: scale(1.08);
+  filter: brightness(1.05) contrast(1.03);
+}
+
+/* 图片内边框角标 */
+.fleet-card__img-frame {
+  position: absolute;
+  inset: 0.75rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fleet-card__frame-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(74, 158, 255, 0.3);
+  border-style: solid;
+  transition: border-color 0.4s var(--ease-out);
+}
+
+.fleet-card__frame-corner--tl {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+}
+.fleet-card__frame-corner--tr {
+  top: 0;
+  right: 0;
+  border-width: 2px 2px 0 0;
+}
+.fleet-card__frame-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 2px 2px;
+}
+.fleet-card__frame-corner--br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+}
+
+.fleet-card:hover .fleet-card__frame-corner {
+  border-color: rgba(74, 158, 255, 0.6);
 }
 
 .fleet-card__body {
