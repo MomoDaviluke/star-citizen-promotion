@@ -62,18 +62,20 @@ export const useHomeStore = defineStore('home', () => {
         fleetService.getFleet({ limit: 3, sortBy: 'value', order: 'desc' })
       ])
 
-      // stats 失败时降级到 fallback（stats.value 保持 null，computed 自动降级）
+      // stats：成功则使用后端数据，失败则降级到 fallback（computed 自动降级）
       if (statsRes.status === 'fulfilled') {
-        stats.value = statsRes.value
+        stats.value = unwrap(statsRes.value)
+      } else {
+        error.value = '统计数据获取失败，已展示兜底数据'
       }
-      // stats.value 保持 null，computed 会用 fallback
 
-      // fleet 失败时降级到 fallback
+      // fleet：成功则取前 3 艘，失败则降级到 fallback
       if (fleetRes.status === 'fulfilled') {
         const fleetData = unwrap(fleetRes.value)
         fleetPreview.value = Array.isArray(fleetData) ? fleetData.slice(0, 3) : fallbackFleetPreview
       } else {
         fleetPreview.value = fallbackFleetPreview
+        error.value = error.value || '舰队数据获取失败，已展示兜底数据'
       }
     }, '获取首页数据失败')
   }

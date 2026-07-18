@@ -25,5 +25,6 @@ async function getStats() {
   }
 }
 
-export { getStats }
-export default { getStats }
+const statsService = { getStats }
+
+export { getStats, statsService }
