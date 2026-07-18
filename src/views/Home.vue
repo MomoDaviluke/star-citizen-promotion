@@ -291,279 +291,6 @@ onUnmounted(() => {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   1. HERO — 全屏沉浸
-   ═══════════════════════════════════════════════════════════ */
-
-.hero {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding-bottom: 12vh;
-  padding-left: clamp(2rem, 8vw, 120px);
-  overflow: hidden;
-}
-
-/* 星空粒子 — 3层深度 */
-.hero__stars {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.star {
-  position: absolute;
-  background: #ffffff;
-  border-radius: 50%;
-  opacity: 0;
-}
-
-.star--far {
-  animation: starFar 5s ease-in-out infinite;
-  box-shadow: none;
-}
-
-.star--mid {
-  animation: starMid 4s ease-in-out infinite;
-  box-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
-}
-
-.star--near {
-  animation: starNear 3s ease-in-out infinite;
-  box-shadow: 0 0 6px rgba(74, 158, 255, 0.4), 0 0 2px rgba(255, 255, 255, 0.6);
-}
-
-@keyframes starFar {
-  0%, 100% { opacity: 0.15; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.1); }
-}
-
-@keyframes starMid {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.15); }
-}
-
-@keyframes starNear {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.3); }
-}
-
-.hero__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.hero__bg-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.38) saturate(0.75);
-  animation: bgDrift 32s ease-in-out infinite;
-}
-
-@keyframes bgDrift {
-  0%, 100% { transform: scale(1.02) translate(0, 0); }
-  33% { transform: scale(1.04) translate(-0.3%, 0.2%); }
-  66% { transform: scale(1.03) translate(0.2%, -0.15%); }
-}
-
-.hero__bg-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      to top,
-      var(--color-bg) 0%,
-      rgba(5, 5, 8, 0.6) 35%,
-      rgba(5, 5, 8, 0.2) 60%,
-      transparent 100%
-    ),
-    linear-gradient(
-      135deg,
-      rgba(5, 5, 8, 0.4) 0%,
-      transparent 50%
-    );
-}
-
-.hero__bg-gradient {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse at 30% 50%,
-      rgba(74, 158, 255, 0.08) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse at 80% 20%,
-      rgba(167, 139, 250, 0.03) 0%,
-      transparent 50%
-    );
-}
-
-/* 主光源 — 左下角偏亮光束 */
-.hero__bg-glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse at 15% 85%,
-    rgba(74, 158, 255, 0.12) 0%,
-    rgba(74, 158, 255, 0.04) 30%,
-    transparent 60%
-  );
-  animation: glowBreathe 8s ease-in-out infinite;
-  will-change: opacity;
-}
-
-@keyframes glowBreathe {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-.hero__content {
-  position: relative;
-  z-index: 2;
-  text-align: left;
-  max-width: 800px;
-}
-
-.hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 1.25rem;
-  background: rgba(74, 158, 255, 0.08);
-  border: 1px solid rgba(74, 158, 255, 0.15);
-  border-radius: 9999px;
-  font-family: var(--font-data);
-  font-size: var(--text-xs);
-  letter-spacing: 0.15em;
-  color: var(--color-accent);
-  margin-bottom: var(--space-8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* ═══ Mobile — 粒子减半 + 去重特效 ═══ */
-@media (max-width: 768px) {
-  .star--far {
-    display: none;
-  }
-
-  .star--mid {
-    animation-duration: 6s;
-    box-shadow: none;
-  }
-
-  .star--near {
-    animation-duration: 5s;
-    box-shadow: 0 0 3px rgba(74, 158, 255, 0.3);
-  }
-
-  .hero__badge {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .hero__bg-img {
-    animation: none;
-    filter: brightness(0.35) saturate(0.7);
-  }
-
-  .hero__bg-glow {
-    animation: none;
-    opacity: 0.8;
-  }
-}
-
-.hero__badge-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--color-accent);
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
-}
-
-.hero__title {
-  font-family: var(--font-display);
-  font-size: var(--text-hero);
-  font-weight: 700;
-  line-height: 0.92;
-  letter-spacing: -0.03em;
-  color: #ffffff;
-  margin-bottom: var(--space-4);
-  text-shadow: 0 0 40px rgba(74, 158, 255, 0.15);
-}
-
-.hero__title-line {
-  display: block;
-}
-
-.hero__title-line--accent {
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-bright) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 20px rgba(74, 158, 255, 0.25));
-}
-
-.hero__tagline {
-  font-family: var(--font-data);
-  font-size: var(--text-sm);
-  letter-spacing: 0.35em;
-  color: var(--color-text-dim);
-  margin-bottom: var(--space-10);
-  text-shadow: 0 0 12px rgba(74, 158, 255, 0.1);
-}
-
-.hero__actions {
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.hero__scroll {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.hero__scroll-line {
-  width: 1px;
-  height: 40px;
-  background: linear-gradient(to bottom, transparent, var(--color-accent));
-  animation: scrollLine 2s ease-in-out infinite;
-}
-
-@keyframes scrollLine {
-  0% { transform: scaleY(0); transform-origin: top; }
-  50% { transform: scaleY(1); transform-origin: top; }
-  51% { transform: scaleY(1); transform-origin: bottom; }
-  100% { transform: scaleY(0); transform-origin: bottom; }
-}
-
-.hero__scroll-text {
-  font-family: var(--font-data);
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  color: var(--color-text-dim);
-}
-
-/* ═══════════════════════════════════════════════════════════
    2. KEY NUMBERS — 两个核心数据
    ═══════════════════════════════════════════════════════════ */
 
@@ -620,7 +347,7 @@ onUnmounted(() => {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   4. CTA — 页面底部行动号召
+   5. CTA — 页面底部行动号召
    ═══════════════════════════════════════════════════════════ */
 
 .cta-section {
@@ -714,7 +441,7 @@ onUnmounted(() => {
 
 @media (max-width: 1024px) {
   .fleet-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     max-width: 600px;
     margin-inline: auto;
   }
@@ -733,22 +460,15 @@ onUnmounted(() => {
     padding: var(--space-10) 0;
   }
 
-  .hero {
-    padding-left: 1.25rem;
-    padding-bottom: 8vh;
-  }
-
-  .hero__title {
-    font-size: clamp(2.5rem, 12vw, 4rem);
+  /* Key Numbers 改为 2×2 网格（原为 flex column 1 列） */
+  .key-numbers__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
   }
 
   .key-numbers {
     padding: var(--space-10) 0 var(--space-8);
-  }
-
-  .key-numbers__grid {
-    flex-direction: column;
-    gap: var(--space-8);
   }
 
   .key-number__value {
