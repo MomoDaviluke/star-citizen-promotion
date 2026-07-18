@@ -28,12 +28,12 @@
       <slot name="data-panel"></slot>
 
       <div class="hero-section__actions">
-        <RouterLink to="/join" class="hero-section__btn hero-section__btn--primary">
+        <BaseButton variant="cta" size="lg" @click="router.push('/join')">
           START APPLICATION
-        </RouterLink>
-        <RouterLink to="/fleet" class="hero-section__btn hero-section__btn--ghost">
+        </BaseButton>
+        <BaseButton variant="outline" size="lg" @click="router.push('/fleet')">
           EXPLORE FLEET
-        </RouterLink>
+        </BaseButton>
       </div>
     </div>
 
@@ -43,7 +43,11 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.js'
+import BaseButton from '../common/BaseButton.vue'
+
+const router = useRouter()
 </script>
 
 <style scoped>
@@ -132,50 +136,6 @@ import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.j
   display: flex;
   gap: var(--space-4);
   flex-wrap: wrap;
-}
-
-.hero-section__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  transition:
-    background-color var(--motion-duration-fast) var(--motion-ease-out),
-    border-color var(--motion-duration-fast) var(--motion-ease-out),
-    color var(--motion-duration-fast) var(--motion-ease-out),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-out),
-    transform var(--motion-duration-fast) var(--motion-ease-spring);
-}
-
-.hero-section__btn--primary {
-  background: var(--color-highlight);
-  color: var(--color-bg);
-  box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
-}
-
-.hero-section__btn--primary:hover {
-  background: var(--color-highlight-bright);
-  box-shadow: 0 0 30px rgba(255, 179, 0, 0.5);
-  transform: translateY(-2px);
-}
-
-.hero-section__btn--ghost {
-  background: transparent;
-  color: var(--color-text-heading);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.hero-section__btn--ghost:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  box-shadow: 0 0 20px rgba(74, 158, 255, 0.15);
 }
 
 .hero-section__corner {

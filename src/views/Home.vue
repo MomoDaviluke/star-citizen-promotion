@@ -10,7 +10,7 @@
     <!-- ═══ 1. HERO — 100vh 全屏沉浸 ═══ -->
     <HeroSection>
       <template #data-panel>
-        <HeroDataPanel />
+        <HeroDataPanel :items="heroDataPanelItems" />
       </template>
     </HeroSection>
 
@@ -20,20 +20,16 @@
     <section class="key-numbers" data-animate>
       <div class="container">
         <div class="key-numbers__grid">
-          <div class="key-number">
-            <span class="key-number__value">128</span>
-            <span class="key-number__label">ACTIVE PILOTS</span>
-          </div>
-          <div class="key-number">
-            <span class="key-number__value">2,400+</span>
-            <span class="key-number__label">FLIGHT HOURS</span>
+          <div v-for="item in keyNumbers" :key="item.label" class="key-number">
+            <span class="key-number__value">{{ item.value }}{{ item.suffix }}</span>
+            <span class="key-number__label">{{ item.label }}</span>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ═══ 3. PLANET EXPLORATION — 火星预览板块 ═══ -->
-    <HomeWorldsSection />
+    <HomeWorldsSection :planet-data="planetData" />
 
     <!-- ═══ 4. FLEET PREVIEW — 3 张舰船卡片 ═══ -->
     <section class="fleet-preview section" data-animate>
@@ -45,54 +41,12 @@
         </div>
 
         <div class="fleet-grid">
-          <div
-            v-for="(ship, idx) in fleetShips"
+          <ShipCard
+            v-for="ship in fleetShips"
             :key="ship.slug"
-            class="fleet-card glass-card"
-            :class="{ 'is-tapped': tappedIndex === idx }"
-            role="button"
-            tabindex="0"
-            :aria-label="`查看 ${ship.name} 详情`"
-            @click="handleCardClick(idx)"
-            @keydown.enter="handleCardClick(idx)"
-          >
-            <HudCorner position="top-left" size="sm" class="fleet-card__corner fleet-card__corner--tl" />
-            <HudCorner position="bottom-right" size="sm" class="fleet-card__corner fleet-card__corner--br" />
-
-            <div class="fleet-card__img-wrap">
-              <img :src="ship.image" :alt="ship.name" class="fleet-card__img" loading="lazy" />
-              <div class="fleet-card__img-overlay"></div>
-              <div class="fleet-card__img-vignette" aria-hidden="true"></div>
-              <div class="fleet-card__img-scanline" aria-hidden="true"></div>
-              <div class="fleet-card__img-frame" aria-hidden="true">
-                <span class="fleet-card__frame-corner fleet-card__frame-corner--tl" />
-                <span class="fleet-card__frame-corner fleet-card__frame-corner--tr" />
-                <span class="fleet-card__frame-corner fleet-card__frame-corner--bl" />
-                <span class="fleet-card__frame-corner fleet-card__frame-corner--br" />
-              </div>
-            </div>
-            <div class="fleet-card__body">
-              <div class="fleet-card__header">
-                <h3 class="fleet-card__name">{{ ship.name }}</h3>
-                <span class="fleet-card__role">{{ ship.role }}</span>
-              </div>
-              <span class="fleet-card__hint">
-                <span>explore</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </span>
-              <div class="fleet-card__specs">
-                <div v-for="(spec, si) in ship.specs" :key="si" class="spec-row">
-                  <span class="spec-row__label">{{ spec.label }}</span>
-                  <div class="spec-bar">
-                    <div class="spec-bar__fill" :style="{ '--fill-width': spec.value + '%' }"></div>
-                  </div>
-                  <span class="spec-row__value">{{ spec.value }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            :ship="ship"
+            @click="handleCardClick(ship.slug)"
+          />
         </div>
 
         <div class="fleet-preview__more">
@@ -113,8 +67,12 @@
           <h2 class="cta-title">READY TO JOIN?</h2>
           <p class="cta-desc">加入我们的行列，与百名飞行员一起征服星辰大海。</p>
           <div class="cta-actions">
-            <RouterLink to="/join" class="btn-primary">START APPLICATION</RouterLink>
-            <RouterLink to="/fleet" class="btn-ghost">EXPLORE FLEET</RouterLink>
+            <BaseButton variant="cta" size="lg" @click="router.push('/join')">
+              START APPLICATION
+            </BaseButton>
+            <BaseButton variant="outline" size="lg" @click="router.push('/fleet')">
+              EXPLORE FLEET
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -124,53 +82,50 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
+import { useHomeStore } from '../stores/homeStore'
 import HeroSection from '../components/home/HeroSection.vue'
 import HeroDataPanel from '../components/home/HeroDataPanel.vue'
 import HeroTicker from '../components/home/HeroTicker.vue'
 import HomeWorldsSection from '../components/home/HomeWorldsSection.vue'
+import BaseButton from '../components/common/BaseButton.vue'
+import ShipCard from '../components/fleet/ShipCard.vue'
 import { HudCorner } from '../components/hud/index.js'
 
 const router = useRouter()
+const homeStore = useHomeStore()
+const { heroDataPanelItems, keyNumbers, planetData, loading, error } = storeToRefs(homeStore)
 
-// 首页舰队预览：从统一数据库取推荐舰船，保持 3 张卡片
+// 首页舰队预览：从统一数据库取推荐舰船，传完整对象给 ShipCard
 const fleetShips = computed(() =>
-  recommendedShips.slice(0, 3).map((slug) => {
-    const s = shipDatabase[slug]
-    return {
-      slug,
-      name: s.name,
-      role: s.role,
-      image: s.image,
-      specs: s.specs.slice(0, 3),
-    }
-  })
+  recommendedShips.slice(0, 3).map((slug) => ({
+    slug,
+    ...shipDatabase[slug]
+  }))
 )
 
-const tappedIndex = ref(null)
+const tappedSlug = ref(null)
 
 /**
  * 点击首页舰队卡片：移动端保持展开收起效果，桌面端直接跳转舰船详情
- * @param {number} idx - 卡片索引
+ * @param {string} slug - 舰船 slug
  */
-function handleCardClick(idx) {
+function handleCardClick(slug) {
   if (window.innerWidth <= 768) {
-    // 移动端 accordion: 展开新卡片时自动收起其他
-    tappedIndex.value = tappedIndex.value === idx ? null : idx
+    tappedSlug.value = tappedSlug.value === slug ? null : slug
     return
   }
-  // 桌面端点击跳转详情
-  const ship = fleetShips.value[idx]
-  if (ship && ship.slug) {
-    router.push({ name: '舰船详情', params: { slug: ship.slug } })
+  if (slug) {
+    router.push({ name: '舰船详情', params: { slug } })
   }
 }
 
 // 入场动画 — IntersectionObserver 触发滚动显现
 onMounted(() => {
+  homeStore.fetchHomeData()
   const sections = document.querySelectorAll('[data-animate]')
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -249,96 +204,6 @@ onMounted(() => {
   font-size: var(--text-md);
   color: var(--color-text-label);
   margin-top: var(--space-2);
-}
-
-/* Spec bars */
-.spec-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-2);
-}
-
-.spec-row__label {
-  font-family: var(--font-data);
-  font-size: var(--text-xs);
-  color: var(--color-text-label);
-  letter-spacing: 0.05em;
-  min-width: 3rem;
-}
-
-.spec-row__value {
-  font-family: var(--font-data);
-  font-size: var(--text-xs);
-  color: var(--color-text-dim);
-  min-width: 2rem;
-  text-align: right;
-}
-
-.spec-bar {
-  flex: 1;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.spec-bar__fill {
-  height: 100%;
-  background: var(--color-accent);
-  border-radius: 2px;
-  transition: width 0.8s var(--ease-smooth);
-}
-
-/* Buttons */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-bright) 100%);
-  color: #000000;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-smooth);
-  text-decoration: none;
-  box-shadow: 0 4px 20px rgba(74, 158, 255, 0.3);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(74, 158, 255, 0.4);
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: transparent;
-  color: var(--color-accent);
-  border: 1px solid var(--color-accent);
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-smooth);
-  text-decoration: none;
-}
-
-.btn-ghost:hover {
-  background: var(--color-accent-muted);
-  box-shadow: var(--glow-accent);
-  transform: translateY(-2px);
 }
 
 /* Arrow link */
@@ -721,252 +586,6 @@ onMounted(() => {
   gap: var(--space-4);
 }
 
-.fleet-card {
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  transition: all var(--duration-normal) var(--ease-smooth);
-  cursor: pointer;
-  position: relative;
-}
-
-.fleet-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-xl);
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 50%,
-    rgba(74, 158, 255, 0.1) 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--duration-normal);
-  z-index: 2;
-}
-
-.fleet-card:hover::before {
-  opacity: 1;
-}
-
-.fleet-card:hover {
-  transform: translateY(-8px);
-  box-shadow:
-    0 20px 48px rgba(0, 0, 0, 0.35),
-    0 0 32px rgba(74, 158, 255, 0.1);
-}
-
-.fleet-card:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 4px;
-  transform: translateY(-8px);
-}
-
-.fleet-card__corner {
-  position: absolute;
-  z-index: 3;
-}
-
-.fleet-card__corner--tl { top: 0.75rem; left: 0.75rem; }
-.fleet-card__corner--br { bottom: 0.75rem; right: 0.75rem; }
-
-.fleet-card__img-wrap {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  position: relative;
-}
-
-.fleet-card__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s var(--ease-smooth), filter 0.6s var(--ease-smooth);
-}
-
-.fleet-card__img-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(15, 15, 24, 0.85) 0%, transparent 55%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* 电影级暗角：强化图片视觉重心 */
-.fleet-card__img-vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background:
-    radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(5, 5, 8, 0.5) 100%),
-    linear-gradient(180deg, transparent 50%, rgba(5, 5, 8, 0.7) 100%);
-  opacity: 0.85;
-  transition: opacity 0.4s var(--ease-out);
-}
-
-/* HUD 扫描线：悬浮时显现 */
-.fleet-card__img-scanline {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(74, 158, 255, 0.05) 2px,
-    rgba(74, 158, 255, 0.05) 4px
-  );
-  opacity: 0;
-  transition: opacity 0.4s var(--ease-out);
-}
-
-.fleet-card:hover .fleet-card__img-scanline {
-  opacity: 1;
-}
-
-.fleet-card:hover .fleet-card__img-vignette {
-  opacity: 0.7;
-}
-
-.fleet-card:hover .fleet-card__img {
-  transform: scale(1.08);
-  filter: brightness(1.05) contrast(1.03);
-}
-
-/* 图片内边框角标 */
-.fleet-card__img-frame {
-  position: absolute;
-  inset: 0.75rem;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.fleet-card__frame-corner {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-color: rgba(74, 158, 255, 0.3);
-  border-style: solid;
-  transition: border-color 0.4s var(--ease-out);
-}
-
-.fleet-card__frame-corner--tl {
-  top: 0;
-  left: 0;
-  border-width: 2px 0 0 2px;
-}
-.fleet-card__frame-corner--tr {
-  top: 0;
-  right: 0;
-  border-width: 2px 2px 0 0;
-}
-.fleet-card__frame-corner--bl {
-  bottom: 0;
-  left: 0;
-  border-width: 0 0 2px 2px;
-}
-.fleet-card__frame-corner--br {
-  bottom: 0;
-  right: 0;
-  border-width: 0 2px 2px 0;
-}
-
-.fleet-card:hover .fleet-card__frame-corner {
-  border-color: rgba(74, 158, 255, 0.6);
-}
-
-.fleet-card__body {
-  padding: var(--space-5);
-  position: relative;
-}
-
-.fleet-card__header {
-  margin-bottom: var(--space-4);
-}
-
-.fleet-card__name {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--color-text-heading);
-  margin-bottom: var(--space-1);
-  letter-spacing: -0.01em;
-}
-
-.fleet-card__role {
-  display: block;
-  font-family: var(--font-data);
-  font-size: var(--text-xs);
-  letter-spacing: 0.1em;
-  color: var(--color-text-label);
-}
-
-.fleet-card__specs {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.4s var(--ease-out), opacity 0.3s ease;
-  opacity: 0;
-}
-
-.fleet-card__hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-data);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  color: var(--color-accent);
-  opacity: 0.85;
-  padding-bottom: 2px;
-  border-bottom: 1px solid rgba(74, 158, 255, 0.3);
-  transition: all 0.2s var(--ease-smooth);
-}
-
-.fleet-card__hint:hover {
-  opacity: 1;
-  border-bottom-color: var(--color-accent);
-}
-
-.fleet-card__hint svg {
-  transition: transform 0.2s var(--ease-smooth);
-}
-
-.fleet-card:hover .fleet-card__hint svg {
-  transform: translateX(4px);
-}
-
-.fleet-card:hover .fleet-card__hint,
-.fleet-card.is-tapped .fleet-card__hint {
-  opacity: 0;
-  height: 0;
-  overflow: hidden;
-  margin: 0;
-}
-
-.fleet-card:hover .fleet-card__specs,
-.fleet-card.is-tapped .fleet-card__specs {
-  max-height: 200px;
-  opacity: 1;
-}
-
-/* spec条填充动画 — 容器展开后再填充 */
-.fleet-card .spec-bar__fill {
-  width: 0 !important;
-  transition: width 0.6s var(--ease-smooth) 0.15s;
-}
-
-.fleet-card:hover .spec-bar__fill,
-.fleet-card.is-tapped .spec-bar__fill {
-  width: var(--fill-width) !important;
-}
-
 .fleet-preview__more {
   text-align: center;
   margin-top: var(--space-10);
@@ -1061,15 +680,6 @@ onMounted(() => {
   gap: var(--space-4);
 }
 
-/* CTA按钮加重glow */
-.cta-actions .btn-primary {
-  box-shadow: 0 0 24px rgba(74, 158, 255, 0.25), 0 4px 20px rgba(74, 158, 255, 0.3);
-}
-
-.cta-actions .btn-primary:hover {
-  box-shadow: 0 0 32px rgba(74, 158, 255, 0.4), 0 8px 30px rgba(74, 158, 255, 0.4);
-}
-
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
@@ -1117,11 +727,6 @@ onMounted(() => {
     font-size: clamp(3rem, 15vw, 5rem);
   }
 
-  .fleet-card__specs {
-    max-height: none;
-    margin-top: var(--space-3);
-  }
-
   .cta-title {
     font-size: var(--text-3xl);
   }
@@ -1130,12 +735,6 @@ onMounted(() => {
     flex-direction: column;
     width: 100%;
     max-width: 280px;
-  }
-
-  .cta-actions .btn-primary,
-  .cta-actions .btn-ghost {
-    width: 100%;
-    justify-content: center;
   }
 }
 </style>
