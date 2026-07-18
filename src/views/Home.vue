@@ -17,7 +17,7 @@
     <HeroTicker />
 
     <!-- ═══ 2. KEY NUMBERS — 两个核心数据 ═══ -->
-    <section ref="keyNumbersRef" class="key-numbers" data-animate>
+    <section ref="keyNumbersRef" class="key-numbers">
       <div class="container">
         <div class="key-numbers__grid">
           <div v-for="item in keyNumbers" :key="item.label" class="key-number">
@@ -133,6 +133,7 @@ useGSAPReveal(({ countUp }) => {
     countUp(el, {
       endValue: target,
       duration: 1.5,
+      ease: 'power2.out',
       suffix,
       start: 'top 80%'
     })

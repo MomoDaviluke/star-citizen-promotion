@@ -56,11 +56,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import HudPanel from '../cosmic/HudPanel.vue'
 import CosmicPlanet from '../cosmic/CosmicPlanet.vue'
 import OrbitalRing from '../cosmic/OrbitalRing.vue'
-import { useGSAPReveal } from '@/composables/useGSAPReveal'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const props = defineProps({
   planetData: {
@@ -79,38 +82,50 @@ const planetIndex = computed(() => props.planetData?.index ?? '01')
 const planetDesc = computed(() => props.planetData?.description ?? '')
 
 const sectionRef = ref(null)
+let ctx = null
 
-// 使用 GSAP 滚动揭示组合式函数
-useGSAPReveal(({ reveal, stagger }) => {
-  if (!sectionRef.value) return
+onMounted(() => {
+  // prefers-reduced-motion 降级：跳过动画，保持内容可见
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  // 星球容器：缩放 + 淡入
-  const planetWrap = sectionRef.value.querySelector('.worlds-section__planet-wrap')
-  if (planetWrap) {
-    reveal(planetWrap, {
-      animation: 'scaleIn',
-      duration: 1.2,
-      start: 'top 75%'
+  const section = sectionRef.value
+  if (!section) return
+
+  const panelEl = section.querySelector('.worlds-section__panel')
+  const planetEl = section.querySelector('.worlds-section__planet-wrap')
+
+  ctx = gsap.context(() => {
+    // 用 timeline 串联三段动画，使用相对时序精确匹配 spec
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top 75%',
+        toggleActions: 'play none none none'
+      }
     })
-  }
 
-  // HUD 面板：从左侧滑入
-  const panel = sectionRef.value.querySelector('.worlds-section__panel')
-  if (panel) {
-    reveal(panel, {
-      animation: 'fadeRight',
-      duration: 0.8,
-      start: 'top 75%'
-    })
-  }
+    // 顺序 1：星球容器从 scale:0.8 缩放到 1 + 淡入（duration:1）
+    tl.fromTo(planetEl,
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 1, ease: 'power2.out' }
+    )
+    // 顺序 2：HUD 面板从左侧滑入（x:-40, opacity:0, duration:0.8, position: '-=0.6'）
+    .fromTo(panelEl,
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.8, ease: 'power2.out' },
+      '-=0.6'
+    )
+    // 顺序 3：数据行交错从左滑入（x:-20, opacity:0, duration:0.5, stagger:0.1, position: '-=0.5'）
+    .fromTo('.worlds-section__data-row',
+      { x: -20, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power2.out' },
+      '-=0.5'
+    )
+  }, section)
+})
 
-  // 数据行：交错淡入
-  stagger(sectionRef.value, '.worlds-section__data-row', {
-    animation: 'fadeRight',
-    stagger: 0.1,
-    duration: 0.5,
-    start: 'top 70%'
-  })
+onUnmounted(() => {
+  ctx?.revert()
 })
 </script>
 
