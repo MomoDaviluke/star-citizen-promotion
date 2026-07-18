@@ -67,22 +67,22 @@ describe('Home.vue', () => {
       expect(wrapper.find('.key-numbers').exists()).toBe(true)
     })
 
-    it('应该渲染 2 个数据项', () => {
+    it('应该渲染 4 个核心数据项', () => {
       const wrapper = mount(Home)
       const numbers = wrapper.findAll('.key-number')
-      expect(numbers.length).toBe(2)
+      expect(numbers.length).toBe(4)
     })
 
-    it('应该显示活跃成员数', () => {
+    it('应该显示活跃飞行员数', () => {
       const wrapper = mount(Home)
-      expect(wrapper.html()).toContain('128')
+      expect(wrapper.html()).toContain('15')
       expect(wrapper.html()).toContain('ACTIVE PILOTS')
     })
 
-    it('应该显示飞行小时数', () => {
+    it('应该显示任务总数', () => {
       const wrapper = mount(Home)
-      expect(wrapper.html()).toContain('2,400+')
-      expect(wrapper.html()).toContain('FLIGHT HOURS')
+      expect(wrapper.html()).toContain('120')
+      expect(wrapper.html()).toContain('MISSIONS')
     })
   })
 
@@ -94,7 +94,7 @@ describe('Home.vue', () => {
 
     it('应该渲染 3 张舰队卡片', () => {
       const wrapper = mount(Home)
-      const cards = wrapper.findAll('.fleet-card')
+      const cards = wrapper.findAll('.ship-card')
       expect(cards.length).toBe(3)
     })
 
