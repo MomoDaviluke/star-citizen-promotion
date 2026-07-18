@@ -1,6 +1,7 @@
 <!--
   @file 首页视图组件
   @description Cinematic Sci-Fi Landing — 沉浸式星际体验
+  @module views/Home
   @version 12.0 - Glassmorphism Enhanced
 -->
 
@@ -16,7 +17,7 @@
 
     <HeroTicker />
 
-    <!-- ═══ 2. KEY NUMBERS — 两个核心数据 ═══ -->
+    <!-- ═══ 2. KEY NUMBERS — 四个核心数据 ═══ -->
     <section ref="keyNumbersRef" class="key-numbers">
       <div class="container">
         <div class="key-numbers__grid">
@@ -178,26 +179,6 @@ onUnmounted(() => {
   background: var(--color-bg);
 }
 
-/* Glassmorphism 卡片基础 */
-.glass-card {
-  background: rgba(15, 15, 24, 0.6);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.glass-card:hover {
-  background: rgba(22, 22, 34, 0.7);
-  border-color: rgba(74, 158, 255, 0.2);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.4),
-    0 0 30px rgba(74, 158, 255, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
 .container {
   width: 100%;
   max-width: 1200px;
@@ -328,7 +309,7 @@ onUnmounted(() => {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   3. FLEET PREVIEW — 3 张舰船卡片
+   4. FLEET PREVIEW — 3 张舰船卡片
    ═══════════════════════════════════════════════════════════ */
 
 .fleet-preview__header {
