@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
@@ -93,11 +93,10 @@ import HeroTicker from '../components/home/HeroTicker.vue'
 import HomeWorldsSection from '../components/home/HomeWorldsSection.vue'
 import BaseButton from '../components/common/BaseButton.vue'
 import ShipCard from '../components/fleet/ShipCard.vue'
-import { HudCorner } from '../components/hud/index.js'
 
 const router = useRouter()
 const homeStore = useHomeStore()
-const { heroDataPanelItems, keyNumbers, planetData, loading, error } = storeToRefs(homeStore)
+const { heroDataPanelItems, keyNumbers, planetData } = storeToRefs(homeStore)
 
 // 首页舰队预览：从统一数据库取推荐舰船，传完整对象给 ShipCard
 const fleetShips = computed(() =>
@@ -107,17 +106,11 @@ const fleetShips = computed(() =>
   }))
 )
 
-const tappedSlug = ref(null)
-
 /**
- * 点击首页舰队卡片：移动端保持展开收起效果，桌面端直接跳转舰船详情
+ * 点击首页舰队卡片，跳转舰船详情
  * @param {string} slug - 舰船 slug
  */
 function handleCardClick(slug) {
-  if (window.innerWidth <= 768) {
-    tappedSlug.value = tappedSlug.value === slug ? null : slug
-    return
-  }
   if (slug) {
     router.push({ name: '舰船详情', params: { slug } })
   }
