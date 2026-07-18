@@ -105,11 +105,11 @@ describe('Home.vue', () => {
       expect(wrapper.html()).toContain('Aegis Avenger Stalker')
     })
 
-    it('应该包含查看全部舰队链接', () => {
+    it('应该包含进入舰队展厅链接', () => {
       const wrapper = mount(Home)
       const link = wrapper.find('.link-arrow')
       expect(link.exists()).toBe(true)
-      expect(link.html()).toContain('查看全部舰队')
+      expect(link.html()).toContain('进入舰队展厅 · ENTER HANGAR')
     })
   })
 
