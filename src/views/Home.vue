@@ -17,11 +17,15 @@
     <HeroTicker />
 
     <!-- ═══ 2. KEY NUMBERS — 两个核心数据 ═══ -->
-    <section class="key-numbers" data-animate>
+    <section ref="keyNumbersRef" class="key-numbers" data-animate>
       <div class="container">
         <div class="key-numbers__grid">
           <div v-for="item in keyNumbers" :key="item.label" class="key-number">
-            <span class="key-number__value">{{ item.value }}{{ item.suffix }}</span>
+            <span
+              class="key-number__value"
+              :data-count-target="item.value"
+              :data-count-suffix="item.suffix"
+            >{{ item.value }}{{ item.suffix }}</span>
             <span class="key-number__label">{{ item.label }}</span>
           </div>
         </div>
@@ -82,11 +86,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
 import { useHomeStore } from '../stores/homeStore'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
 import HeroSection from '../components/home/HeroSection.vue'
 import HeroDataPanel from '../components/home/HeroDataPanel.vue'
 import HeroTicker from '../components/home/HeroTicker.vue'
@@ -115,6 +120,24 @@ function handleCardClick(slug) {
     router.push({ name: '舰船详情', params: { slug } })
   }
 }
+
+const keyNumbersRef = ref(null)
+
+// Key Numbers 数字计数动画
+useGSAPReveal(({ countUp }) => {
+  if (!keyNumbersRef.value) return
+  const valueEls = keyNumbersRef.value.querySelectorAll('.key-number__value')
+  valueEls.forEach((el) => {
+    const target = Number(el.dataset.countTarget || 0)
+    const suffix = el.dataset.countSuffix || ''
+    countUp(el, {
+      endValue: target,
+      duration: 1.5,
+      suffix,
+      start: 'top 80%'
+    })
+  })
+})
 
 // 入场动画 — IntersectionObserver 触发滚动显现
 onMounted(() => {

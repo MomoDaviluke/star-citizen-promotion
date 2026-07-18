@@ -7,7 +7,6 @@
   <section
     ref="sectionRef"
     class="worlds-section section"
-    data-animate
     aria-labelledby="worlds-title"
   >
     <div class="worlds-section__nebula" aria-hidden="true" />
@@ -22,17 +21,14 @@
 
       <div class="worlds-section__body">
         <HudPanel class="worlds-section__panel" :skewed="false" corner-size="md">
-          <span class="worlds-section__index">01</span>
-          <h3 class="worlds-section__panel-title">MARS</h3>
-          <p class="worlds-section__panel-desc">
-            纹理来源：NASA 3D Resources - Mars，版权标注 NASA/JPL-Caltech
-          </p>
+          <span class="worlds-section__index">{{ planetIndex }}</span>
+          <h3 class="worlds-section__panel-title">{{ planetName }}</h3>
+          <p class="worlds-section__panel-desc">{{ planetDesc }}</p>
           <div class="worlds-section__data">
             <div
-              v-for="(row, idx) in planetData"
+              v-for="row in planetRows"
               :key="row.key"
               class="worlds-section__data-row"
-              :style="{ '--stagger': idx }"
             >
               <span class="worlds-section__data-key">{{ row.key }}</span>
               <span class="worlds-section__data-value">{{ row.value }}</span>
@@ -44,7 +40,7 @@
           <CosmicPlanet
             size="large"
             variant="mars"
-            rotation-duration="110"
+            :rotation-duration="110"
             texture="/assets/cosmic/planets/mars.jpg"
             class="worlds-section__planet"
           >
@@ -60,48 +56,61 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import HudPanel from '../cosmic/HudPanel.vue'
 import CosmicPlanet from '../cosmic/CosmicPlanet.vue'
 import OrbitalRing from '../cosmic/OrbitalRing.vue'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
 
-/**
- * 行星核心数据
- * 集中管理以避免模板硬编码，便于后续扩展为多行星数据驱动渲染
- */
-const planetData = [
-  { key: 'GRAVITY', value: '1.12 G' },
-  { key: 'ATMOSPHERE', value: 'BREATHABLE' },
-  { key: 'RESOURCES', value: 'RICH' }
-]
-
-const sectionRef = ref(null)
-let observer = null
-
-onMounted(() => {
-  // 当板块进入视口时添加可见类，触发滚动入场动画
-  if (!sectionRef.value || typeof IntersectionObserver === 'undefined') return
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-          observer.unobserve(entry.target)
-        }
-      })
-    },
-    { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-  )
-
-  observer.observe(sectionRef.value)
+const props = defineProps({
+  planetData: {
+    type: Object,
+    required: true,
+    validator: (value) => Array.isArray(value.rows)
+  }
 })
 
-onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
-    observer = null
+// 行星数据行（从 prop 中取）
+const planetRows = computed(() => props.planetData?.rows ?? [])
+
+// 行星名称和描述
+const planetName = computed(() => props.planetData?.name ?? 'MARS')
+const planetIndex = computed(() => props.planetData?.index ?? '01')
+const planetDesc = computed(() => props.planetData?.description ?? '')
+
+const sectionRef = ref(null)
+
+// 使用 GSAP 滚动揭示组合式函数
+useGSAPReveal(({ reveal, stagger }) => {
+  if (!sectionRef.value) return
+
+  // 星球容器：缩放 + 淡入
+  const planetWrap = sectionRef.value.querySelector('.worlds-section__planet-wrap')
+  if (planetWrap) {
+    reveal(planetWrap, {
+      animation: 'scaleIn',
+      duration: 1.2,
+      start: 'top 75%'
+    })
   }
+
+  // HUD 面板：从左侧滑入
+  const panel = sectionRef.value.querySelector('.worlds-section__panel')
+  if (panel) {
+    reveal(panel, {
+      animation: 'fadeRight',
+      duration: 0.8,
+      start: 'top 75%'
+    })
+  }
+
+  // 数据行：交错淡入
+  stagger(sectionRef.value, '.worlds-section__data-row', {
+    animation: 'fadeRight',
+    stagger: 0.1,
+    duration: 0.5,
+    start: 'top 70%'
+  })
 })
 </script>
 
@@ -204,9 +213,9 @@ onUnmounted(() => {
 
 /*
   HUD 面板左侧装饰条：模拟数据读取光带，增强全息感。
-  动画仅在板块可见后触发，避免离屏时无效渲染。
+  装饰条由 GSAP 入场动画触发后持续呼吸（使用 CSS 无限循环）。
 */
-.worlds-section.is-visible .worlds-section__panel::before {
+.worlds-section__panel::before {
   content: '';
   position: absolute;
   left: 0;
@@ -270,16 +279,6 @@ onUnmounted(() => {
   font-family: var(--font-data);
   font-size: var(--text-sm);
   letter-spacing: 0.05em;
-  opacity: 0;
-  transform: translateX(-12px);
-  transition:
-    opacity 0.5s var(--ease-out) calc(var(--stagger, 0) * 120ms),
-    transform 0.5s var(--ease-out) calc(var(--stagger, 0) * 120ms);
-}
-
-.worlds-section.is-visible .worlds-section__data-row {
-  opacity: 1;
-  transform: translateX(0);
 }
 
 .worlds-section__data-key {
@@ -425,15 +424,9 @@ onUnmounted(() => {
     animation: none;
   }
 
-  .worlds-section.is-visible .worlds-section__panel::before {
+  .worlds-section__panel::before {
     animation: none;
     opacity: 0.6;
-  }
-
-  .worlds-section__data-row {
-    opacity: 1;
-    transform: none;
-    transition: none;
   }
 }
 </style>

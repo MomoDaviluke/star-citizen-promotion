@@ -16,18 +16,18 @@
         <StatusPulse variant="online" label="RECRUITING NOW" />
       </div>
 
-      <h1 class="hero-section__title">
+      <h1 ref="titleRef" class="hero-section__title">
         <span class="hero-section__title-line">STELLAR</span>
         <span class="hero-section__title-line hero-section__title-line--accent">NEXUS</span>
       </h1>
 
       <TechDivider class="hero-section__divider" />
 
-      <p class="hero-section__tagline">EXPLORE · FIGHT · CONQUER</p>
+      <p ref="taglineRef" class="hero-section__tagline">EXPLORE · FIGHT · CONQUER</p>
 
       <slot name="data-panel"></slot>
 
-      <div class="hero-section__actions">
+      <div ref="actionsRef" class="hero-section__actions">
         <BaseButton variant="cta" size="lg" @click="router.push('/join')">
           START APPLICATION
         </BaseButton>
@@ -43,11 +43,53 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import gsap from 'gsap'
 import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.js'
 import BaseButton from '../common/BaseButton.vue'
 
 const router = useRouter()
+
+// 入场动画 ref
+const titleRef = ref(null)
+const taglineRef = ref(null)
+const actionsRef = ref(null)
+let ctx = null
+
+onMounted(() => {
+  // 检查 prefers-reduced-motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  ctx = gsap.context(() => {
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+    // 标题逐行从下方滑入
+    tl.from(titleRef.value.querySelectorAll('.hero-section__title-line'), {
+      y: 60,
+      opacity: 0,
+      duration: 1,
+      stagger: 0.15
+    })
+      // 副标题淡入
+      .from(taglineRef.value, {
+        y: 30,
+        opacity: 0,
+        duration: 0.6
+      }, '-=0.4')
+      // 按钮组从下方滑入
+      .from(actionsRef.value.children, {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        stagger: 0.1
+      }, '-=0.3')
+  })
+})
+
+onUnmounted(() => {
+  ctx?.revert()
+})
 </script>
 
 <style scoped>
