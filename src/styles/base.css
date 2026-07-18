@@ -299,32 +299,6 @@ img {
 }
 
 /* ============================================================
- * Double-Bezel Glass Card
- * ============================================================ */
-.glass-card {
-  background: rgba(var(--raw-white-rgb), 0.05);
-  border: 1px solid rgba(var(--raw-white-rgb), 0.1);
-  border-radius: var(--radius-2xl);
-  padding: 6px;
-  box-shadow: var(--shadow-card);
-  transition: box-shadow var(--duration-normal) var(--ease-out),
-              border-color var(--duration-normal) var(--ease-out);
-}
-
-.glass-card:hover {
-  border-color: rgba(var(--raw-cyan-rgb), 0.2);
-  box-shadow: var(--shadow-card-hover), var(--glow-card-hover);
-}
-
-.glass-card > .glass-card__inner,
-.glass-card__inner {
-  background: var(--color-bg-mid);
-  border-radius: calc(var(--radius-2xl) - 6px);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-inset);
-}
-
-/* ============================================================
  * Scroll Reveal Animation
  * ============================================================ */
 .section-reveal {
