@@ -5,7 +5,7 @@
 -->
 
 <template>
-  <div class="home">
+  <div ref="rootRef" class="home">
 
     <!-- ═══ 1. HERO — 100vh 全屏沉浸 ═══ -->
     <HeroSection>
@@ -64,7 +64,7 @@
       </div>
     </section>
 
-    <!-- ═══ 4. CTA — 页面底部行动号召 ═══ -->
+    <!-- ═══ 5. CTA — 页面底部行动号召 ═══ -->
     <section class="cta-section" data-animate>
       <div class="container">
         <div class="cta-content">
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
@@ -122,6 +122,8 @@ function handleCardClick(slug) {
 }
 
 const keyNumbersRef = ref(null)
+const rootRef = ref(null)
+let observer = null
 
 // Key Numbers 数字计数动画
 useGSAPReveal(({ countUp }) => {
@@ -143,8 +145,11 @@ useGSAPReveal(({ countUp }) => {
 // 入场动画 — IntersectionObserver 触发滚动显现
 onMounted(() => {
   homeStore.fetchHomeData()
-  const sections = document.querySelectorAll('[data-animate]')
-  const observer = new IntersectionObserver((entries) => {
+
+  // 通过根元素限定查询范围，避免跨组件污染
+  if (!rootRef.value) return
+  const sections = rootRef.value.querySelectorAll('[data-animate]')
+  observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add('is-visible')
@@ -154,6 +159,12 @@ onMounted(() => {
   }, { threshold: 0.1 })
 
   sections.forEach((s) => observer.observe(s))
+})
+
+// 组件卸载时清理 IntersectionObserver，避免内存泄漏
+onUnmounted(() => {
+  observer?.disconnect()
+  observer = null
 })
 </script>
 

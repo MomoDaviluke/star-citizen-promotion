@@ -1,6 +1,7 @@
 <!--
-  @file 首页英雄区
-  @description 非对称分层电影构图，包含星云背景、舰船侧影、数据读数、CTA
+  @file Hero 区组件
+  @description 全屏沉浸式 Hero — 标题、副标题、行动按钮、背景元素
+  @module components/home/HeroSection
 -->
 <template>
   <section class="hero-section">
@@ -58,26 +59,35 @@ const actionsRef = ref(null)
 let ctx = null
 
 onMounted(() => {
-  // 检查 prefers-reduced-motion
+  // prefers-reduced-motion 降级：跳过动画，保持内容可见
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+  // 防御性检查：确保所有 ref 已挂载，避免 GSAP 找不到目标抛出错误
+  if (!titleRef.value || !taglineRef.value || !actionsRef.value) return
+
+  // 创建 GSAP context，便于组件卸载时统一清理动画资源
   ctx = gsap.context(() => {
+    // Hero 标题入场时间轴
+    // 顺序：标题逐行滑入 → 副标题淡入 → 按钮组交错出现
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
-    // 标题逐行从下方滑入
+    // 1. 标题逐行从下方滑入（y:60, opacity:0, duration:1, stagger:0.15）
+    //    选择 .hero-section__title-line 的两个 span，交错出现形成逐行效果
     tl.from(titleRef.value.querySelectorAll('.hero-section__title-line'), {
       y: 60,
       opacity: 0,
       duration: 1,
       stagger: 0.15
     })
-      // 副标题淡入
+      // 2. 副标题淡入（y:30, opacity:0, duration:0.6）
+      //    position '-=0.4' 表示在上一段动画结束前 0.4s 开始，形成重叠过渡
       .from(taglineRef.value, {
         y: 30,
         opacity: 0,
         duration: 0.6
       }, '-=0.4')
-      // 按钮组从下方滑入
+      // 3. 按钮组子元素交错出现（y:20, opacity:0, duration:0.5, stagger:0.1）
+      //    position '-=0.3' 与副标题动画重叠
       .from(actionsRef.value.children, {
         y: 20,
         opacity: 0,
