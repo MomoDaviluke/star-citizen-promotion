@@ -7,12 +7,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getStats } from '@/services/statsService'
-import { fleetService } from '@/services/fleetService'
-import { createStoreHelpers } from '@/utils/storeHelpers'
 import {
   fallbackSummary,
   fallbackStatsList,
-  fallbackFleetPreview,
   fallbackPlanetMeta
 } from '@/data/homeFallback'
 
@@ -20,12 +17,9 @@ export const useHomeStore = defineStore('home', () => {
   // ========== 状态定义 ==========
   /** @type {import('vue').Ref<object|null>} 后端返回的完整 stats 数据（含 stats 数组和 summary） */
   const stats = ref(null)
-  /** @type {import('vue').Ref<Array<object>>} 首页 Fleet 预览卡片数据 */
-  const fleetPreview = ref([])
   const loading = ref(false)
   const error = ref(null)
 
-  const { withLoading } = createStoreHelpers(loading, error)
   /** 解包服务端返回的 { data: ... } 包装结构，兼容直接返回实体 */
   const unwrap = (res) => res?.data ?? res
 
@@ -54,30 +48,18 @@ export const useHomeStore = defineStore('home', () => {
   const planetData = computed(() => fallbackPlanetMeta)
 
   // ========== 方法定义 ==========
-  /** 统一获取首页数据（stats + fleet preview），使用 allSettled 保证部分失败不影响整体 */
+  /** 统一获取首页统计数据，失败时降级到 fallback */
   async function fetchHomeData() {
-    return withLoading(async () => {
-      const [statsRes, fleetRes] = await Promise.allSettled([
-        getStats(),
-        fleetService.getFleet({ limit: 3, sortBy: 'value', order: 'desc' })
-      ])
-
-      // stats：成功则使用后端数据，失败则降级到 fallback（computed 自动降级）
-      if (statsRes.status === 'fulfilled') {
-        stats.value = unwrap(statsRes.value)
-      } else {
-        error.value = '统计数据获取失败，已展示兜底数据'
-      }
-
-      // fleet：成功则取前 3 艘，失败则降级到 fallback
-      if (fleetRes.status === 'fulfilled') {
-        const fleetData = unwrap(fleetRes.value)
-        fleetPreview.value = Array.isArray(fleetData) ? fleetData.slice(0, 3) : fallbackFleetPreview
-      } else {
-        fleetPreview.value = fallbackFleetPreview
-        error.value = error.value || '舰队数据获取失败，已展示兜底数据'
-      }
-    }, '获取首页数据失败')
+    loading.value = true
+    error.value = null
+    try {
+      stats.value = unwrap(await getStats())
+    } catch {
+      // 统计数据获取失败，降级到 fallback（stats.value 保持 null，computed 自动降级）
+      error.value = '统计数据获取失败，已展示兜底数据'
+    } finally {
+      loading.value = false
+    }
   }
 
   /** 清除错误状态 */
@@ -88,7 +70,6 @@ export const useHomeStore = defineStore('home', () => {
   return {
     // 状态
     stats,
-    fleetPreview,
     loading,
     error,
     // 计算属性

@@ -12,11 +12,19 @@
 </template>
 
 <script setup>
-const items = [
-  { value: '128', label: 'ACTIVE PILOTS' },
-  { value: '2,400+', label: 'FLIGHT HOURS' },
-  { value: '12', label: 'COMBAT READY' }
-]
+/**
+ * Hero 数据面板组件
+ * @props {Array<{value: string, label: string}>} items - 数据条目
+ */
+defineProps({
+  items: {
+    type: Array,
+    required: true,
+    validator: (value) => value.every(item =>
+      typeof item.value === 'string' && typeof item.label === 'string'
+    )
+  }
+})
 </script>
 
 <style scoped>
