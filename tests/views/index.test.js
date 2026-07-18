@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
+import { createPinia } from 'pinia'
 
 const mockRouter = createRouter({
   history: createWebHistory(),
@@ -54,7 +55,7 @@ describe('视图组件基础测试', () => {
       const { default: Home } = await import('@/views/Home.vue')
       const wrapper = mount(Home, {
         global: {
-          plugins: [mockRouter],
+          plugins: [createPinia(), mockRouter],
           stubs: {
             RouterLink: true,
             RouterView: true

@@ -41,14 +41,14 @@
     </span>
 
     <!-- 科幻边框效果 -->
-    <span v-if="variant === 'primary' || variant === 'accent'" class="button-border-effect"></span>
+    <span v-if="variant === 'primary' || variant === 'cta' || variant === 'accent'" class="button-border-effect"></span>
   </button>
 </template>
 
 <script setup>
 /**
  * 基础按钮组件
- * @props {string} variant - 按钮样式变体 (primary|secondary|outline|ghost|danger|success)
+ * @props {string} variant - 按钮样式变体 (primary|secondary|outline|ghost|danger|success|cta)
  * @props {string} size - 按钮尺寸 (sm|md|lg|xl)
  * @props {boolean} disabled - 是否禁用
  * @props {boolean} loading - 是否加载中
@@ -62,7 +62,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'secondary', 'outline', 'ghost', 'danger', 'success'].includes(value)
+    validator: (value) => ['primary', 'secondary', 'outline', 'ghost', 'danger', 'success', 'cta'].includes(value)
   },
   size: {
     type: String,
@@ -215,6 +215,24 @@ function handleClick(event) {
 .base-button--danger:hover:not(.is-disabled):not(.is-loading) {
   background: #ff5252;
   box-shadow: var(--glow-status-danger);
+}
+
+/* CTA 按钮 — 琥珀色主行动按钮，用于 Hero 和 CTA 区 */
+.base-button--cta {
+  background: var(--color-highlight);
+  color: var(--color-bg);
+  border-color: var(--color-highlight);
+  box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
+}
+
+.base-button--cta:hover:not(.is-disabled):not(.is-loading) {
+  background: var(--color-highlight-bright);
+  box-shadow: 0 0 30px rgba(255, 179, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.base-button--cta:active:not(.is-disabled):not(.is-loading) {
+  transform: translateY(0);
 }
 
 /* 成功按钮 */

@@ -1,6 +1,7 @@
 <!--
-  @file 首页英雄区
-  @description 非对称分层电影构图，包含星云背景、舰船侧影、数据读数、CTA
+  @file Hero 区组件
+  @description 全屏沉浸式 Hero — 标题、副标题、行动按钮、背景元素
+  @module components/home/HeroSection
 -->
 <template>
   <section class="hero-section">
@@ -16,24 +17,24 @@
         <StatusPulse variant="online" label="RECRUITING NOW" />
       </div>
 
-      <h1 class="hero-section__title">
+      <h1 ref="titleRef" class="hero-section__title">
         <span class="hero-section__title-line">STELLAR</span>
         <span class="hero-section__title-line hero-section__title-line--accent">NEXUS</span>
       </h1>
 
       <TechDivider class="hero-section__divider" />
 
-      <p class="hero-section__tagline">EXPLORE · FIGHT · CONQUER</p>
+      <p ref="taglineRef" class="hero-section__tagline">EXPLORE · FIGHT · CONQUER</p>
 
       <slot name="data-panel"></slot>
 
-      <div class="hero-section__actions">
-        <RouterLink to="/join" class="hero-section__btn hero-section__btn--primary">
+      <div ref="actionsRef" class="hero-section__actions">
+        <BaseButton variant="cta" size="lg" @click="router.push('/join')">
           START APPLICATION
-        </RouterLink>
-        <RouterLink to="/fleet" class="hero-section__btn hero-section__btn--ghost">
+        </BaseButton>
+        <BaseButton variant="outline" size="lg" @click="router.push('/fleet')">
           EXPLORE FLEET
-        </RouterLink>
+        </BaseButton>
       </div>
     </div>
 
@@ -43,7 +44,62 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import gsap from 'gsap'
 import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.js'
+import BaseButton from '../common/BaseButton.vue'
+
+const router = useRouter()
+
+// 入场动画 ref
+const titleRef = ref(null)
+const taglineRef = ref(null)
+const actionsRef = ref(null)
+let ctx = null
+
+onMounted(() => {
+  // prefers-reduced-motion 降级：跳过动画，保持内容可见
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  // 防御性检查：确保所有 ref 已挂载，避免 GSAP 找不到目标抛出错误
+  if (!titleRef.value || !taglineRef.value || !actionsRef.value) return
+
+  // 创建 GSAP context，便于组件卸载时统一清理动画资源
+  ctx = gsap.context(() => {
+    // Hero 标题入场时间轴
+    // 顺序：标题逐行滑入 → 副标题淡入 → 按钮组交错出现
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+    // 1. 标题逐行从下方滑入（y:60, opacity:0, duration:1, stagger:0.15）
+    //    选择 .hero-section__title-line 的两个 span，交错出现形成逐行效果
+    tl.from(titleRef.value.querySelectorAll('.hero-section__title-line'), {
+      y: 60,
+      opacity: 0,
+      duration: 1,
+      stagger: 0.15
+    })
+      // 2. 副标题淡入（y:30, opacity:0, duration:0.6）
+      //    position '-=0.4' 表示在上一段动画结束前 0.4s 开始，形成重叠过渡
+      .from(taglineRef.value, {
+        y: 30,
+        opacity: 0,
+        duration: 0.6
+      }, '-=0.4')
+      // 3. 按钮组子元素交错出现（y:20, opacity:0, duration:0.5, stagger:0.1）
+      //    position '-=0.3' 与副标题动画重叠
+      .from(actionsRef.value.children, {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        stagger: 0.1
+      }, '-=0.3')
+  })
+})
+
+onUnmounted(() => {
+  ctx?.revert()
+})
 </script>
 
 <style scoped>
@@ -132,50 +188,6 @@ import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.j
   display: flex;
   gap: var(--space-4);
   flex-wrap: wrap;
-}
-
-.hero-section__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  transition:
-    background-color var(--motion-duration-fast) var(--motion-ease-out),
-    border-color var(--motion-duration-fast) var(--motion-ease-out),
-    color var(--motion-duration-fast) var(--motion-ease-out),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-out),
-    transform var(--motion-duration-fast) var(--motion-ease-spring);
-}
-
-.hero-section__btn--primary {
-  background: var(--color-highlight);
-  color: var(--color-bg);
-  box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
-}
-
-.hero-section__btn--primary:hover {
-  background: var(--color-highlight-bright);
-  box-shadow: 0 0 30px rgba(255, 179, 0, 0.5);
-  transform: translateY(-2px);
-}
-
-.hero-section__btn--ghost {
-  background: transparent;
-  color: var(--color-text-heading);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.hero-section__btn--ghost:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  box-shadow: 0 0 20px rgba(74, 158, 255, 0.15);
 }
 
 .hero-section__corner {
