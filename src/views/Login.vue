@@ -188,6 +188,7 @@ async function handleLogin() {
 <style scoped>
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -457,11 +458,26 @@ async function handleLogin() {
   .bezel-card__inner {
     padding: var(--space-6);
   }
+
+  /* iOS 防止输入框聚焦缩放 */
+  .holo-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .login-submit {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 480px) {
   .bezel-card__inner {
     padding: var(--space-5);
+  }
+
+  /* 窄屏时增加底部 safe-area 间距，避免被 home indicator 遮挡 */
+  .login-page {
+    padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
   }
 }
 </style>

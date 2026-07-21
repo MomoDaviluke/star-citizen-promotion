@@ -20,6 +20,7 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 300px);
+  min-height: calc(100dvh - 300px);
   padding: var(--space-8) 0;
   text-align: center;
 }

@@ -160,7 +160,7 @@ const channels = [
 /* Bottom */
 .site-footer__bottom {
   padding-top: var(--space-4);
-  padding-bottom: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .site-footer__divider {

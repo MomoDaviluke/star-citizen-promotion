@@ -466,4 +466,27 @@ onUnmounted(() => {
     max-width: 280px;
   }
 }
+
+/*
+ * 窄屏单列降级（≤480px）
+ * fleet-grid 由 2 列转为 1 列，确保 375px 屏卡片可读
+ */
+@media (max-width: 480px) {
+  .fleet-grid {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+  }
+
+  .key-numbers__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .key-number__value {
+    font-size: clamp(2.5rem, 18vw, 4rem);
+  }
+
+  .cta-content {
+    padding: var(--space-8) var(--space-4);
+  }
+}
 </style>

@@ -40,7 +40,7 @@
           </thead>
           <tbody>
             <tr v-for="app in filteredApplications" :key="app.id">
-              <td>
+              <td data-label="申请人">
                 <div class="applicant-info">
                   <span class="applicant-name">{{ app.name }}</span>
                   <span class="applicant-discord" v-if="app.discord">
@@ -48,23 +48,23 @@
                   </span>
                 </div>
               </td>
-              <td>
+              <td data-label="联系方式">
                 <a :href="`mailto:${app.email}`" class="email-link">
                   {{ app.email }}
                 </a>
               </td>
-              <td>
+              <td data-label="游戏经验">
                 <span class="experience-preview" :title="app.experience">
                   {{ truncate(app.experience, 30) || '未填写' }}
                 </span>
               </td>
-              <td>{{ formatDate(app.created_at) }}</td>
-              <td>
+              <td data-label="提交时间">{{ formatDate(app.created_at) }}</td>
+              <td data-label="状态">
                 <span class="status-badge" :class="`status-${app.status}`">
                   {{ getApplicationStatusLabel(app.status) }}
                 </span>
               </td>
-              <td>
+              <td data-label="操作">
                 <div class="action-buttons">
                   <button
                     class="btn btn-sm"
@@ -579,5 +579,112 @@ onMounted(() => {
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--line);
+}
+
+/*
+ * 移动端表格卡片化（≤768px）
+ * 将 6 列表格转为卡片，避免 375px 屏横向溢出
+ */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-group,
+  .search-group {
+    width: 100%;
+  }
+
+  .filter-select,
+  .search-input {
+    width: 100%;
+  }
+
+  .table-container {
+    border-radius: 8px;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(15, 30, 50, 0.4);
+  }
+
+  .data-table td {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid rgba(95, 169, 255, 0.08);
+    text-align: right;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    margin-right: auto;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .data-table td:first-child {
+    border-bottom: 1px solid var(--line);
+    background: rgba(95, 169, 255, 0.05);
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  .action-buttons .btn-sm {
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pagination .btn-sm {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 </style>

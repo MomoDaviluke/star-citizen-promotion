@@ -78,7 +78,9 @@ function onDismissOffline() {
 .pwa-toast {
   position: fixed;
   bottom: var(--space-6);
+  bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
   right: var(--space-6);
+  right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
   z-index: var(--z-modal);
   min-width: 320px;
   max-width: 420px;
@@ -162,6 +164,7 @@ function onDismissOffline() {
 
 .pwa-toast__btn {
   padding: var(--space-2) var(--space-4);
+  min-height: 44px;
   font-size: var(--text-xs);
   font-family: var(--font-tech);
   letter-spacing: 0.05em;
@@ -191,8 +194,8 @@ function onDismissOffline() {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -228,10 +231,21 @@ function onDismissOffline() {
 @media (max-width: 640px) {
   .pwa-toast {
     left: var(--space-4);
+    left: calc(var(--space-4) + env(safe-area-inset-left, 0px));
     right: var(--space-4);
+    right: calc(var(--space-4) + env(safe-area-inset-right, 0px));
     bottom: var(--space-4);
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
     min-width: 0;
     max-width: none;
+  }
+
+  .pwa-toast__actions {
+    flex-direction: column;
+  }
+
+  .pwa-toast__btn {
+    width: 100%;
   }
 }
 </style>

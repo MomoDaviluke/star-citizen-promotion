@@ -208,6 +208,7 @@ watch(() => route.params.slug, loadShip)
 /* 详情页全局容器 */
 .ship-detail-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-primary, #050508);
   color: var(--color-text-primary, #ffffff);
 }

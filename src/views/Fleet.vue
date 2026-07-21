@@ -584,6 +584,7 @@ function goToShip(slug) {
 
   .filter-group {
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   .filter-status {
@@ -593,6 +594,8 @@ function goToShip(slug) {
   .filter-btn {
     flex: 1 1 auto;
     justify-content: center;
+    min-height: 44px;
+    padding: 0.625rem 1rem;
   }
 
   .ship-grid {

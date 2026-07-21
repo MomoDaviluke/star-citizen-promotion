@@ -106,6 +106,7 @@ onUnmounted(() => {
 .hero-section {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
@@ -204,7 +205,7 @@ onUnmounted(() => {
     padding: var(--space-16) var(--space-5);
   }
   .hero-section__ship {
-    width: 120vw;
+    width: 100vw;
     right: -30%;
     opacity: 0.4;
   }

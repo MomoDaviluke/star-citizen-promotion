@@ -34,20 +34,20 @@
           </thead>
           <tbody>
             <tr v-for="project in filteredProjects" :key="project.id">
-              <td class="project-name">{{ project.name }}</td>
-              <td class="project-desc">{{ truncate(project.description, 50) }}</td>
-              <td>
+              <td data-label="项目名称" class="project-name">{{ project.name }}</td>
+              <td data-label="描述" class="project-desc">{{ truncate(project.description, 50) }}</td>
+              <td data-label="状态">
                 <span class="status-badge" :class="`status-${project.status}`">
                   {{ getProjectStatusLabel(project.status) }}
                 </span>
               </td>
-              <td>
+              <td data-label="进度">
                 <div class="progress-bar">
                   <div class="progress-fill" :style="{ width: `${project.progress || 0}%` }"></div>
                   <span class="progress-text">{{ project.progress || 0 }}%</span>
                 </div>
               </td>
-              <td>
+              <td data-label="操作">
                 <div class="action-buttons">
                   <button class="btn btn-sm" @click="editProject(project)">编辑</button>
                   <button class="btn btn-sm btn-danger" @click="deleteProject(project.id)">删除</button>
@@ -405,5 +405,107 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+/*
+ * 移动端表格卡片化（≤768px）
+ * 将 5 列表格转为卡片，避免 375px 屏横向溢出
+ */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .btn-primary,
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .table-container {
+    border-radius: 8px;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(15, 30, 50, 0.4);
+  }
+
+  .data-table td {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid rgba(95, 169, 255, 0.08);
+    text-align: right;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    margin-right: auto;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .data-table td:first-child {
+    border-bottom: 1px solid var(--line);
+    background: rgba(95, 169, 255, 0.05);
+  }
+
+  /* 进度条在卡片中扩展宽度 */
+  .progress-bar {
+    width: 100%;
+    max-width: 180px;
+  }
+
+  .action-buttons {
+    gap: 0.5rem;
+  }
+
+  .action-buttons .btn-sm {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 </style>

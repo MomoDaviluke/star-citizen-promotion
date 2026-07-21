@@ -1003,7 +1003,10 @@ onMounted(() => {
 
 .event-dot {
   font-size: 0.7rem;
-  padding: 0.125rem 0.25rem;
+  padding: 0.25rem 0.375rem;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
   border-radius: 2px;
   cursor: pointer;
   overflow: hidden;
@@ -1311,6 +1314,8 @@ onMounted(() => {
 @media (max-width: 768px) {
   .calendar-page {
     padding: 1rem;
+    padding-top: calc(1rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .page-title {
@@ -1338,6 +1343,7 @@ onMounted(() => {
 
   .event-dot {
     font-size: 0.625rem;
+    min-height: 24px;
   }
 
   .form-row {
@@ -1354,6 +1360,11 @@ onMounted(() => {
   }
 }
 
+/*
+ * 窄屏（≤480px）月历水平滚动方案
+ * 7 列网格在 375px 屏幕每格仅 ~50px，无法显示事件
+ * 改为水平滚动 + 最小列宽，保持日历结构可用
+ */
 @media (max-width: 480px) {
   .page-header-mfd {
     flex-direction: column;
@@ -1365,12 +1376,29 @@ onMounted(() => {
     align-items: flex-start;
   }
 
+  .month-view {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -1rem;
+    padding: 0 0.5rem;
+  }
+
+  .month-header,
+  .month-grid {
+    min-width: 480px;
+  }
+
   .month-grid {
     min-height: 350px;
   }
 
   .day-cell {
-    min-height: 50px;
+    min-height: 56px;
+  }
+
+  .week-day {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.65rem;
   }
 }
 </style>

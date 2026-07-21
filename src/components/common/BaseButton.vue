@@ -319,20 +319,43 @@ function handleClick(event) {
 }
 
 /* ========== 响应式 ========== */
+/*
+ * 移动端触控目标优化（WCAG 2.5.5）
+ * 桌面端按钮通常 30~48px 高度，移动端需保证 ≥44px 最小触控目标
+ * 因此移动端应增大而非缩小尺寸，与桌面端相反
+ */
 @media (max-width: 768px) {
   .base-button {
-    padding: 0.5rem 1rem;
+    min-height: 44px;
+    padding: 0.75rem 1.25rem;
+    font-size: var(--text-base);
+  }
+
+  /* sm 在移动端不再使用紧凑尺寸 */
+  .base-button--sm {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
     font-size: var(--text-sm);
   }
 
   .base-button--lg {
-    padding: 0.75rem 1.5rem;
-    font-size: var(--text-base);
+    padding: 0.875rem 1.5rem;
+    min-height: 48px;
+    font-size: var(--text-lg);
   }
 
   .base-button--xl {
-    padding: 0.875rem 1.75rem;
-    font-size: var(--text-lg);
+    padding: 1rem 1.75rem;
+    min-height: 52px;
+    font-size: var(--text-xl);
+  }
+
+  /* 仅图标按钮：触控目标必须 ≥44×44px */
+  .base-button.is-icon-only {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
   }
 }
 </style>

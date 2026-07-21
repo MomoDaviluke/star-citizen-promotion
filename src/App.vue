@@ -292,6 +292,7 @@ provide('loading', { showLoading, hideLoading })
 .page-main {
   padding-top: 64px;
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
 }
 

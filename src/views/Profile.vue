@@ -337,4 +337,47 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
+
+/*
+ * 移动端响应式（≤768px）
+ * profile-grid 自动折叠为单列，表单输入和按钮适配窄屏
+ */
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+  }
+
+  .form-actions .btn,
+  .btn-primary,
+  .btn-danger {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .danger-content {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header h3 {
+    font-size: 1rem;
+  }
+
+  .form-label {
+    font-size: 0.8rem;
+  }
+}
 </style>

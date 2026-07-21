@@ -6,13 +6,23 @@
 
 <template>
   <div class="admin-layout">
-    <aside class="admin-sidebar">
+    <!-- 移动端遮罩层 -->
+    <Transition name="overlay-fade">
+      <div
+        v-if="sidebarOpen"
+        class="sidebar-overlay"
+        @click="closeSidebar"
+        aria-hidden="true"
+      ></div>
+    </Transition>
+
+    <aside class="admin-sidebar" :class="{ 'is-open': sidebarOpen }">
       <div class="sidebar-header">
         <span class="sidebar-icon">⚙</span>
         <span class="sidebar-title">管理后台</span>
       </div>
 
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" @click="handleNavClick">
         <RouterLink
           v-for="item in menuItems"
           :key="item.to"
@@ -25,7 +35,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <RouterLink to="/" class="back-link">
+        <RouterLink to="/" class="back-link" @click="closeSidebar">
           <span>←</span>
           <span>返回前台</span>
         </RouterLink>
@@ -34,7 +44,20 @@
 
     <main class="admin-main">
       <header class="admin-header">
-        <h1 class="page-title">{{ pageTitle }}</h1>
+        <div class="header-left">
+          <button
+            class="sidebar-toggle"
+            type="button"
+            :aria-expanded="sidebarOpen"
+            aria-label="切换导航菜单"
+            @click="toggleSidebar"
+          >
+            <span class="sidebar-toggle-bar"></span>
+            <span class="sidebar-toggle-bar"></span>
+            <span class="sidebar-toggle-bar"></span>
+          </button>
+          <h1 class="page-title">{{ pageTitle }}</h1>
+        </div>
         <div class="header-actions">
           <span class="user-info">
             <span class="user-name">{{ user?.username }}</span>
@@ -60,7 +83,7 @@
  * @summary 作为所有管理后台页面的父布局组件，提供统一的导航和用户信息展示
  */
 
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '@/services'
 import { getUserRoleLabel } from '@/utils/labelMaps'
@@ -69,6 +92,9 @@ import { getUserRoleLabel } from '@/utils/labelMaps'
 const router = useRouter()
 /** 当前路由对象，用于获取当前路径 */
 const route = useRoute()
+
+/** 移动端侧边栏展开状态 */
+const sidebarOpen = ref(false)
 
 /**
  * 侧边栏菜单项配置
@@ -102,6 +128,31 @@ const pageTitle = computed(() => {
 })
 
 /**
+ * 切换侧边栏展开状态
+ */
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
+/**
+ * 关闭侧边栏
+ */
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
+/**
+ * 处理侧边栏导航点击事件
+ * @description 仅当点击 RouterLink 时关闭侧边栏
+ * @param {MouseEvent} event - 点击事件
+ */
+function handleNavClick(event) {
+  if (event.target.closest('.nav-item')) {
+    closeSidebar()
+  }
+}
+
+/**
  * 处理用户登出
  * @description 清除认证状态并跳转到首页
  */
@@ -109,13 +160,27 @@ function handleLogout() {
   authService.logout()
   router.push('/')
 }
+
+// 路由切换时关闭侧边栏（保险机制）
+watch(() => route.path, () => {
+  closeSidebar()
+})
+
+// 监听 ESC 键关闭侧边栏
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebarOpen.value) {
+      closeSidebar()
+    }
+  })
+}
 </script>
 
 <style scoped>
 .admin-layout {
   display: grid;
   grid-template-columns: 240px 1fr;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
 }
 
@@ -155,6 +220,7 @@ function handleLogout() {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.5rem;
+  min-height: 44px;
   color: var(--text-muted);
   font-size: 0.85rem;
   transition: all var(--transition-fast);
@@ -184,6 +250,7 @@ function handleLogout() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-height: 44px;
   color: var(--text-muted);
   font-size: 0.8rem;
   transition: color var(--transition-fast);
@@ -203,9 +270,45 @@ function handleLogout() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   padding: 1rem 1.5rem;
+  padding-top: calc(1rem + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid var(--line);
   background: rgba(4, 8, 16, 0.8);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.sidebar-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.sidebar-toggle:hover {
+  background: rgba(95, 169, 255, 0.08);
+}
+
+.sidebar-toggle-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 1px;
 }
 
 .page-title {
@@ -213,6 +316,9 @@ function handleLogout() {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -242,13 +348,34 @@ function handleLogout() {
 
 .btn-outline {
   padding: 0.5rem 1rem;
+  min-height: 44px;
   font-size: 0.75rem;
 }
 
 .admin-content {
   flex: 1;
   padding: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
+}
+
+/* 移动端遮罩层 */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity var(--motion-duration-fast, 0.2s);
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
 }
 
 @media (max-width: 860px) {
@@ -256,19 +383,53 @@ function handleLogout() {
     grid-template-columns: 1fr;
   }
 
+  .sidebar-toggle {
+    display: flex;
+  }
+
   .admin-sidebar {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 240px;
+    width: min(280px, 80vw);
+    padding-top: env(safe-area-inset-top, 0px);
     transform: translateX(-100%);
-    transition: transform var(--transition-normal);
+    transition: transform var(--motion-duration-normal, 0.3s) var(--motion-ease-out, ease-out);
     z-index: 1000;
   }
 
-  .admin-sidebar.open {
+  .admin-sidebar.is-open {
     transform: translateX(0);
+  }
+
+  .admin-header {
+    padding: 0.75rem 1rem;
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  }
+
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .admin-content {
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1rem;
+  }
+
+  .btn-outline {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
   }
 }
 </style>

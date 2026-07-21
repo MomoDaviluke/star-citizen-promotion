@@ -371,4 +371,51 @@ function formatDate(dateStr) {
     transform: translateY(0);
   }
 }
+
+/*
+ * 移动端响应式（≤768px）
+ * 表单输入和按钮适配窄屏，确保触控目标 ≥44px
+ */
+@media (max-width: 768px) {
+  .query-form .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+  }
+
+  .form-actions .btn,
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .status-banner {
+    padding: 0.875rem 1rem;
+  }
+
+  .next-steps {
+    padding: 1rem;
+  }
+
+  .next-steps .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .status-text {
+    font-size: 1rem;
+  }
+
+  .not-found-icon {
+    font-size: 2.5rem;
+  }
+}
 </style>

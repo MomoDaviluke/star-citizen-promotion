@@ -161,6 +161,7 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 200px);
+  min-height: calc(100dvh - 200px);
   padding: var(--space-8) 0;
 }
 
@@ -236,4 +237,34 @@ async function handleRegister() {
 
 .fade-enter-active, .fade-leave-active { transition: opacity var(--duration-fast); }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/*
+ * 移动端响应式（≤480px）
+ * 表单输入和按钮确保触控目标 ≥44px，并防止 iOS 输入框聚焦缩放
+ */
+@media (max-width: 480px) {
+  .register-page {
+    padding: var(--space-4) 0;
+  }
+
+  .auth-card {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .auth-form .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+    min-height: 44px;
+  }
+
+  .form-submit {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .auth-card__footer {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+}
 </style>
