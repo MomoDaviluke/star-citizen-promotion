@@ -18,6 +18,7 @@ export const useHomeStore = defineStore('home', () => {
   /** @type {import('vue').Ref<object|null>} 后端返回的完整 stats 数据（含 stats 数组和 summary） */
   const stats = ref(null)
   const loading = ref(false)
+  /** @type {import('vue').Ref<string|null>} 统计数据获取失败时的错误信息 */
   const error = ref(null)
 
   /** 解包服务端返回的 { data: ... } 包装结构，兼容直接返回实体 */
