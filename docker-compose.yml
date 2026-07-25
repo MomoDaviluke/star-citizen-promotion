@@ -22,6 +22,9 @@ services:
         condition: service_healthy
     environment:
       - NODE_ENV=production
+      # JWT_SECRET 在 config 模块加载时校验，migrate 脚本虽不使用 JWT，
+      # 但需透传以避免 config 模块抛出 FATAL 错误
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       - DB_HOST=${DB_HOST:-mysql}
       - DB_PORT=${DB_PORT:-3306}
       - DB_USER=${DB_USER:-app_user}
@@ -95,6 +98,9 @@ services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
+    # 使用 mysql_native_password 认证插件，兼容 alpine mysql-client（mariadb-client）
+    # alpine 的 mysql-client 不支持 MySQL 8.0 默认的 caching_sha2_password 插件
+    command: ["--default-authentication-plugin=mysql_native_password"]
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-${DB_PASSWORD:?DB_PASSWORD must be set}}
       MYSQL_DATABASE: ${DB_NAME:-star_citizen_promotion}

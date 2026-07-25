@@ -101,10 +101,16 @@ http {
         add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws: wss:; frame-src 'none'; object-src 'none'" always;
 
         # ============================================
+        # 前端静态文件根目录（server 级别，供所有 location 继承）
+        # 关键：root 必须在 server 块级别定义，否则正则 location（如静态资源缓存）
+        # 会使用 nginx 默认 root 导致 404
+        # ============================================
+        root /usr/share/nginx/html;
+
+        # ============================================
         # 前端静态文件
         # ============================================
         location / {
-            root /usr/share/nginx/html;
             index index.html;
             try_files $uri $uri/ /index.html;
         }

@@ -58,7 +58,9 @@ playwright/.cache/
 .env.*.local
 .env.development
 .env.production
+.env.prod
 !.env.example
+!.env.production.example
 
 # Database files
 *.sqlite
