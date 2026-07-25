@@ -1,257 +1,294 @@
 # 部署指南
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-05-31
+> **更新日期**: 2026-07-25
 > **版本**: v1.3.1
 
 ---
 
-## 部署方式概览
+## 部署架构概览
 
-| 方式 | 适用场景 | 复杂度 | 推荐度 |
+```
+┌──────────────────────────────────────────────────────────────┐
+│  docker compose --profile production up -d                   │
+│                                                              │
+│  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐   │
+│  │  mysql   │ ←─ │ migrate  │    │  nginx (自构建前端) │   │
+│  │  8.0     │    │ (一次性) │    │  - multi-stage       │   │
+│  └────┬─────┘    └────┬─────┘    │  - envsubst 模板化   │   │
+│       │               │          │  - SSL 终止          │   │
+│       │               ↓          └──────────┬───────────┘   │
+│       │          ┌──────────┐               │               │
+│       └────────→ │ backend  │ ←─────────────┘               │
+│                  │ (prod)   │                               │
+│                  └──────────┘                               │
+│                                                              │
+│  ┌──────────┐    ┌──────────┐                               │
+│  │ backup   │    │ certbot  │                               │
+│  │ crond    │    │ renew    │                               │
+│  └──────────┘    └──────────┘                               │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 服务说明
+
+| 服务 | 端口 | Profile | 说明 |
 |:---|:---|:---|:---|
-| Docker Compose | 生产环境、一键部署 | 低 | ⭐⭐⭐ |
-| 手动部署 | 本地开发、调试 | 中 | ⭐⭐ |
-| VPS 全手动 | 无 Docker 环境的服务器 | 高 | ⭐ |
+| `migrate` | — | 默认 + production | 一次性数据库迁移服务，backend 依赖其成功退出 |
+| `backend` | 3001 | 默认 + production | 后端 API（生产镜像，仅 dependencies） |
+| `mysql` | 127.0.0.1:3306 | 默认 + production | MySQL 8.0（仅本地访问） |
+| `nginx` | 80, 443 | production | 反向代理 + SSL 终止 + 前端静态文件 |
+| `backup` | — | production | 数据库自动备份（每天 03:00，保留 30 天） |
+| `certbot` | — | production | Let's Encrypt 证书自动续期（每 12 小时检查） |
 
 ---
 
-## 方式一：Docker Compose 部署（推荐）
-
-### 前置条件
+## 前置条件
 
 | 依赖 | 最低版本 |
 |:---|:---|
 | Docker | 20.10+ |
 | Docker Compose | 2.0+ |
 | 可用内存 | ≥ 2GB |
+| openssl（生成密钥与自签名证书） | 任意版本 |
 
-### 快速启动（开发环境）
+---
+
+## 部署方式一：Docker Compose（推荐）
+
+### 1. 准备环境变量
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/MomoDaviluke/star-citizen-promotion.git
-cd star-citizen-promotion
+# 复制模板
+cp .env.production.example .env
 
-# 2. 创建环境变量文件
-cat > .env << 'EOF'
+# 生成强密钥并写入 .env
 JWT_SECRET=$(openssl rand -hex 32)
 DB_PASSWORD=$(openssl rand -hex 16)
 DB_ROOT_PASSWORD=$(openssl rand -hex 16)
-DB_USER=app_user
-DB_NAME=star_citizen_promotion
-EOF
 
-# 3. 启动服务（仅后端 + MySQL）
-docker-compose up -d
+# 在 .env 中填入（Windows PowerShell 用户需手动编辑）
+sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" .env
+sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" .env
+sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD|" .env
 
-# 4. 验证
-curl http://localhost:3001/health
+# 设置域名（本地验证用 localhost，生产环境填真实域名）
+sed -i "s|^SERVER_NAME=.*|SERVER_NAME=localhost|" .env
+sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https://localhost|" .env
+sed -i "s|^ALLOWED_ORIGINS=.*|ALLOWED_ORIGINS=https://localhost|" .env
 ```
 
-### 生产环境部署（含 Nginx + SSL）
+### 2. 准备 SSL 证书
+
+#### 方案 A：自签名证书（本地验证）
 
 ```bash
-# 1. 准备 SSL 证书
-mkdir -p ssl certbot/www
+# 生成本地验证用自签名证书
+./scripts/generate-self-signed-cert.sh localhost
 
-# 方案 A：Let's Encrypt 免费证书
-# 先临时使用 HTTP 配置启动 Nginx，再申请证书
-docker run --rm -v $(pwd)/certbot/www:/var/www/certbot \
-  certbot/certbot certonly --webroot \
-  -w /var/www/certbot -d your-domain.com \
-  --email your-email@example.com --agree-tos --no-eff-email
-
-# 将证书复制到 ssl/ 目录
-cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/
-cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/
-
-# 方案 B：自签名证书（仅测试用）
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout ssl/privkey.pem -out ssl/fullchain.pem \
-  -subj "/CN=localhost"
-
-# 2. 创建 .env 文件（务必使用强密钥）
-cat > .env << EOF
-JWT_SECRET=$(openssl rand -hex 32)
-DB_PASSWORD=$(openssl rand -hex 16)
-DB_ROOT_PASSWORD=$(openssl rand -hex 16)
-DB_USER=app_user
-DB_NAME=star_citizen_promotion
-EOF
-
-# 3. 启动全部服务（含 Nginx）
-docker-compose --profile production up -d
-
-# 4. 验证
-curl -k https://your-domain.com/health
+# 证书会被放到 ./ssl/ 目录
+ls ssl/
+# fullchain.pem  privkey.pem
 ```
 
-### Docker Compose 服务说明
+#### 方案 B：Let's Encrypt 免费证书（生产环境）
 
-| 服务 | 端口 | Profile | 说明 |
-|:---|:---|:---|:---|
-| `backend` | 3001 | 默认 | 后端 API + 前端静态文件服务 |
-| `mysql` | 127.0.0.1:3306 | 默认 | MySQL 8.0（仅本地访问） |
-| `nginx` | 80, 443 | production | 反向代理 + SSL 终止 |
-| `backup` | — | production | 数据库每日自动备份（保留 30 天） |
-| `certbot` | — | production | SSL 证书自动续期（每 12 小时检查） |
+```bash
+# 1. 创建 certbot 所需目录
+mkdir -p ssl certbot/www certbot/conf
 
-### 数据持久化
+# 2. 临时启动 nginx（仅 HTTP 模式申请证书）
+# 编辑 .env 将 SERVER_NAME 改为真实域名，并先用 HTTP-only 启动
+docker compose --profile production up -d nginx
 
-| 卷 | 挂载路径 | 用途 |
-|:---|:---|:---|
-| `mysql_data` | `/var/lib/mysql` | 数据库数据 |
-| `./server/data` | `/app/server/data` | 应用数据 |
-| `./logs` | `/app/logs` | 应用日志 |
+# 3. 申请证书
+docker compose run --rm certbot certonly \
+    --webroot -w /var/www/certbot \
+    -d your-domain.com \
+    --email your@email.com \
+    --agree-tos --no-eff-email
 
-### 环境变量清单
+# 4. 同步证书到 nginx 读取的路径
+./scripts/sync-letsencrypt-certs.sh your-domain.com
 
-**必填变量**（不设置则容器拒绝启动）：
+# 5. 重载 nginx
+docker compose exec nginx nginx -s reload
+```
+
+### 3. 启动服务
+
+#### 完整生产栈（含 nginx + backup + certbot）
+
+```bash
+docker compose --profile production up -d
+```
+
+#### 仅后端 + 数据库（开发调试）
+
+```bash
+docker compose up -d
+```
+
+### 4. 验证部署
+
+```bash
+# 查看所有服务状态（应全部 Up (healthy)，migrate 应为 exited (0)）
+docker compose --profile production ps
+
+# 健康检查（自签名证书用 -k 跳过校验）
+curl -k https://localhost/health/live
+# 期望: {"status":"ok"}
+
+curl -k https://localhost/health
+# 期望: {"status":"ok","checks":{"database":true,...}}
+
+# API 冒烟
+curl -k https://localhost/api/fleet
+curl -k https://localhost/api/stats
+
+# HTTPS 重定向验证
+curl -I http://localhost
+# 期望: 301 → https://localhost/
+
+# 前端首页
+curl -k https://localhost/
+# 期望: 200 + HTML
+```
+
+---
+
+## 环境变量清单
+
+### 必填变量（不设置则容器拒绝启动）
 
 | 变量 | 说明 |
 |:---|:---|
 | `JWT_SECRET` | JWT 签名密钥，至少 32 字符 |
 | `DB_PASSWORD` | 数据库密码 |
+| `DB_ROOT_PASSWORD` | MySQL root 密码（用于备份服务） |
 
-**可选变量**（有默认值）：
+### 可选变量（有默认值）
 
 | 变量 | 默认值 | 说明 |
 |:---|:---|:---|
-| `DB_HOST` | `mysql` | 数据库主机 |
+| `SERVER_NAME` | `localhost` | nginx server_name，生产环境填真实域名 |
+| `USE_HTTPS` | `true` | 是否启用 HTTPS |
+| `DB_HOST` | `mysql` | 数据库主机（Docker 服务名） |
 | `DB_PORT` | `3306` | 数据库端口 |
 | `DB_USER` | `app_user` | 数据库用户 |
 | `DB_NAME` | `star_citizen_promotion` | 数据库名 |
-| `DB_ROOT_PASSWORD` | 同 `DB_PASSWORD` | MySQL root 密码 |
-| `DB_NAME` | `star_citizen_promotion` | 数据库名 |
+| `DB_CONNECTION_LIMIT` | `20` | 连接池大小 |
+| `JWT_EXPIRES_IN` | `30d` | JWT 过期时间 |
+| `BCRYPT_SALT_ROUNDS` | `12` | bcrypt 加盐轮数 |
+| `RATE_LIMIT_WINDOW_MS` | `900000` | 限流窗口（15 分钟） |
+| `RATE_LIMIT_MAX` | `100` | 窗口内最大请求数 |
+| `ALLOWED_ORIGINS` | `https://localhost` | CORS 允许来源 |
+| `FRONTEND_URL` | `https://localhost` | 前端 URL（用于 CORS） |
+| `METRICS_ENABLED` | `true` | 是否启用 /metrics 端点 |
+| `METRICS_ALLOWED_IPS` | `127.0.0.1,::1` | /metrics 访问白名单 |
+| `WS_PORT` | `3003` | WebSocket 端口 |
+| `LOG_LEVEL` | `info` | 日志级别 |
+| `LOG_FILE_ENABLED` | `true` | 是否启用文件日志 |
 
-### 数据库备份与恢复
-
-生产环境自动备份服务每天凌晨 3 点执行，备份文件保存在 `backups/` 目录。
-
-```bash
-# 查看备份文件
-ls -la backups/
-
-# 恢复指定备份
-gunzip < backups/backup_20260531_030000.sql.gz | \
-  docker-compose exec -T mysql mysql -u root -p"$DB_ROOT_PASSWORD" "$DB_NAME"
-
-# 手动触发备份（不等待定时任务）
-docker-compose exec backup sh -c 'mysqldump -h mysql -u root -p"$DB_ROOT_PASSWORD" --single-transaction --all-databases | gzip > /backups/manual_$(date +%Y%m%d_%H%M%S).sql.gz'
-```
-
-备份策略：单文件最大无限制，保留 30 天，超期自动清理。
-
-### SSL 证书管理
-
-**首次申请证书**：
-
-```bash
-# 确保 Nginx 已启动且 80 端口可访问
-docker-compose --profile production up -d nginx
-
-# 申请 Let's Encrypt 证书
-docker-compose run --rm certbot certonly \
-  --webroot -w /var/www/certbot \
-  -d your-domain.com \
-  --email your@email.com \
-  --agree-tos --no-eff-email
-
-# 将证书复制到 Nginx 期望的路径
-cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/
-cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/
-
-# 重载 Nginx
-docker-compose exec nginx nginx -s reload
-```
-
-证书续期由 certbot 容器自动处理（每 12 小时检查一次）。
+完整变量列表见 [.env.production.example](../../.env.production.example)。
 
 ---
 
-## 方式二：手动部署
+## 数据持久化
 
-### 环境要求
+| 卷 | 挂载路径 | 用途 |
+|:---|:---|:---|
+| `mysql_data` (Docker volume) | `/var/lib/mysql` | 数据库数据 |
+| `./server/data` (bind mount) | `/app/server/data` | 应用数据 |
+| `./backups` (bind mount) | `/backups` | 数据库备份文件 |
+| `./ssl` (bind mount, ro) | `/etc/nginx/ssl` | SSL 证书 |
+| `./certbot/conf` (bind mount) | `/etc/letsencrypt` | Let's Encrypt 证书归档 |
+| `./certbot/www` (bind mount) | `/var/www/certbot` | ACME 挑战路径 |
 
-| 依赖 | 版本 |
-|:---|:---|
-| Node.js | ^20.19.0 或 >=22.12.0 |
-| npm | ≥9.0.0 |
-| MySQL | ≥8.0 |
+---
 
-### 步骤
+## 数据库迁移
+
+迁移由独立的 `migrate` 服务执行：
 
 ```bash
-# 1. 克隆并安装依赖
-git clone https://github.com/MomoDaviluke/star-citizen-promotion.git
-cd star-citizen-promotion
-npm install
-cd server && npm install && cd ..
+# 查看迁移日志
+docker compose logs migrate
 
-# 2. 配置环境变量
-cp .env.example .env.development
-cp server/.env.example server/.env.development
-# 编辑 server/.env.development，填入数据库连接信息和 JWT 密钥
+# 手动重新执行迁移（会先停止依赖它的 backend）
+docker compose stop backend
+docker compose up migrate
+docker compose start backend
 
-# 3. 初始化数据库
-cd server && npm run db:init && cd ..
-
-# 4. 构建前端
-npm run build
-# 产物输出到 dist/ 目录
-
-# 5. 启动后端（生产模式）
-cd server
-NODE_ENV=production node dist/index.js
+# 迁移服务使用 server/src/database/migrate.ts 编译后的 dist/database/migrate.js
+# 该脚本会创建数据库（若不存在）和所有表（CREATE TABLE IF NOT EXISTS，幂等）
 ```
 
-### Nginx 反向代理配置
+---
 
-手动部署时，需要自行配置 Nginx。核心配置参考项目内置的 `nginx.conf`：
+## 数据库备份与恢复
 
-```nginx
-upstream backend {
-    server 127.0.0.1:3001;
-}
+### 自动备份
 
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
+`backup` 服务使用 alpine + busybox crond，每天 03:00（Asia/Shanghai）自动执行：
 
-    # SSL 证书
-    ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+```bash
+# 查看备份服务日志
+docker compose logs backup
 
-    # 前端静态文件
-    location / {
-        root /path/to/star-citizen-promotion/dist;
-        try_files $uri $uri/ /index.html;
-    }
+# 查看已生成的备份文件
+ls -la backups/
+# backup_20260725_030000.sql.gz  backup_20260726_030000.sql.gz  ...
 
-    # API 代理
-    location /api/ {
-        proxy_pass http://backend;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+# 备份策略：
+# - 每天 03:00 执行
+# - mysqldump --single-transaction（InnoDB 一致性快照，不锁表）
+# - gzip 压缩
+# - 保留 30 天，过期自动清理
+```
 
-    # WebSocket 代理
-    location /ws {
-        proxy_pass http://backend;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_read_timeout 86400s;
-    }
+### 手动备份
 
-    # 健康检查
-    location /health {
-        proxy_pass http://backend/health;
-    }
-}
+```bash
+# 触发一次手动备份
+docker compose exec backup /backup/backup.sh
+
+# 或在宿主机直接执行
+docker compose run --rm backup /backup/backup.sh
+```
+
+### 恢复备份
+
+```bash
+# 解压并恢复
+gunzip < backups/backup_20260725_030000.sql.gz | \
+    docker compose exec -T mysql mysql -u root -p"$DB_ROOT_PASSWORD" "$DB_NAME"
+```
+
+---
+
+## SSL 证书管理
+
+### 证书续期（Let's Encrypt）
+
+Let's Encrypt 证书有效期 90 天，certbot 容器每 12 小时自动检查续期：
+
+```bash
+# 查看 certbot 日志
+docker compose logs certbot
+
+# 续期后需同步证书到 nginx 路径并重载
+./scripts/sync-letsencrypt-certs.sh your-domain.com
+docker compose exec nginx nginx -s reload
+```
+
+> **提示**：可配置 certbot 的 `--deploy-hook` 自动调用 sync 脚本，避免手动操作。
+
+### 自签名证书重新生成
+
+```bash
+./scripts/generate-self-signed-cert.sh localhost
+docker compose exec nginx nginx -s reload
 ```
 
 ---
@@ -262,28 +299,9 @@ server {
 
 | 端点 | 用途 | 响应 |
 |:---|:---|:---|
-| `GET /health/live` | 存活探针（Kubernetes liveness） | `{ "status": "ok" }` |
-| `GET /health/ready` | 就绪探针（Kubernetes readiness） | 200 就绪 / 503 未就绪 |
+| `GET /health/live` | 存活探针 | `{ "status": "ok" }` |
+| `GET /health/ready` | 就绪探针 | 200 就绪 / 503 未就绪 |
 | `GET /health` | 综合健康检查 | 数据库连接 + 内存使用 + 连接池状态 |
-
-**综合健康检查响应示例**：
-
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-05-31T10:00:00.000Z",
-  "uptime": 86400,
-  "checks": {
-    "database": true,
-    "memory": true,
-    "poolStatus": {
-      "active": 5,
-      "idle": 15,
-      "total": 20
-    }
-  }
-}
-```
 
 Docker 健康检查配置已内置在 `Dockerfile` 和 `docker-compose.yml` 中，间隔 15~30 秒自动探测。
 
@@ -303,26 +321,34 @@ Docker 环境中，`docker stop` 会发送 SIGTERM 信号触发优雅关闭。�
 
 ---
 
-## 证书续期（Let's Encrypt）
+## 日志管理
 
-Let's Encrypt 证书有效期 90 天，需定期续期：
+所有服务已配置日志大小限制：
 
-```bash
-# 手动续期
-docker run --rm -v $(pwd)/certbot/www:/var/www/certbot \
-  -v $(pwd)/ssl:/etc/nginx/ssl \
-  certbot/certbot renew
-
-# 重载 Nginx 使新证书生效
-docker-compose exec nginx nginx -s reload
+```yaml
+logging:
+  driver: json-file
+  options:
+    max-size: "10m"      # 单个日志文件最大 10MB
+    max-file: "3"        # 保留 3 个日志文件
 ```
 
-建议配置 crontab 自动续期：
-
 ```bash
-# 每月 1 号凌晨 3 点续期
-0 3 1 * * cd /path/to/project && docker run --rm -v $(pwd)/certbot/www:/var/www/certbot certbot/certbot renew && docker-compose exec nginx nginx -s reload
+# 查看实时日志
+docker compose logs -f backend
+
+# 查看最近 100 行
+docker compose logs --tail 100 nginx
+
+# 应用层日志（winston）保存在容器内 /app/logs/
+docker compose exec backend ls /app/logs/
 ```
+
+---
+
+## 监控接入
+
+后端暴露 Prometheus 格式的 `/metrics` 端点，接入方式见 [METRICS.md](../observability/METRICS.md)。
 
 ---
 
@@ -330,23 +356,31 @@ docker-compose exec nginx nginx -s reload
 
 ### Q: 容器启动后数据库连接失败？
 
-MySQL 容器的健康检查通过后，后端才会启动（`depends_on: condition: service_healthy`）。如果仍然失败：
+1. 检查 `.env` 中 `DB_PASSWORD` 与 `DB_ROOT_PASSWORD` 是否正确
+2. 确认 MySQL 容器健康：`docker compose ps mysql`
+3. 查看 migrate 日志：`docker compose logs migrate`
+4. 查看 backend 日志：`docker compose logs backend`
 
-1. 检查 `.env` 中 `DB_PASSWORD` 是否正确
-2. 确认 MySQL 容器日志：`docker-compose logs mysql`
-3. 确认网络连通：`docker-compose exec backend wget -qO- http://mysql:3306`
+### Q: backend 容器一直处于 `starting` 状态？
+
+backend 依赖 migrate 服务成功退出。如果 migrate 失败：
+
+```bash
+docker compose logs migrate
+# 修复问题后重启
+docker compose up migrate
+docker compose start backend
+```
 
 ### Q: Nginx 返回 502 Bad Gateway？
 
-后端服务尚未就绪或已崩溃：
-
-1. 检查后端日志：`docker-compose logs backend`
-2. 确认健康检查：`curl http://localhost:3001/health`
-3. 检查端口占用：`netstat -tlnp | grep 3001`
+1. 检查后端是否健康：`curl http://localhost:3001/health/live`
+2. 查看 nginx 日志：`docker compose logs nginx`
+3. 确认 nginx 配置语法：`docker compose exec nginx nginx -t`
 
 ### Q: 前端页面刷新后 404？
 
-Nginx 需要配置 SPA 路由回退。确认 `nginx.conf` 中有：
+确认 nginx.conf 中有 SPA 路由回退（已在 `nginx.conf.tmpl` 中配置）：
 
 ```nginx
 location / {
@@ -356,7 +390,7 @@ location / {
 
 ### Q: WebSocket 连接不上？
 
-确认 Nginx 配置了 WebSocket 代理头：
+确认 nginx 配置了 WebSocket 代理头（已在 `nginx.conf.tmpl` 中配置）：
 
 ```nginx
 location /ws {
@@ -365,3 +399,52 @@ location /ws {
     proxy_set_header Connection "upgrade";
 }
 ```
+
+### Q: HTTPS 浏览器提示证书不可信？
+
+自签名证书仅供本地验证。生产环境请使用 Let's Encrypt 或商业证书。
+
+### Q: 日志文件占用磁盘过大？
+
+所有服务已限制单文件 10MB × 3 个文件。如需更激进的限制，修改 `docker-compose.yml` 中 `logging.options`。
+
+---
+
+## 部署方式二：手动部署（无 Docker）
+
+### 环境要求
+
+| 依赖 | 版本 |
+|:---|:---|
+| Node.js | ^20.19.0 或 >=22.12.0 |
+| npm | ≥9.0.0 |
+| MySQL | ≥8.0 |
+
+### 步骤
+
+```bash
+# 1. 克隆并安装依赖
+git clone https://github.com/MomoDaviluke/star-citizen-promotion.git
+cd star-citizen-promotion
+npm ci
+cd server && npm ci && cd ..
+
+# 2. 配置环境变量
+cp server/.env.production.example server/.env.production
+# 编辑 server/.env.production，填入数据库连接信息和 JWT 密钥
+
+# 3. 初始化数据库
+cd server && npm run db:init && cd ..
+
+# 4. 构建前端
+npm run build
+# 产物输出到 dist/ 目录
+
+# 5. 启动后端（生产模式）
+cd server
+NODE_ENV=production node dist/index.js
+```
+
+### Nginx 反向代理配置
+
+手动部署时，参考 `nginx.conf.tmpl` 配置宿主机 nginx，将 `${SERVER_NAME}` 替换为实际域名。
