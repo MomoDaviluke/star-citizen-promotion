@@ -6,6 +6,7 @@
 # ============================================
 
 set -e
+set -o pipefail
 
 # 环境变量校验
 : "${DB_HOST:?DB_HOST must be set}"
@@ -27,7 +28,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🔄 开始备份数据库 $DB_NAME..."
 # 执行 mysqldump 并 gzip 压缩
 # --single-transaction: InnoDB 一致性快照，不锁表
 # --routines --triggers: 包含存储过程和触发器
-# --set-gtid-purged=OFF: 避免 GTID 冲突（单机部署）
+# 注：alpine mysql-client 实际为 mariadb-client，不支持 --set-gtid-purged=OFF
 if mysqldump \
     --host="$DB_HOST" \
     --port="$DB_PORT" \
@@ -36,7 +37,6 @@ if mysqldump \
     --single-transaction \
     --routines \
     --triggers \
-    --set-gtid-purged=OFF \
     "$DB_NAME" 2>/tmp/mysqldump_error.log | gzip > "$BACKUP_FILE"; then
     SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ 备份成功: $BACKUP_FILE ($SIZE)"

@@ -61,3 +61,16 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+# 强制 shell 脚本与 Dockerfile 使用 LF 行尾符
+# （避免 Windows autocrlf 导致容器内 \r 报错，alpine busybox ash/crond 无法解析 CRLF）
+###############################################################################
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile text eol=lf
+Dockerfile.* text eol=lf
+crontab text eol=lf
+nginx.conf* text eol=lf
+*.tmpl text eol=lf
+nginx-entrypoint.sh text eol=lf
