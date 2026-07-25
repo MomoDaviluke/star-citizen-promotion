@@ -30,7 +30,6 @@ services:
     # 执行迁移脚本后退出
     command: ["node", "dist/database/migrate.js"]
     restart: "no"
-    profiles: ["default", "production"]
     logging:
       driver: json-file
       options:
