@@ -1,0 +1,64 @@
+# 版本控制
+.git
+.gitignore
+.githooks
+.github
+
+# 依赖与构建产物（构建时重新生成）
+node_modules
+server/node_modules
+dist
+server/dist
+coverage
+server/coverage
+
+# 测试与文档（生产镜像不需要）
+tests
+server/tests
+e2e
+load-tests
+playwright-report
+test-results
+docs
+screenshots
+*.md
+!server/README.md
+
+# 环境与配置（构建时通过环境变量注入）
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# 临时与缓存
+*.log
+*.tmp
+*.temp
+.cache
+.eslintcache
+*.tsbuildinfo
+.worktrees
+.trae
+.claude
+.claude-crap
+.agents
+.vscode
+.idea
+
+# Docker 卷与备份
+docker-volumes
+backups
+ssl
+certbot
+
+# 压测报告
+load-tests/reports
+
+# 设计参考与脚本
+docs/design-ref
+scripts/generate-ship-images.md
+patches
+
+# 子项目目录（避免上下文污染）
+backup
