@@ -208,15 +208,18 @@ jobs:
         run: npm ci
 
       - name: 前端安全审计
-        run: npm audit --audit-level=high
+        # 仅审计生产依赖：devDependencies 中的 jest/autocannon/eslint 工具链漏洞
+        # 不进入生产镜像（Dockerfile --omit=dev），生产环境只关心运行时漏洞
+        run: npm audit --omit=dev --audit-level=high
 
       - name: 安装后端依赖
         working-directory: ./server
         run: npm ci
 
       - name: 后端安全审计
+        # 同上：仅审计生产依赖，devDependencies 漏洞不构成运行时风险
         working-directory: ./server
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
       - name: 运行 Snyk 扫描
         uses: snyk/actions/node@master
