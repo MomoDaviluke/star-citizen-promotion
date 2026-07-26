@@ -113,10 +113,11 @@ export async function runScenario(opts) {
  * @param {boolean} expectRateLimit - 是否预期 429
  * @returns {Object} 标准化结果
  */
-function formatResult(result, expectRateLimit) {
+export function formatResult(result, expectRateLimit = false) {
   const statusCodeStats = {}
-  for (const [code, count] of Object.entries(result.statusCodeStats || {})) {
-    statusCodeStats[code] = count
+  for (const [code, value] of Object.entries(result.statusCodeStats || {})) {
+    // autocannon 7.x 中 statusCodeStats[code] 是 {count: N} 对象；旧版本是数字
+    statusCodeStats[code] = typeof value === 'number' ? value : (value?.count ?? 0)
   }
 
   const total = result.requests.total || 0
@@ -140,7 +141,8 @@ function formatResult(result, expectRateLimit) {
       min: result.latency.min,
       p50: result.latency.p50,
       p90: result.latency.p90,
-      p95: result.latency.p97_5 || result.latency.p95,
+      // autocannon 7.x 不返回 p95，从 p90/p99 插值估算
+      p95: result.latency.p95 ?? Math.round((result.latency.p90 + result.latency.p99) / 2),
       p99: result.latency.p99,
       max: result.latency.max
     },

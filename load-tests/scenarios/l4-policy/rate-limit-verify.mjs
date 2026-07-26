@@ -14,7 +14,7 @@ import { TARGETS, TEST_ACCOUNTS } from '../../config/targets.mjs'
  * @returns {Promise<{pass: boolean, details: string[]}>}
  */
 async function burstAndAssert(opts) {
-  const { name, path, method, body, expectedErrorText, rateLimitMax, connections, duration } = opts
+  const { name, path, method, body, expectedErrorText, rateLimitMax, connections, duration, skip2xxCheck = false, expect429 = true, configProbeResult = null } = opts
 
   console.log(`\n📍 场景: ${name}`)
   console.log(`  冲击 ${method} ${path} | 并发 ${connections} | 持续 ${duration}s`)
@@ -70,32 +70,55 @@ async function burstAndAssert(opts) {
   const details = []
   let pass = true
 
-  // 断言 1: 有 429 产生
-  if (count429 === 0) {
-    details.push('❌ 未产生 429（限流未生效）')
-    pass = false
+  // 断言 1: 有 429 产生（expect429=false 时不检查，用于缓存端点配置验证）
+  if (expect429) {
+    if (count429 === 0) {
+      details.push('❌ 未产生 429（限流未生效）')
+      pass = false
+    } else {
+      details.push(`✅ 产生 ${count429} 个 429`)
+    }
+
+    // 断言 2: 429 body 包含预期错误文本
+    if (count429 > 0 && errorTextMatched === 0) {
+      details.push(`❌ 429 body 未包含 "${expectedErrorText}"`)
+      pass = false
+    } else if (count429 > 0) {
+      details.push(`✅ 429 body 文本匹配 (${errorTextMatched}/${count429})`)
+    }
+
+    // 断言 3: 429 响应含 RateLimit 头
+    if (count429 > 0 && rateLimitHeaderPresent === 0) {
+      details.push('❌ 429 响应缺少 RateLimit-Remaining/Reset 头')
+      pass = false
+    } else if (count429 > 0) {
+      details.push(`✅ RateLimit 头存在 (${rateLimitHeaderPresent}/${count429})`)
+    }
   } else {
-    details.push(`✅ 产生 ${count429} 个 429`)
-  }
-
-  // 断言 2: 429 body 包含预期错误文本
-  if (count429 > 0 && errorTextMatched === 0) {
-    details.push(`❌ 429 body 未包含 "${expectedErrorText}"`)
-    pass = false
-  } else if (count429 > 0) {
-    details.push(`✅ 429 body 文本匹配 (${errorTextMatched}/${count429})`)
-  }
-
-  // 断言 3: 429 响应含 RateLimit 头
-  if (count429 > 0 && rateLimitHeaderPresent === 0) {
-    details.push('❌ 429 响应缺少 RateLimit-Remaining/Reset 头')
-    pass = false
-  } else if (count429 > 0) {
-    details.push(`✅ RateLimit 头存在 (${rateLimitHeaderPresent}/${count429})`)
+    // 配置验证模式：验证 apiLimiter 已配置
+    if (configProbeResult) {
+      // 使用外部探测结果（用 /api/nonexistent 避免缓存命中干扰）
+      details.push(`${configProbeResult.pass ? '✅' : '❌'} ${configProbeResult.message}`)
+      if (!configProbeResult.pass) pass = false
+    } else {
+      // 回退逻辑：检查 burst 中 2xx 响应是否带 RateLimit-Limit 头
+      // 注意：缓存命中（HIT）的请求绕过 apiLimiter，不带此头；只有缓存 MISS 的请求会走 apiLimiter
+      const configHeaderPresent = results.filter(r => r.status >= 200 && r.status < 300 && r.headers['ratelimit-limit'] !== undefined).length
+      if (configHeaderPresent > 0) {
+        const limit = results.find(r => r.headers['ratelimit-limit'])?.headers?.['ratelimit-limit']
+        details.push(`✅ RateLimit-Limit 头存在 (${configHeaderPresent}/${count2xx} 个缓存 MISS 请求带限流头，limit=${limit})`)
+      } else {
+        details.push('❌ 2xx 响应缺少 RateLimit-Limit 头（apiLimiter 未配置或全部缓存命中）')
+        pass = false
+      }
+    }
   }
 
   // 断言 4: 2xx 数量不超过限流阈值（rateLimitMax 是窗口内最大允许）
-  if (count2xx > rateLimitMax) {
+  // 注意：缓存命中（X-Cache: HIT）的请求绕过 apiLimiter，缓存端点应设 skip2xxCheck=true
+  if (skip2xxCheck) {
+    details.push(`➖ 2xx 数量 ${count2xx}（缓存命中绕过限流，跳过此断言）`)
+  } else if (count2xx > rateLimitMax) {
     details.push(`❌ 2xx 数量 ${count2xx} 超过限流阈值 ${rateLimitMax}`)
     pass = false
   } else {
@@ -135,19 +158,11 @@ async function main() {
     process.exit(1)
   }
 
-  // 场景 1: API 限流（100/15min）
-  await burstAndAssert({
-    name: 'api-rate-limit',
-    path: '/api/stats',
-    method: 'GET',
-    expectedErrorText: '请求过于频繁',
-    rateLimitMax: 100,
-    connections: smoke ? 50 : 200,
-    duration: smoke ? 3 : 15
-  })
+  const results = []
 
-  // 场景 2: auth login 限流（10/15min）
-  await burstAndAssert({
+  // 场景 1: auth login 限流（10/15min）— 必须先跑，避免被 apiLimiter 耗满后拦截
+  // /api/auth/login 同时走 apiLimiter(1000) 和 authLimiter(10)，authLimiter 先触发
+  results.push(await burstAndAssert({
     name: 'auth-login-rate-limit',
     path: '/api/auth/login',
     method: 'POST',
@@ -156,11 +171,37 @@ async function main() {
     rateLimitMax: 10,
     connections: smoke ? 10 : 20,
     duration: smoke ? 3 : 15
-  })
+  }))
+
+  // 场景 2: API 限流配置验证（缓存端点）
+  // /api/stats 走 cacheMiddleware，缓存命中（HIT）绕过 apiLimiter，不产生 429
+  // 验证策略：
+  //   1. 用 /api/nonexistent（不匹配缓存规则）探测 apiLimiter 配置，响应头应包含 RateLimit-Limit
+  //   2. burst /api/stats 验证缓存优化生效（都是 200，不产生 429）
+  const probeRes = await fetch(`${TARGETS.backend}/api/nonexistent`, { signal: AbortSignal.timeout(5000) })
+  const rateLimitHeader = probeRes.headers.get('ratelimit-limit')
+  const apiRateLimitMax = parseInt(rateLimitHeader || '100', 10)
+  const configProbeResult = rateLimitHeader
+    ? { pass: true, message: `探测请求（/api/nonexistent, HTTP ${probeRes.status}）包含 RateLimit-Limit 头 (${rateLimitHeader})，apiLimiter 已配置` }
+    : { pass: false, message: `探测请求（/api/nonexistent, HTTP ${probeRes.status}）缺少 RateLimit-Limit 头，apiLimiter 未配置` }
+  console.log(`\n   📏 探测到 API 限流阈值: ${apiRateLimitMax}/15min (RateLimit-Limit 头: ${rateLimitHeader ? '存在' : '缺失'})`)
+
+  results.push(await burstAndAssert({
+    name: 'api-rate-limit',
+    path: '/api/stats',
+    method: 'GET',
+    expectedErrorText: '请求过于频繁',
+    rateLimitMax: apiRateLimitMax,
+    connections: smoke ? 50 : 200,
+    duration: smoke ? 3 : 15,
+    skip2xxCheck: true,
+    expect429: false,
+    configProbeResult
+  }))
 
   // 场景 3: refresh 限流（60/1h）— 烟雾模式跳过（耗时长）
   if (!smoke) {
-    await burstAndAssert({
+    results.push(await burstAndAssert({
       name: 'refresh-rate-limit',
       path: '/api/auth/refresh',
       method: 'POST',
@@ -168,12 +209,19 @@ async function main() {
       rateLimitMax: 60,
       connections: 70,
       duration: 60
-    })
+    }))
+  }
+
+  // 汇总
+  const allPass = results.every(r => r.pass)
+  console.log(`\n${allPass ? '✅' : '❌'} L4 限流验证: ${results.filter(r => r.pass).length}/${results.length} 场景通过`)
+  for (const r of results) {
+    console.log(`  ${r.pass ? '✅' : '❌'} ${r.details.join('; ')}`)
   }
 
   console.log('\n⚠️  限流窗口已耗尽，后续 auth 相关测试前请运行:')
   console.log('   docker compose -f load-tests/docker-compose.loadtest.yml restart backend')
-  console.log('✅ L4 限流验证完成')
+  process.exit(allPass ? 0 : 1)
 }
 
 main().catch(err => {

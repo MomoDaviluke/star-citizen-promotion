@@ -6,7 +6,7 @@
  */
 
 import autocannon from 'autocannon'
-import { parseArgs, probe, buildUrl } from '../../lib/client.mjs'
+import { parseArgs, probe, buildUrl, formatResult } from '../../lib/client.mjs'
 import { saveResult, appendSummary, evaluateThreshold } from '../../lib/report.mjs'
 import { authHeaders } from '../../lib/auth.mjs'
 import { TARGETS } from '../../config/targets.mjs'
@@ -78,13 +78,15 @@ async function main() {
 
   // 统计 X-Cache 头分布（autocannon 不直接提供，需要从 result 提取）
   const cacheHitRate = 0 // autocannon 默认不解析响应头，需自定义监控；此处记录为待人工核查
-  result.cacheHitRate = cacheHitRate
+  // 应用 formatResult 统一处理 p95 插值和 429 统计
+  const formatted = formatResult(result, true)
+  formatted.cacheHitRate = cacheHitRate
 
-  saveResult('l2', '80-20-mixed', result)
-  const evaluation = evaluateThreshold(result, 'l2')
-  appendSummary('L2', '80-20-mixed', result, evaluation)
+  saveResult('l2', '80-20-mixed', formatted)
+  const evaluation = evaluateThreshold(formatted, 'l2')
+  appendSummary('L2', '80-20-mixed', formatted, evaluation)
 
-  console.log(`\nP50=${result.latency.p50}ms P95=${result.latency.p95}ms QPS=${result.requests.average} 错误率=${((result.errors / result.requests.total) * 100).toFixed(2)}% ${evaluation.pass ? '✅' : '❌'}`)
+  console.log(`\nP50=${formatted.latency.p50}ms P95=${formatted.latency.p95}ms QPS=${formatted.requests.qps} 429=${formatted.rateLimited} 错误率=${(formatted.errorRate * 100).toFixed(2)}% ${evaluation.pass ? '✅' : '❌'}`)
   console.log('✅ L2 混合负载完成')
 }
 
