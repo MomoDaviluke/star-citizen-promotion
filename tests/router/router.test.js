@@ -47,7 +47,8 @@ vi.mock('vue-router', () => {
       replace: vi.fn(),
       getRoutes: () => flattenRoutes(globalThis.__registeredRoutes),
       options,
-      currentRoute: { value: { path: '/' } }
+      currentRoute: { value: { path: '/' } },
+      isReady: () => Promise.resolve()
     }
   }
 

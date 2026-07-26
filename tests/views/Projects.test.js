@@ -32,7 +32,7 @@ describe('Projects.vue', () => {
     it('应该渲染项目卡片', () => {
       const wrapper = mount(Projects)
       const cards = wrapper.findAll('.project-card')
-      expect(cards.length).toBe(6)
+      expect(cards.length).toBe(8)
     })
 
     it('应该渲染页面标题', () => {

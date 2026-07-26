@@ -43,9 +43,8 @@ describe('useAuthStore', () => {
     it('登录成功应该设置用户信息', async () => {
       const store = useAuthStore()
       const mockUser = { id: '1', username: 'test', role: 'member' }
-      authService.login.mockResolvedValue({
-        data: { user: mockUser, token: 'jwt-token' }
-      })
+      // authService.login 已解包 response.data，返回 { token, user }
+      authService.login.mockResolvedValue({ user: mockUser, token: 'jwt-token' })
 
       await store.login({ email: 'test@test.com', password: '123' })
 
@@ -75,7 +74,7 @@ describe('useAuthStore', () => {
       const loginPromise = store.login({ email: 'test@test.com', password: '123' })
       expect(store.loading).toBe(true)
 
-      resolveLogin({ data: { user: { id: '1' } } })
+      resolveLogin({ user: { id: '1' } })
       await loginPromise
       expect(store.loading).toBe(false)
     })

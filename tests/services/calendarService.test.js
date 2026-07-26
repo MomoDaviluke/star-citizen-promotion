@@ -36,18 +36,28 @@ describe('calendarService', () => {
   // ---- getEvents ----
 
   describe('getEvents', () => {
-    it('应该调用 GET /events 并返回数据', async () => {
-      const mockData = { data: [{ id: '1', title: '测试活动' }] }
-      httpClient.get.mockResolvedValue({ data: mockData })
+    it('应该调用 GET /events 并返回数据（snake→camel 字段转换）', async () => {
+      // 后端返回 { success, data: events[], pagination }
+      // httpClient.get 直接返回后端 JSON
+      const backendResponse = {
+        success: true,
+        data: [{ id: '1', title: '测试活动', start_time: '2026-06-01T10:00:00Z', creator_id: 'u1' }],
+        pagination: { total: 1, limit: 50, offset: 0, hasMore: false }
+      }
+      httpClient.get.mockResolvedValue(backendResponse)
 
       const result = await getEvents()
 
       expect(httpClient.get).toHaveBeenCalledWith('/events', {})
-      expect(result).toEqual(mockData)
+      // service 层应将 start_time→startTime, creator_id→creatorId
+      expect(result.data[0]).toEqual({
+        id: '1', title: '测试活动', startTime: '2026-06-01T10:00:00Z', creatorId: 'u1'
+      })
+      expect(result.pagination.total).toBe(1)
     })
 
     it('应该传递查询参数', async () => {
-      httpClient.get.mockResolvedValue({ data: { data: [] } })
+      httpClient.get.mockResolvedValue({ success: true, data: [], pagination: { total: 0, limit: 50, offset: 0, hasMore: false } })
 
       await getEvents({ startDate: '2026-01-01', status: 'active' })
 
@@ -66,14 +76,20 @@ describe('calendarService', () => {
   // ---- getEvent ----
 
   describe('getEvent', () => {
-    it('应该调用 GET /events/:id 并返回数据', async () => {
-      const mockEvent = { data: { id: '1', title: '活动详情' } }
-      httpClient.get.mockResolvedValue(mockEvent)
+    it('应该调用 GET /events/:id 并返回转换后的数据', async () => {
+      // 后端返回 { success, data: event }
+      const backendResponse = {
+        success: true,
+        data: { id: '1', title: '活动详情', start_time: '2026-06-01T10:00:00Z' }
+      }
+      httpClient.get.mockResolvedValue(backendResponse)
 
       const result = await getEvent('1')
 
       expect(httpClient.get).toHaveBeenCalledWith('/events/1')
-      expect(result).toEqual(mockEvent.data)
+      // service 层返回 { ...response, data: toCamelEvent(response.data) }
+      expect(result.data).toEqual({ id: '1', title: '活动详情', startTime: '2026-06-01T10:00:00Z' })
+      expect(result.success).toBe(true)
     })
 
     it('缺少 eventId 应该抛出错误', async () => {
@@ -85,15 +101,23 @@ describe('calendarService', () => {
   // ---- createEvent ----
 
   describe('createEvent', () => {
-    it('应该调用 POST /events 并返回创建的活动', async () => {
+    it('应该调用 POST /events，发送 snake_case 并返回 camelCase', async () => {
       const eventData = { title: '新活动', startTime: '2026-06-01T10:00:00Z' }
-      const mockResponse = { data: { id: '2', ...eventData } }
-      httpClient.post.mockResolvedValue(mockResponse)
+      // 后端返回创建的活动（snake_case）
+      const backendResponse = {
+        success: true,
+        data: { id: '2', title: '新活动', start_time: '2026-06-01T10:00:00Z' }
+      }
+      httpClient.post.mockResolvedValue(backendResponse)
 
       const result = await createEvent(eventData)
 
-      expect(httpClient.post).toHaveBeenCalledWith('/events', eventData)
-      expect(result).toEqual(mockResponse.data)
+      // 发送时应转为 snake_case
+      expect(httpClient.post).toHaveBeenCalledWith('/events', {
+        title: '新活动', start_time: '2026-06-01T10:00:00Z'
+      })
+      // 返回时应转回 camelCase
+      expect(result.data).toEqual({ id: '2', title: '新活动', startTime: '2026-06-01T10:00:00Z' })
     })
 
     it('缺少 title 应该抛出错误', async () => {
@@ -122,12 +146,16 @@ describe('calendarService', () => {
   describe('updateEvent', () => {
     it('应该调用 PATCH /events/:id', async () => {
       const updates = { title: '更新后的标题' }
-      httpClient.patch.mockResolvedValue({ data: { id: '1', ...updates } })
+      httpClient.patch.mockResolvedValue({
+        success: true,
+        data: { id: '1', title: '更新后的标题' }
+      })
 
       const result = await updateEvent('1', updates)
 
       expect(httpClient.patch).toHaveBeenCalledWith('/events/1', updates)
-      expect(result.title).toBe('更新后的标题')
+      // service 返回 { ...response, data: toCamelEvent(response.data) }
+      expect(result.data.title).toBe('更新后的标题')
     })
 
     it('缺少 eventId 应该抛出错误', async () => {
@@ -161,12 +189,13 @@ describe('calendarService', () => {
 
   describe('joinEvent', () => {
     it('应该调用 POST /events/:id/join', async () => {
-      httpClient.post.mockResolvedValue({ data: { id: '1', joined: true } })
+      // service 返回 { ...response, data: toCamelEvent(response.data) }
+      httpClient.post.mockResolvedValue({ success: true, data: { id: '1', joined: true } })
 
       const result = await joinEvent('1')
 
       expect(httpClient.post).toHaveBeenCalledWith('/events/1/join')
-      expect(result.joined).toBe(true)
+      expect(result.data.joined).toBe(true)
     })
 
     it('缺少 eventId 应该抛出错误', async () => {
@@ -178,12 +207,12 @@ describe('calendarService', () => {
 
   describe('leaveEvent', () => {
     it('应该调用 POST /events/:id/leave', async () => {
-      httpClient.post.mockResolvedValue({ data: { id: '1', joined: false } })
+      httpClient.post.mockResolvedValue({ success: true, data: { id: '1', joined: false } })
 
       const result = await leaveEvent('1')
 
       expect(httpClient.post).toHaveBeenCalledWith('/events/1/leave')
-      expect(result.joined).toBe(false)
+      expect(result.data.joined).toBe(false)
     })
 
     it('缺少 eventId 应该抛出错误', async () => {
