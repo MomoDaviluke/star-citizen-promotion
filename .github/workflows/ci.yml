@@ -225,6 +225,7 @@ jobs:
           echo "Backend started, PID: $(cat backend.pid)"
 
       - name: 等待后端就绪
+        working-directory: ./server
         run: |
           for i in {1..30}; do
             if curl -sf http://localhost:3001/health/live > /dev/null 2>&1; then
@@ -235,7 +236,14 @@ jobs:
             sleep 1
           done
           echo "❌ Backend failed to start"
-          cat server/backend.log
+          echo "===== backend.log 内容 ====="
+          if [ -f backend.log ]; then
+            cat backend.log
+          else
+            echo "(backend.log 不存在，后端进程可能未启动)"
+          fi
+          echo "===== ps 输出 ====="
+          ps aux | grep -E 'node|npm' | grep -v grep || true
           exit 1
 
       - name: 构建前端
