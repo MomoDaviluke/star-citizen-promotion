@@ -9,6 +9,7 @@ import express from 'express'
 
 const mockGetApplications = jest.fn()
 const mockGetApplicationById = jest.fn()
+const mockGetApplicationByEmail = jest.fn()
 const mockSubmitApplication = jest.fn()
 const mockUpdateApplicationStatus = jest.fn()
 const mockDeleteApplication = jest.fn()
@@ -16,6 +17,7 @@ const mockDeleteApplication = jest.fn()
 jest.unstable_mockModule('../../src/services/applicationService.js', () => ({
   getApplications: mockGetApplications,
   getApplicationById: mockGetApplicationById,
+  getApplicationByEmail: mockGetApplicationByEmail,
   submitApplication: mockSubmitApplication,
   updateApplicationStatus: mockUpdateApplicationStatus,
   deleteApplication: mockDeleteApplication
@@ -141,6 +143,45 @@ describe('GET /api/applications/:id', () => {
     const res = await request(app).get('/api/applications/nonexistent')
 
     expect(res.status).toBe(404)
+    expect(res.body.success).toBe(false)
+  })
+})
+
+describe('GET /api/applications/by-email/:email', () => {
+  let app: express.Express
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    app = createApp()
+  })
+
+  it('有效邮箱应返回申请记录', async () => {
+    mockGetApplicationByEmail.mockResolvedValueOnce({
+      id: 'a1', name: 'Test', email: 'test@test.com', status: 'pending'
+    })
+
+    const res = await request(app).get('/api/applications/by-email/test@test.com')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data.id).toBe('a1')
+    expect(mockGetApplicationByEmail).toHaveBeenCalledWith('test@test.com')
+  })
+
+  it('未找到申请应返回 data 为 null', async () => {
+    mockGetApplicationByEmail.mockResolvedValueOnce(null)
+
+    const res = await request(app).get('/api/applications/by-email/notfound@test.com')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+    expect(res.body.data).toBeNull()
+  })
+
+  it('无效邮箱格式应返回 400', async () => {
+    const res = await request(app).get('/api/applications/by-email/invalid-email')
+
+    expect(res.status).toBe(400)
     expect(res.body.success).toBe(false)
   })
 })

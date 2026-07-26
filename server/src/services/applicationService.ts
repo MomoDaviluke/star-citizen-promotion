@@ -84,6 +84,22 @@ export async function getApplicationById(id: string): Promise<Application | null
 }
 
 /**
+ * 通过邮箱获取最新的申请
+ * @description 用于申请人自助查询入队进度，返回该邮箱最近一条申请
+ */
+export async function getApplicationByEmail(email: string): Promise<Application | null> {
+  return queryOne<Application>(
+    `SELECT a.*, u.username as reviewer_name
+     FROM applications a
+     LEFT JOIN users u ON a.reviewed_by = u.id
+     WHERE a.email = ?
+     ORDER BY a.created_at DESC
+     LIMIT 1`,
+    [email]
+  )
+}
+
+/**
  * 提交入队申请
  */
 export async function submitApplication(data: {
