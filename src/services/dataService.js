@@ -308,16 +308,38 @@ export const dataService = {
     return httpClient.get('/activity-logs', params)
   },
 
+  /**
+   * 按邮箱查询申请状态（供用户自助查询入队进度）
+   * @param {string} email - 申请时填写的邮箱
+   * @returns {Promise<Object>} 查询结果
+   */
+  async getApplicationByEmail(email) {
+    if (!email) throw new Error('邮箱不能为空')
+    return httpClient.get(`/applications/by-email/${encodeURIComponent(email)}`)
+  },
+
   async updateSiteSettings(data) {
     return httpClient.put('/settings', data)
   },
 
-  async resetDatabase() {
-    return httpClient.post('/admin/reset-db')
+  /**
+   * 重置数据库（高危操作，需管理员确认密码）
+   * @param {string} confirmPassword - 管理员确认密码
+   * @returns {Promise<Object>} 操作结果
+   */
+  async resetDatabase(confirmPassword) {
+    if (!confirmPassword) throw new Error('请提供确认密码以执行此操作')
+    return httpClient.post('/admin/reset-db', { confirmPassword })
   },
 
-  async clearCache() {
-    return httpClient.post('/admin/clear-cache')
+  /**
+   * 清除缓存（高危操作，需管理员确认密码）
+   * @param {string} confirmPassword - 管理员确认密码
+   * @returns {Promise<Object>} 操作结果
+   */
+  async clearCache(confirmPassword) {
+    if (!confirmPassword) throw new Error('请提供确认密码以执行此操作')
+    return httpClient.post('/admin/clear-cache', { confirmPassword })
   }
 }
 

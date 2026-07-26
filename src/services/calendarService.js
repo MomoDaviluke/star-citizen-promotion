@@ -13,6 +13,64 @@ const logger = createLogger('CalendarService')
 const BASE_URL = '/events'
 
 /**
+ * 后端 SQL 字段（snake_case）→ 前端字段（camelCase）映射
+ * @description 后端 events 表用 start_time/end_time/creator_id，
+ *              前端 store/组件约定用 startTime/endTime/creatorId。
+ *              在 service 层做双向转换，保证前后端字段名惯例各自一致。
+ */
+const SNAKE_TO_CAMEL = {
+  start_time: 'startTime',
+  end_time: 'endTime',
+  creator_id: 'creatorId',
+  created_at: 'createdAt',
+  updated_at: 'updatedAt'
+}
+
+const CAMEL_TO_SNAKE = Object.entries(SNAKE_TO_CAMEL).reduce((acc, [snake, camel]) => {
+  acc[camel] = snake
+  return acc
+}, {})
+
+/**
+ * 将单个 event 对象的字段名从 snake_case 转为 camelCase
+ * @param {Object} event - 后端返回的 event 对象
+ * @returns {Object} 转换后的 event 对象
+ */
+function toCamelEvent(event) {
+  if (!event || typeof event !== 'object') return event
+  const result = { ...event }
+  for (const [snake, camel] of Object.entries(SNAKE_TO_CAMEL)) {
+    if (snake in result) {
+      result[camel] = result[snake]
+      delete result[snake]
+    }
+  }
+  return result
+}
+
+/**
+ * 将单个 event 对象的字段名从 camelCase 转为 snake_case
+ * @param {Object} event - 前端传入的 event 对象
+ * @returns {Object} 转换后的 event 对象
+ */
+function toSnakeEvent(event) {
+  if (!event || typeof event !== 'object') return event
+  const result = { ...event }
+  for (const [camel, snake] of Object.entries(CAMEL_TO_SNAKE)) {
+    if (camel in result) {
+      result[snake] = result[camel]
+      delete result[camel]
+    }
+  }
+  return result
+}
+
+/** 批量转换 event 数组为 camelCase */
+function toCamelEvents(events) {
+  return Array.isArray(events) ? events.map(toCamelEvent) : events
+}
+
+/**
  * 获取活动列表
  * @param {Object} [params] - 查询参数
  * @param {string} [params.startDate] - 开始日期
@@ -24,7 +82,9 @@ const BASE_URL = '/events'
 async function getEvents(params = {}) {
   try {
     const response = await httpClient.get(BASE_URL, params)
-    return response.data
+    // 后端返回 { success, data: events[], pagination }，这里解包 data 并转 camelCase
+    const events = toCamelEvents(response.data)
+    return { ...response, data: events }
   } catch (error) {
     const err = /** @type {any} */ (error)
     logger.warn('获取活动列表失败:', err.response?.data || err.message)
@@ -39,10 +99,11 @@ async function getEvents(params = {}) {
  */
 async function getEvent(eventId) {
   if (!eventId) throw new Error('eventId is required')
-  
+
   try {
     const response = await httpClient.get(`${BASE_URL}/${eventId}`)
-    return response.data
+    // 后端返回 { success, data: event }，这里解包 data 并转 camelCase
+    return { ...response, data: toCamelEvent(response.data) }
   } catch (error) {
     const err = /** @type {any} */ (error)
     logger.warn('获取活动详情失败:', err.response?.data || err.message)
@@ -67,8 +128,9 @@ async function createEvent(eventData) {
   }
 
   try {
-    const response = await httpClient.post(BASE_URL, eventData)
-    return response.data
+    // 发送前转 snake_case，返回后转 camelCase
+    const response = await httpClient.post(BASE_URL, toSnakeEvent(eventData))
+    return { ...response, data: toCamelEvent(response.data) }
   } catch (error) {
     const err = /** @type {any} */ (error)
     logger.error('创建活动失败:', err.response?.data || err.message)
@@ -84,10 +146,11 @@ async function createEvent(eventData) {
  */
 async function updateEvent(eventId, updates) {
   if (!eventId) throw new Error('eventId is required')
-  
+
   try {
-    const response = await httpClient.patch(`${BASE_URL}/${eventId}`, updates)
-    return response.data
+    // 发送前转 snake_case，返回后转 camelCase
+    const response = await httpClient.patch(`${BASE_URL}/${eventId}`, toSnakeEvent(updates))
+    return { ...response, data: toCamelEvent(response.data) }
   } catch (error) {
     const err = /** @type {any} */ (error)
     logger.error('更新活动失败:', err.response?.data || err.message)
@@ -119,10 +182,10 @@ async function deleteEvent(eventId) {
  */
 async function joinEvent(eventId) {
   if (!eventId) throw new Error('eventId is required')
-    
+
   try {
     const response = await httpClient.post(`${BASE_URL}/${eventId}/join`)
-    return response.data
+    return { ...response, data: toCamelEvent(response.data) }
   } catch (error) {
     const err = /** @type {any} */ (error)
     logger.error('报名失败:', err.response?.data || err.message)
@@ -137,10 +200,10 @@ async function joinEvent(eventId) {
  */
 async function leaveEvent(eventId) {
   if (!eventId) throw new Error('eventId is required')
-    
+
   try {
     const response = await httpClient.post(`${BASE_URL}/${eventId}/leave`)
-    return response.data
+    return { ...response, data: toCamelEvent(response.data) }
   } catch (error) {
     const err = /** @type {any} */ (error)
     logger.error('取消报名失败:', err.response?.data || err.message)
