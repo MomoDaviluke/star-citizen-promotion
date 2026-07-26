@@ -69,7 +69,7 @@ function collectRumMetrics(page) {
         } else {
           rumMetrics.push(body)
         }
-      } catch {}
+      } catch { /* 静默忽略非 JSON 响应，负载测试场景无需处理解析失败 */ }
     }
   })
 

@@ -60,7 +60,7 @@ async function main() {
       try {
         const msg = JSON.parse(data.toString())
         if (msg.type === 'pong') results.pingResponses++
-      } catch {}
+      } catch { /* 静默忽略非 JSON 消息，负载测试场景无需处理解析失败 */ }
     })
 
     ws.on('close', (code) => {
