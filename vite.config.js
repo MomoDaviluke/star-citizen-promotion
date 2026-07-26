@@ -154,6 +154,30 @@ export default defineConfig(({ mode }) => {
     },
 
     /**
+     * 预览服务器配置
+     * @description 配置生产构建预览服务器（npm run preview）
+     *              与 dev server 保持一致的 proxy 配置，确保 E2E 测试
+     *              能通过 /api 前缀访问后端 API
+     */
+    preview: {
+      /** 预览端口，Playwright webServer 期望 4173 */
+      port: 4173,
+      /** 绑定 0.0.0.0 支持 CI 容器内访问 */
+      host: '0.0.0.0',
+      /** 复用 dev server 的代理规则，保证 E2E 测试环境一致 */
+      proxy: {
+        '/api': {
+          target: env.VITE_BACKEND_URL || 'http://localhost:3001',
+          changeOrigin: true
+        },
+        '/ai': {
+          target: env.VITE_AI_SERVICE_URL || 'http://localhost:3002',
+          changeOrigin: true
+        }
+      }
+    },
+
+    /**
      * 生产构建配置
      * @description 优化构建输出，提升生产环境性能
      */
