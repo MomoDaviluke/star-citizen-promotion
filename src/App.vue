@@ -26,8 +26,11 @@
     <!-- 站点底部 -->
     <SiteFooter />
 
-    <!-- 全局加载指示器 -->
+    <!-- 全局加载指示器（页面内重型加载用） -->
     <LoadingIndicator ref="loadingIndicator" />
+
+    <!-- 路由切换顶部进度条（不阻塞内容） -->
+    <RouteProgress ref="routeProgress" />
 
     <!-- PWA 更新与离线提示 -->
     <PwaUpdateToast />
@@ -68,6 +71,7 @@ import SiteHeader from './components/layout/SiteHeader.vue'
 import SiteFooter from './components/layout/SiteFooter.vue'
 import PageTransition from './components/common/PageTransition.vue'
 import LoadingIndicator from './components/common/LoadingIndicator.vue'
+import RouteProgress from './components/common/RouteProgress.vue'
 import ErrorBoundary from './components/common/ErrorBoundary.vue'
 import PwaUpdateToast from './components/PwaUpdateToast.vue'
 import { createLogger } from './utils/logger.js'
@@ -79,6 +83,9 @@ const router = useRouter()
 
 /** 加载指示器组件引用 */
 const loadingIndicator = ref(null)
+
+/** 路由进度条组件引用 */
+const routeProgress = ref(null)
 
 /** 页面加载状态 */
 const isPageLoading = ref(false)
@@ -173,20 +180,20 @@ function handleGlobalError(errorInfo) {
 provide('notification', { showNotification, removeNotification })
 
 /**
- * 监听路由加载状态变化
+ * 监听路由加载状态变化 — 使用顶部进度条替代全屏遮罩
+ * 注意：不调用 next()，仅设置进度条状态，路由守卫逻辑由 router/index.js 处理
  */
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   isPageLoading.value = true
-  if (loadingIndicator.value) {
-    loadingIndicator.value.startLoading()
+  if (routeProgress.value) {
+    routeProgress.value.start()
   }
-  next()
 })
 
 router.afterEach(() => {
   isPageLoading.value = false
-  if (loadingIndicator.value) {
-    loadingIndicator.value.stopLoading()
+  if (routeProgress.value) {
+    routeProgress.value.finish()
   }
 })
 
@@ -195,8 +202,8 @@ router.afterEach(() => {
  * @description 导航出错时显示错误通知
  */
 router.onError(() => {
-  if (loadingIndicator.value) {
-    loadingIndicator.value.forceStop()
+  if (routeProgress.value) {
+    routeProgress.value.finish()
   }
   showNotification({
     message: '页面加载失败，请检查网络连接',

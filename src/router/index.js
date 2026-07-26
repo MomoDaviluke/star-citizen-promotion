@@ -51,7 +51,7 @@ const routes = [
     path: '/fleet',
     name: '舰队展示',
     component: () => import('../views/Fleet.vue'),
-    meta: { title: '舰队展示 - 星际公民团队官网', preload: false }
+    meta: { title: '舰队展示 - 星际公民团队官网', preload: true }
   },
   {
     path: '/fleet/:slug',
@@ -69,13 +69,13 @@ const routes = [
     path: '/join',
     name: '加入我们',
     component: () => import('../views/Join.vue'),
-    meta: { title: '加入我们 - 星际公民团队官网' }
+    meta: { title: '加入我们 - 星际公民团队官网', preload: true }
   },
   {
     path: '/contact',
     name: '联系我们',
     component: () => import('../views/Contact.vue'),
-    meta: { title: '联系我们 - 星际公民团队官网' }
+    meta: { title: '联系我们 - 星际公民团队官网', preload: true }
   },
   {
     path: '/login',
@@ -217,3 +217,30 @@ router.beforeEach((to) => {
 })
 
 export default router
+
+/**
+ * 关键路由预加载
+ * @description 首页加载完成后，利用浏览器空闲时间预加载标记了 preload: true 的路由 chunk，
+ *              减少用户点击导航时的可感知延迟
+ */
+function preloadCriticalRoutes() {
+  const preloadRoutes = routes.filter((r) => r.meta?.preload)
+  const preload = (route) => {
+    if (typeof route.component === 'function') {
+      route.component().catch(() => {})
+    }
+  }
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => {
+      preloadRoutes.forEach(preload)
+    }, { timeout: 3000 })
+  } else {
+    setTimeout(() => {
+      preloadRoutes.forEach(preload)
+    }, 2000)
+  }
+}
+
+// 首次导航完成后触发预加载
+router.isReady().then(preloadCriticalRoutes)
