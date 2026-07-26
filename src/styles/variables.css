@@ -55,8 +55,8 @@
   /* Text — 文字色 */
   --raw-text-1: #ffffff;
   --raw-text-2: #b8b8cc;
-  --raw-text-3: #a0a0b8;
-  --raw-text-4: #9898b0;
+  --raw-text-3: #a8a8c0;
+  --raw-text-4: #9a9ab0;
 
   /* ============================================================
    * Semantic Tokens — 语义层
@@ -89,7 +89,7 @@
   /* Border */
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-hover: rgba(255, 255, 255, 0.15);
-  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
   --color-border-strong: rgba(74, 158, 255, 0.3);
   --color-border-accent: rgba(74, 158, 255, 0.2);
   --color-border-amber: rgba(255, 179, 0, 0.2);
@@ -167,7 +167,7 @@
   --color-text-body: var(--raw-text-2);
   --color-text-label: var(--raw-text-3);
   --color-text-dim: var(--raw-text-4);
-  --color-text-hint: rgba(255, 255, 255, 0.35);
+  --color-text-hint: rgba(255, 255, 255, 0.45);
   --color-text-accent: var(--raw-cyan);
   --color-text-highlight: var(--raw-amber);
 

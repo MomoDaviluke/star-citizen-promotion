@@ -189,7 +189,7 @@ function handleClick(event) {
 }
 
 .base-button--outline:hover:not(.is-disabled):not(.is-loading) {
-  background: rgba(95, 169, 255, 0.1);
+  background: rgba(var(--raw-cyan-rgb), 0.1);
   border-color: var(--color-accent);
 }
 
@@ -201,7 +201,7 @@ function handleClick(event) {
 }
 
 .base-button--ghost:hover:not(.is-disabled):not(.is-loading) {
-  background: rgba(95, 169, 255, 0.05);
+  background: rgba(var(--raw-cyan-rgb), 0.05);
   color: var(--color-text-heading);
 }
 

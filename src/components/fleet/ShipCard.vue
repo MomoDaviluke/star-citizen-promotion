@@ -17,7 +17,25 @@
 
         <!-- Ship image area -->
         <div class="ship-card__image">
-          <img :src="ship.image" :alt="ship.name" loading="lazy" decoding="async" />
+          <!-- 骨架占位：图片加载前显示 HUD 风格占位 -->
+          <div v-if="!imageLoaded" class="ship-card__skeleton" aria-hidden="true">
+            <svg class="ship-card__skeleton-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M32 8L52 28v20L32 56 12 48V28z" opacity="0.3"/>
+              <path d="M32 8v48M12 28h40" opacity="0.2"/>
+            </svg>
+            <div class="ship-card__skeleton-shimmer"></div>
+          </div>
+          <img
+            :src="ship.image"
+            :alt="ship.name"
+            width="400"
+            height="225"
+            loading="lazy"
+            decoding="async"
+            :class="{ 'is-loaded': imageLoaded }"
+            @load="imageLoaded = true"
+            @error="imageLoaded = true"
+          />
           <div class="ship-card__image-frame" aria-hidden="true">
             <span class="ship-card__frame-corner ship-card__frame-corner--tl" />
             <span class="ship-card__frame-corner ship-card__frame-corner--tr" />
@@ -53,6 +71,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { HudCorner, ShipCategoryBadge } from '../hud/index.js'
 
 defineProps({
@@ -60,6 +79,9 @@ defineProps({
 })
 
 defineEmits(['click'])
+
+// 图片加载状态：加载前显示骨架占位
+const imageLoaded = ref(false)
 </script>
 
 <style scoped>
@@ -68,8 +90,8 @@ defineEmits(['click'])
 }
 
 .ship-card__shell {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
   transition:
@@ -108,21 +130,42 @@ defineEmits(['click'])
     var(--color-bg-deep);
 }
 
-/* 图片加载前的微光占位，减少 CLS 感知 */
-.ship-card__image::before {
-  content: '';
+/* 图片加载前的骨架占位：HUD 风格飞船轮廓 + 扫光 */
+.ship-card__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(135deg, rgba(74, 158, 255, 0.05) 0%, transparent 50%),
+    var(--color-bg-deep);
+  overflow: hidden;
+}
+
+.ship-card__skeleton-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--color-accent);
+  opacity: 0.2;
+}
+
+.ship-card__skeleton-shimmer {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.04) 50%,
+    rgba(74, 158, 255, 0.06) 50%,
     transparent 100%
   );
   transform: translateX(-100%);
-  animation: image-shimmer 2s infinite;
-  pointer-events: none;
-  z-index: 1;
+  animation: skeleton-shimmer 1.8s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
 }
 
 .ship-card__image img {
@@ -131,9 +174,15 @@ defineEmits(['click'])
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
   transition:
+    opacity var(--motion-duration-slow) var(--motion-ease-smooth),
     transform var(--motion-duration-slow) var(--motion-ease-smooth),
     filter var(--motion-duration-slow) var(--motion-ease-smooth);
+}
+
+.ship-card__image img.is-loaded {
+  opacity: 1;
 }
 
 .ship-card:hover .ship-card__image img {
@@ -253,7 +302,7 @@ defineEmits(['click'])
     transition: none;
   }
 
-  .ship-card__image::before {
+  .ship-card__skeleton-shimmer {
     animation: none;
   }
 }
@@ -281,7 +330,7 @@ defineEmits(['click'])
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
   letter-spacing: -0.01em;
   margin-bottom: 0;
 }
@@ -313,7 +362,7 @@ defineEmits(['click'])
 
 .spec-bar {
   height: 3px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-border-subtle);
   border-radius: 2px;
   overflow: hidden;
 }

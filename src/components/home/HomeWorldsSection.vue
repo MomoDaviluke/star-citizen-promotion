@@ -140,8 +140,6 @@ onUnmounted(() => {
 .worlds-section {
   position: relative;
   overflow: hidden;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 900px;
 }
 
 /*
