@@ -53,6 +53,23 @@ export function getPool(): Pool {
 }
 
 /**
+ * 规范化 SQL 参数：把 ISO 8601 时间字符串转为 Date 对象
+ * @description MySQL datetime 列在严格模式（STRICT_TRANS_TABLES）下不接受
+ *              'YYYY-MM-DDTHH:mm:ssZ' 格式字符串。mysql2 的 escape 会把 Date 对象
+ *              正确序列化为 'YYYY-MM-DD HH:mm:ss'。在 query 入口统一转换，
+ *              所有 service 无需逐个处理时间格式。
+ */
+const ISO_8601_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/
+function normalizeParams(params: unknown[]): unknown[] {
+  return params.map((p) => {
+    if (typeof p === 'string' && ISO_8601_PATTERN.test(p)) {
+      return new Date(p)
+    }
+    return p
+  })
+}
+
+/**
  * 执行 SQL 查询
  * @param sql - SQL 语句
  * @param params - 参数数组
@@ -60,7 +77,10 @@ export function getPool(): Pool {
  */
 export async function query<T = RowDataPacket[]>(sql: string, params: unknown[] = []): Promise<T> {
   const connection = getPool()
-  const [rows] = await connection.execute<RowDataPacket[]>(sql, params as never)
+  // 使用 query 而非 execute：mysql2 的 execute（预处理语句）对 LIMIT ? OFFSET ? 占位符
+  // 会触发 "Incorrect arguments to mysqld_stmt_execute" 错误（驱动层参数类型推断问题）。
+  // query 仍为参数化查询（客户端转义），不存在 SQL 注入风险。
+  const [rows] = await connection.query<RowDataPacket[]>(sql, normalizeParams(params) as never)
   return rows as unknown as T
 }
 
@@ -149,7 +169,8 @@ export async function queryWithTiming<T = RowDataPacket[]>(
 
   try {
     const connection = getPool()
-    const [rows] = await connection.execute<RowDataPacket[]>(sql, params as never)
+    // 同 query：使用 query 避免 execute 对 LIMIT 占位符的不兼容；normalizeParams 转换 ISO 8601 时间
+    const [rows] = await connection.query<RowDataPacket[]>(sql, normalizeParams(params) as never)
     const durationMs = Date.now() - start
 
     if (durationMs > slowThreshold) {
