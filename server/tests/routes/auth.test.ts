@@ -373,3 +373,50 @@ describe('POST /api/auth/logout', () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe('POST /api/auth/password-reset', () => {
+  let app: express.Express
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    app = createApp()
+  })
+
+  it('请求密码重置应返回 501（功能未启用）', async () => {
+    const res = await request(app)
+      .post('/api/auth/password-reset')
+      .send({ email: 'test@example.com' })
+
+    expect(res.status).toBe(501)
+    expect(res.body.success).toBe(false)
+    expect(res.body.error).toBe('NOT_IMPLEMENTED')
+    expect(res.body.message).toContain('未启用')
+  })
+
+  it('无需认证即可请求（未登录用户也能调用）', async () => {
+    const res = await request(app)
+      .post('/api/auth/password-reset')
+      .send({ email: 'forgot@example.com' })
+
+    expect(res.status).toBe(501)
+  })
+})
+
+describe('POST /api/auth/password-reset/:token', () => {
+  let app: express.Express
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    app = createApp()
+  })
+
+  it('使用重置令牌应返回 501（功能未启用）', async () => {
+    const res = await request(app)
+      .post('/api/auth/password-reset/some-token')
+      .send({ newPassword: 'NewPass123' })
+
+    expect(res.status).toBe(501)
+    expect(res.body.success).toBe(false)
+    expect(res.body.error).toBe('NOT_IMPLEMENTED')
+  })
+})
