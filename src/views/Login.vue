@@ -49,6 +49,7 @@
               <label for="email" class="login-form__label font-data">EMAIL</label>
               <input
                 id="email"
+                name="email"
                 v-model="form.email"
                 type="email"
                 class="holo-input"
@@ -65,6 +66,7 @@
               <label for="password" class="login-form__label font-data">PASSWORD</label>
               <input
                 id="password"
+                name="password"
                 v-model="form.password"
                 type="password"
                 class="holo-input"

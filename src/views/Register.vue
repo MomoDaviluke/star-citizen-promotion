@@ -22,6 +22,7 @@
             <label class="form-label" for="username">用户名</label>
             <input
               id="username"
+              name="username"
               v-model="form.username"
               class="form-input"
               :class="{ 'form-input--error': errors.username }"
@@ -37,6 +38,7 @@
             <label class="form-label" for="email">邮箱</label>
             <input
               id="email"
+              name="email"
               v-model="form.email"
               type="email"
               class="form-input"
@@ -52,6 +54,7 @@
             <label class="form-label" for="password">密码</label>
             <input
               id="password"
+              name="password"
               v-model="form.password"
               type="password"
               class="form-input"
@@ -68,6 +71,7 @@
             <label class="form-label" for="confirmPassword">确认密码</label>
             <input
               id="confirmPassword"
+              name="confirmPassword"
               v-model="form.confirmPassword"
               type="password"
               class="form-input"
