@@ -31,6 +31,11 @@
           </div>
         </div>
       </div>
+      <div class="section-divider" aria-hidden="true">
+        <span class="section-divider__line"></span>
+        <span class="section-divider__diamond"></span>
+        <span class="section-divider__line"></span>
+      </div>
     </section>
 
     <!-- ═══ 3. PLANET EXPLORATION — 火星预览板块 ═══ -->
@@ -87,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import shipDatabase, { recommendedShips } from '../data/shipDatabase.js'
@@ -124,49 +129,43 @@ function handleCardClick(slug) {
 
 const keyNumbersRef = ref(null)
 const rootRef = ref(null)
-let observer = null
 
-// Key Numbers 数字计数动画
-useGSAPReveal(({ countUp }) => {
-  if (!keyNumbersRef.value) return
-  const valueEls = keyNumbersRef.value.querySelectorAll('.key-number__value')
-  valueEls.forEach((el) => {
-    const target = Number(el.dataset.countTarget || 0)
-    const suffix = el.dataset.countSuffix || ''
-    countUp(el, {
-      endValue: target,
-      duration: 1.5,
-      ease: 'power2.out',
-      suffix,
-      start: 'top 80%'
+// 统一使用 GSAP ScrollTrigger 管理所有滚动动画（替代 IntersectionObserver）
+useGSAPReveal(({ countUp, reveal }) => {
+  // Key Numbers 数字计数动画
+  if (keyNumbersRef.value) {
+    const valueEls = keyNumbersRef.value.querySelectorAll('.key-number__value')
+    valueEls.forEach((el) => {
+      const target = Number(el.dataset.countTarget || 0)
+      const suffix = el.dataset.countSuffix || ''
+      countUp(el, {
+        endValue: target,
+        duration: 1.5,
+        ease: 'power2.out',
+        suffix,
+        start: 'top 80%'
+      })
     })
-  })
+  }
+
+  // [data-animate] 区块滚动揭示动画 — 统一到 GSAP，不再用 IntersectionObserver
+  if (rootRef.value) {
+    const sections = rootRef.value.querySelectorAll('[data-animate]')
+    sections.forEach((el) => {
+      reveal(el, {
+        animation: 'fadeUp',
+        duration: 0.8,
+        start: 'top 85%'
+      })
+    })
+  }
 })
 
-// 入场动画 — IntersectionObserver 触发滚动显现
 onMounted(() => {
   homeStore.fetchHomeData()
-
-  // 通过根元素限定查询范围，避免跨组件污染
-  if (!rootRef.value) return
-  const sections = rootRef.value.querySelectorAll('[data-animate]')
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible')
-        observer.unobserve(entry.target)
-      }
-    })
-  }, { threshold: 0.1 })
-
-  sections.forEach((s) => observer.observe(s))
 })
 
-// 组件卸载时清理 IntersectionObserver，避免内存泄漏
-onUnmounted(() => {
-  observer?.disconnect()
-  observer = null
-})
+// 组件卸载时由 useGSAPReveal 自动清理 ScrollTrigger 实例
 </script>
 
 <style scoped>
@@ -242,16 +241,13 @@ onUnmounted(() => {
   transform: translateX(4px);
 }
 
-/* Entrance animation */
+/* Entrance animation — 初始隐藏态，GSAP fromTo 接管动画 */
 [data-animate] {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
 }
 
 [data-animate].is-visible {
   opacity: 1;
-  transform: translateY(0);
 }
 
 /* 尊重减少动画偏好：禁用滚动入场动画，保持内容可见 */
@@ -276,7 +272,31 @@ onUnmounted(() => {
    ═══════════════════════════════════════════════════════════ */
 
 .key-numbers {
-  padding: var(--space-16) 0 var(--space-12);
+  padding: var(--space-16) 0 var(--space-10);
+}
+
+/* 区间过渡装饰：线条 + 菱形 + 线条，填补区块间视觉空洞 */
+.section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-12);
+  opacity: 0.4;
+}
+
+.section-divider__line {
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border-strong), transparent);
+}
+
+.section-divider__diamond {
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px rgba(var(--raw-cyan-rgb), 0.4);
 }
 
 .key-numbers__grid {

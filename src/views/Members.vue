@@ -5,7 +5,7 @@
 -->
 
 <template>
-  <div class="members-page">
+  <div ref="rootRef" class="members-page">
 
     <!-- Page header -->
     <section class="page-header">
@@ -27,11 +27,45 @@
       </div>
     </section>
 
+    <!-- 角色筛选栏 -->
+    <section class="filter-bar-section">
+      <div class="container">
+        <div class="filter-bar">
+          <button
+            v-for="role in roleFilters"
+            :key="role"
+            class="filter-btn"
+            :class="{ 'filter-btn--active': activeRole === role }"
+            @click="activeRole = role"
+          >
+            {{ role }}
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- Member grid -->
     <section class="members-grid-section section">
       <div class="container">
-        <div class="members-grid">
-          <div v-for="(member, i) in members" :key="member.name" class="member-card">
+        <!-- 空状态：API 失败或无数据 -->
+        <div v-if="members.length === 0" class="members-empty">
+          <div class="members-empty__icon" aria-hidden="true">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+              <circle cx="12" cy="8" r="4" opacity="0.4"/>
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" opacity="0.4"/>
+              <path d="M9 7l6 6M15 7l-6 6" stroke="var(--color-status-danger)" opacity="0.5"/>
+            </svg>
+          </div>
+          <h3 class="members-empty__title">数据库连接中断</h3>
+          <p class="members-empty__desc">飞行员档案系统暂时无法访问，请稍后再试。</p>
+          <div class="members-empty__fault font-data">
+            <span class="members-empty__dot"></span>
+            STATUS: OFFLINE · RETRY IN PROGRESS
+          </div>
+        </div>
+
+        <div v-else class="members-grid">
+          <div v-for="(member, i) in filteredMembers" :key="member.name" class="member-card">
             <!-- Double-Bezel outer shell -->
             <div class="bezel-shell">
               <!-- Double-Bezel inner core -->
@@ -74,7 +108,40 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
+
+const rootRef = ref(null)
+
+// GSAP 滚动入场动画：统计条淡入 + 成员卡片交错
+useGSAPReveal(({ reveal, stagger }) => {
+  nextTick(() => {
+    if (!rootRef.value) return
+
+    // 统计条淡入
+    const statsBar = rootRef.value.querySelector('.stats-bar')
+    if (statsBar) {
+      reveal(statsBar, { animation: 'fadeUp', duration: 0.6 })
+    }
+
+    // 成员卡片交错揭示（延迟到数据加载后）
+    const observeGrid = () => {
+      const grid = rootRef.value?.querySelector('.members-grid')
+      if (grid && grid.children.length > 0) {
+        stagger(grid, '.member-card', {
+          animation: 'scaleIn',
+          stagger: 0.08,
+          duration: 0.6,
+          start: 'top 80%'
+        })
+      } else {
+        // 数据未加载完成，延迟重试
+        setTimeout(observeGrid, 300)
+      }
+    }
+    setTimeout(observeGrid, 200)
+  })
+})
 
 const memberStats = ref([
   { value: '128', label: '活跃成员' },
@@ -84,6 +151,15 @@ const memberStats = ref([
 ])
 
 const members = ref([])
+
+// 角色筛选
+const roleFilters = ['全部', '指挥官', '后勤', '训练官', '战斗员']
+const activeRole = ref('全部')
+
+const filteredMembers = computed(() => {
+  if (activeRole.value === '全部') return members.value
+  return members.value.filter((m) => m.role === activeRole.value)
+})
 
 onMounted(async () => {
   try {
@@ -107,7 +183,7 @@ onMounted(async () => {
   font-size: var(--text-4xl);
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-top: var(--space-3);
 }
 
@@ -131,8 +207,8 @@ onMounted(async () => {
   display: flex;
   gap: var(--space-8);
   padding: var(--space-5) var(--space-6);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
 }
 
@@ -147,7 +223,7 @@ onMounted(async () => {
 .stats-bar__value {
   font-size: var(--text-2xl);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
   letter-spacing: -0.02em;
 }
 
@@ -160,8 +236,8 @@ onMounted(async () => {
 
 /* ── Double-Bezel Card ── */
 .bezel-shell {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
   transition: border-color var(--duration-normal) var(--ease-out),
@@ -245,7 +321,7 @@ onMounted(async () => {
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-bottom: 0;
   letter-spacing: -0.01em;
 }
@@ -277,7 +353,7 @@ onMounted(async () => {
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-3);
   padding-top: var(--space-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--color-border);
   width: 100%;
 }
 
@@ -291,7 +367,7 @@ onMounted(async () => {
 .member-card__stat-val {
   font-size: var(--text-base);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
 }
 
 .member-card__stat-lbl {
@@ -331,6 +407,108 @@ onMounted(async () => {
 
   .stats-bar__value {
     font-size: var(--text-xl);
+  }
+}
+
+/* ── Filter Bar ── */
+.filter-bar-section {
+  padding: var(--space-6) 0;
+}
+
+.filter-bar {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: 6px 16px;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.filter-btn:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.filter-btn--active {
+  color: var(--color-bg-deep);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* ═══ 空状态 UI ═══ */
+.members-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-4);
+  text-align: center;
+}
+
+.members-empty__icon {
+  color: var(--color-text-hint);
+  margin-bottom: var(--space-4);
+  animation: empty-pulse 2s ease-in-out infinite;
+}
+
+@keyframes empty-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.members-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin-bottom: var(--space-2);
+}
+
+.members-empty__desc {
+  font-size: var(--text-md);
+  color: var(--color-text-body);
+  margin-bottom: var(--space-4);
+}
+
+.members-empty__fault {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-hint);
+  letter-spacing: 0.15em;
+}
+
+.members-empty__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-status-danger);
+  animation: empty-blink 1s ease-in-out infinite;
+}
+
+@keyframes empty-blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; box-shadow: 0 0 8px var(--color-status-danger); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .members-empty__icon,
+  .members-empty__dot {
+    animation: none;
   }
 }
 </style>

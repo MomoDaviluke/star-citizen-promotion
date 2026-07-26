@@ -5,7 +5,7 @@
 -->
 
 <template>
-  <div class="ship-detail-page">
+  <div ref="rootRef" class="ship-detail-page">
     <!-- 加载状态 -->
     <div v-if="!ship" class="loading-state">
       <div class="loading-spinner"></div>
@@ -40,7 +40,7 @@
       <!-- 主图区域 -->
       <section class="ship-hero">
         <div class="ship-hero__bg">
-          <img :src="ship.image" :alt="ship.name" loading="eager" decoding="async" />
+          <img :src="ship.image" :alt="ship.name" width="800" height="450" loading="eager" decoding="async" />
         </div>
         <div class="ship-hero__overlay"></div>
         <div class="ship-hero__vignette" aria-hidden="true"></div>
@@ -138,19 +138,88 @@
           </div>
         </div>
       </section>
+
+      <!-- 同类型舰船推荐 -->
+      <section v-if="relatedShips.length" class="related-ships section">
+        <div class="container">
+          <h2 class="section-title font-data">// 同类舰船 · RELATED VESSELS</h2>
+          <div class="related-grid">
+            <RouterLink
+              v-for="rShip in relatedShips"
+              :key="rShip.slug"
+              :to="`/fleet/${rShip.slug}`"
+              class="related-card"
+            >
+              <div class="related-card__image">
+                <img :src="rShip.image" :alt="rShip.name" width="144" height="144" loading="lazy" decoding="async" />
+              </div>
+              <div class="related-card__info">
+                <span class="related-card__category font-data">{{ rShip.categoryEn }}</span>
+                <h3 class="related-card__name">{{ rShip.name }}</h3>
+                <p class="related-card__role">{{ rShip.role }}</p>
+              </div>
+              <div class="related-card__arrow" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+            </RouterLink>
+          </div>
+        </div>
+      </section>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getShipBySlug } from '../data/shipDatabase.js'
+import { getShipBySlug, shipList } from '../data/shipDatabase.js'
 import { HudCorner, TechDivider, ShipCategoryBadge, StatusPulse } from '../components/hud/index.js'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
+import shipDatabase from '../data/shipDatabase.js'
 
 const route = useRoute()
 const router = useRouter()
 const ship = ref(null)
+const rootRef = ref(null)
+
+// GSAP 滚动入场动画：参数条填充 + 区块揭示
+useGSAPReveal(({ reveal, stagger, barFill }) => {
+  nextTick(() => {
+    if (!rootRef.value || !ship.value || ship.value.notFound) return
+
+    // 核心参数条从 0 填充到目标值
+    const specBars = rootRef.value.querySelectorAll('.spec-bar-lg__fill')
+    specBars.forEach((el) => {
+      const targetWidth = el.style.width
+      el.style.width = '0%'
+      barFill(el, {
+        width: targetWidth,
+        duration: 1.2,
+        start: 'top 80%'
+      })
+    })
+
+    // 参数卡片交错揭示
+    const specsGrid = rootRef.value.querySelector('.specs-grid')
+    if (specsGrid) {
+      stagger(specsGrid, '.spec-item', {
+        animation: 'scaleIn',
+        stagger: 0.1,
+        duration: 0.6
+      })
+    }
+
+    // 信息面板交错揭示
+    const infoGrid = rootRef.value.querySelector('.info-grid')
+    if (infoGrid) {
+      stagger(infoGrid, '.info-panel', {
+        animation: 'fadeUp',
+        stagger: 0.15,
+        duration: 0.7
+      })
+    }
+  })
+})
 
 /**
  * 根据路由 slug 加载舰船数据
@@ -168,6 +237,24 @@ function loadShip() {
 function goBack() {
   router.push({ name: 'Fleet' })
 }
+
+/**
+ * 同类型舰船推荐 — 排除当前舰船，取同 category 的最多 3 艘
+ * 若同类型不足 3 艘，用其他类型补齐
+ */
+const relatedShips = computed(() => {
+  if (!ship.value || ship.value.notFound) return []
+  const currentSlug = route.params.slug
+  const sameCategory = shipList
+    .filter((slug) => slug !== currentSlug && shipDatabase[slug].category === ship.value.category)
+    .map((slug) => ({ slug, ...shipDatabase[slug] }))
+  // 同类型不足时用其他类型补齐
+  if (sameCategory.length >= 3) return sameCategory.slice(0, 3)
+  const others = shipList
+    .filter((slug) => slug !== currentSlug && shipDatabase[slug].category !== ship.value.category)
+    .map((slug) => ({ slug, ...shipDatabase[slug] }))
+  return [...sameCategory, ...others].slice(0, 3)
+})
 
 /**
  * 生成舰船注册号，用于 Hero 装饰性数据展示
@@ -278,7 +365,7 @@ watch(() => route.params.slug, loadShip)
   padding: var(--space-3) 0;
   background: rgba(5, 5, 8, 0.85);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .detail-nav .container {
@@ -451,8 +538,8 @@ watch(() => route.params.slug, loadShip)
   font-size: var(--text-xs);
   letter-spacing: 0.15em;
   color: var(--color-text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-sm);
 }
 
@@ -461,7 +548,7 @@ watch(() => route.params.slug, loadShip)
   font-size: clamp(2.5rem, 6vw, var(--text-5xl, 3.5rem));
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-bottom: var(--space-3);
   text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
@@ -487,7 +574,7 @@ watch(() => route.params.slug, loadShip)
   gap: var(--space-1);
   padding: var(--space-1);
   background: rgba(5, 5, 8, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -500,7 +587,7 @@ watch(() => route.params.slug, loadShip)
   min-width: 90px;
   padding: var(--space-2) var(--space-3);
   text-align: center;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid var(--color-border-subtle);
 }
 
 .data-strip__item:last-child {
@@ -544,8 +631,8 @@ watch(() => route.params.slug, loadShip)
 .spec-item {
   position: relative;
   padding: var(--space-4);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
 }
 
@@ -609,7 +696,7 @@ watch(() => route.params.slug, loadShip)
   position: relative;
   padding: var(--space-5);
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
 }
 
@@ -632,7 +719,7 @@ watch(() => route.params.slug, loadShip)
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .info-row:last-child {
@@ -676,7 +763,7 @@ watch(() => route.params.slug, loadShip)
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
 }
 
@@ -723,7 +810,7 @@ watch(() => route.params.slug, loadShip)
     flex: 1 1 calc(33.333% - var(--space-1));
     min-width: 80px;
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--color-border-subtle);
   }
 
   .data-strip__item:last-child {
@@ -738,6 +825,119 @@ watch(() => route.params.slug, loadShip)
 
   .specs-grid,
   .status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ 同类型舰船推荐区 ═══ */
+.related-ships {
+  padding-top: var(--space-12);
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.related-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+  overflow: hidden;
+}
+
+.related-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(var(--raw-cyan-rgb), 0.05) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-smooth);
+}
+
+.related-card:hover {
+  border-color: var(--color-border-accent);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(var(--raw-cyan-rgb), 0.1);
+}
+
+.related-card:hover::before {
+  opacity: 1;
+}
+
+.related-card__image {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg-deep);
+}
+
+.related-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--motion-duration-slow) var(--motion-ease-smooth);
+}
+
+.related-card:hover .related-card__image img {
+  transform: scale(1.1);
+}
+
+.related-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.related-card__category {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+}
+
+.related-card__name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin: var(--space-1) 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.related-card__role {
+  font-size: var(--text-xs);
+  color: var(--color-text-body);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.related-card__arrow {
+  color: var(--color-text-hint);
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+  flex-shrink: 0;
+}
+
+.related-card:hover .related-card__arrow {
+  color: var(--color-accent);
+  transform: translateX(4px);
+}
+
+@media (max-width: 768px) {
+  .related-grid {
     grid-template-columns: 1fr;
   }
 }

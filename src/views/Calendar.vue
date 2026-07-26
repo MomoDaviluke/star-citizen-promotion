@@ -326,6 +326,20 @@
         </div>
       </div>
     </BaseModal>
+
+    <!-- 删除确认弹窗 -->
+    <BaseModal :show="showDeleteConfirm" title="确认删除" @close="showDeleteConfirm = false">
+      <div class="confirm-dialog">
+        <div class="confirm-dialog__icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <p class="confirm-dialog__text">确定删除此任务？此操作不可撤销。</p>
+        <div class="confirm-dialog__actions">
+          <button class="btn btn--ghost" @click="showDeleteConfirm = false">取消</button>
+          <button class="btn btn--danger" @click="confirmDelete">确认删除</button>
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -353,6 +367,8 @@ const authStore = useAuthStore()
 // 弹窗状态
 const showAddDialog = ref(false)
 const showDetailDialog = ref(false)
+const showDeleteConfirm = ref(false)
+const pendingDeleteId = ref(null)
 const editingEvent = ref(null)
 const selectedEvent = ref(null)
 
@@ -591,11 +607,17 @@ async function leaveEvent(eventId) {
  * @param {string} eventId - 活动ID
  */
 async function deleteEvent(eventId) {
-  if (!confirm('确定删除此任务？')) return
+  pendingDeleteId.value = eventId
+  showDeleteConfirm.value = true
+}
 
+async function confirmDelete() {
+  if (!pendingDeleteId.value) return
   try {
-    await calendarStore.deleteEvent(eventId)
+    await calendarStore.deleteEvent(pendingDeleteId.value)
     showDetailDialog.value = false
+    showDeleteConfirm.value = false
+    pendingDeleteId.value = null
   } catch (err) {
     logger.error('删除失败:', err)
   }
@@ -1400,5 +1422,58 @@ onMounted(() => {
     padding: 0.5rem 0.25rem;
     font-size: 0.65rem;
   }
+}
+
+/* 删除确认弹窗 */
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4);
+  gap: var(--space-4);
+}
+
+.confirm-dialog__icon {
+  color: var(--color-status-warning);
+}
+
+.confirm-dialog__text {
+  font-size: var(--text-md);
+  color: var(--color-text-body);
+  line-height: 1.6;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.confirm-dialog .btn {
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+}
+
+.confirm-dialog .btn--ghost {
+  background: transparent;
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-text-heading);
+}
+
+.confirm-dialog .btn--ghost:hover {
+  border-color: var(--color-accent);
+}
+
+.confirm-dialog .btn--danger {
+  background: var(--color-status-danger);
+  border: 1px solid var(--color-status-danger);
+  color: #fff;
+}
+
+.confirm-dialog .btn--danger:hover {
+  opacity: 0.85;
 }
 </style>

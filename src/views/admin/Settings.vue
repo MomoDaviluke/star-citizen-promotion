@@ -182,24 +182,28 @@ async function saveSiteSettings() {
 }
 
 async function resetDatabase() {
-  if (confirm('确定要重置数据库吗？此操作不可恢复！')) {
-    try {
-      await dataService.resetDatabase()
-      statusMessage.value = '数据库已重置'
-    } catch (error) {
-      statusMessage.value = '重置失败: ' + (error.message || '未知错误')
-    }
+  if (!confirm('确定要重置数据库吗？此操作不可恢复！')) return
+  const confirmPassword = prompt('请输入您的管理员密码以确认重置数据库操作')
+  if (!confirmPassword) return
+
+  try {
+    await dataService.resetDatabase(confirmPassword)
+    statusMessage.value = '数据库已重置'
+  } catch (error) {
+    statusMessage.value = '重置失败: ' + (error.message || '未知错误')
   }
 }
 
 async function clearCache() {
-  if (confirm('确定要清除缓存吗？')) {
-    try {
-      await dataService.clearCache()
-      statusMessage.value = '缓存已清除'
-    } catch (error) {
-      statusMessage.value = '清除失败: ' + (error.message || '未知错误')
-    }
+  if (!confirm('确定要清除缓存吗？')) return
+  const confirmPassword = prompt('请输入您的管理员密码以确认清除缓存操作')
+  if (!confirmPassword) return
+
+  try {
+    await dataService.clearCache(confirmPassword)
+    statusMessage.value = '缓存已清除'
+  } catch (error) {
+    statusMessage.value = '清除失败: ' + (error.message || '未知错误')
   }
 }
 

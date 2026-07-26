@@ -204,8 +204,8 @@ async function handleLogin() {
 
 /* Double-Bezel Glass Card */
 .bezel-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
 }

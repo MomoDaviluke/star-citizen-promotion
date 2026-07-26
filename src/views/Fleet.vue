@@ -247,7 +247,7 @@ function goToShip(slug) {
   font-size: var(--text-4xl);
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-top: var(--space-3);
   text-shadow: 0 0 40px rgba(74, 158, 255, 0.25);
 }
@@ -316,8 +316,8 @@ function goToShip(slug) {
   display: flex;
   gap: var(--space-8);
   padding: var(--space-5) var(--space-6);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
 }
 
@@ -346,7 +346,7 @@ function goToShip(slug) {
 .stats-bar__value {
   font-size: var(--text-3xl);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
   letter-spacing: -0.02em;
 }
 
@@ -392,8 +392,8 @@ function goToShip(slug) {
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-text-label);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   white-space: nowrap;
   cursor: pointer;
@@ -419,13 +419,13 @@ function goToShip(slug) {
 
 .filter-btn:hover {
   border-color: rgba(74, 158, 255, 0.3);
-  color: #fff;
+  color: var(--color-text-heading);
   background: rgba(255, 255, 255, 0.06);
 }
 
 .filter-btn:hover .filter-btn__icon,
 .filter-btn:hover .filter-btn__en {
-  color: #fff;
+  color: var(--color-text-heading);
 }
 
 .filter-btn--active {
@@ -449,15 +449,15 @@ function goToShip(slug) {
   padding: 0.5rem 1rem;
   font-family: var(--font-data);
   color: var(--color-text-label);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
 }
 
 .filter-status__count {
   font-size: var(--text-lg);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
 }
 
 .filter-status__text {
@@ -514,8 +514,8 @@ function goToShip(slug) {
   height: 80px;
   margin-bottom: var(--space-5);
   color: var(--color-text-dim);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 50%;
 }
 
