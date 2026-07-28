@@ -5,23 +5,37 @@
  */
 
 import { Router, Response, NextFunction } from 'express'
+import rateLimit from 'express-rate-limit'
 import { authenticate, requireAdmin, AuthenticatedRequest } from '../middleware/auth.js'
-import { adminLimiter } from '../middleware/rateLimiters.js'
 import { paginate, PaginatedRequest } from '../middleware/pagination.js'
 import { getActivityLogs } from '../services/activityLogService.js'
 
 const router = Router()
 
 /**
+ * 管理员路由专用速率限制
+ * @description 1 分钟内最多 30 次请求，比全局 apiLimiter 更严格
+ *   显式 inline 调用 rateLimit() 以满足 CodeQL 静态分析（跨文件 import 无法识别）
+ */
+const adminRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => req.ip || 'unknown',
+  message: { error: '管理员操作过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+/**
  * 获取活动日志列表
  * @description 管理员专用，支持按 action/userId 筛选，分页返回
- *   显式应用 adminLimiter（CodeQL 静态分析无法识别 index.ts 中的全局 apiLimiter）
+ *   显式应用 adminRateLimiter（CodeQL 静态分析无法识别 index.ts 中的全局 apiLimiter）
  */
 router.get(
   '/',
   authenticate,
   requireAdmin,
-  adminLimiter,
+  adminRateLimiter,
   paginate(50, 200),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
