@@ -174,23 +174,23 @@ app.use('/api/auth/refresh', refreshLimiter)
 
 /**
  * 健康检查端点
+ * @description 三级健康检查体系：
+ *   - /health/live  : 进程存活（始终返回 ok，仅证明进程未退出）
+ *   - /health/ready : 就绪探针（数据库连通性，决定是否接收入流量）
+ *   - /health       : 综合状态（含连接池指标，供监控面板使用）
+ *
+ *   memory 检查已移除：V8 堆动态扩展时 heapUsed/heapTotal 比值不稳定，
+ *   会导致误报。Node.js 进程内存监控应由 Kubernetes/容器运行时的 OOM 处理，
+ *   而非应用层自我判定。真正的就绪判定只有 database 连通性。
  */
 interface HealthChecks {
   database: boolean
-  memory: boolean
   poolStatus: ReturnType<typeof getPoolStatus>
-}
-
-interface MemoryUsageMB {
-  rss: number
-  heapUsed: number
-  heapTotal: number
 }
 
 async function performHealthCheck(): Promise<HealthChecks> {
   const checks: HealthChecks = {
     database: false,
-    memory: false,
     poolStatus: getPoolStatus()
   }
 
@@ -201,20 +201,12 @@ async function performHealthCheck(): Promise<HealthChecks> {
     checks.database = false
   }
 
-  const memUsage = process.memoryUsage()
-  const memUsageMB: MemoryUsageMB = {
-    rss: Math.round(memUsage.rss / 1024 / 1024),
-    heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-    heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024)
-  }
-  checks.memory = memUsageMB.heapUsed < memUsageMB.heapTotal * 0.9
-
   return checks
 }
 
 app.get('/health', async (_req: Request, res: Response) => {
   const checks = await performHealthCheck()
-  const allHealthy = Object.values(checks).every(Boolean)
+  const allHealthy = checks.database
 
   res.status(allHealthy ? 200 : 503).json({
     status: allHealthy ? 'ok' : 'degraded',
@@ -230,7 +222,7 @@ app.get('/health/live', (_req: Request, res: Response) => {
 
 app.get('/health/ready', async (_req: Request, res: Response) => {
   const checks = await performHealthCheck()
-  const allHealthy = Object.values(checks).every(Boolean)
+  const allHealthy = checks.database
   // 生产环境仅返回状态码，不暴露内部检查详情
   if (config.nodeEnv === 'production') {
     res.status(allHealthy ? 200 : 503).json({
