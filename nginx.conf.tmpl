@@ -47,7 +47,7 @@ http {
     }
 
     # ============================================
-    # HTTP 80 端口：ACME 挑战 + 强制重定向 HTTPS
+    # HTTP 80 端口：ACME 挑战 + 健康检查 + 强制重定向 HTTPS
     # ============================================
     server {
         listen 80;
@@ -56,6 +56,14 @@ http {
         # Let's Encrypt 证书验证路径
         location /.well-known/acme-challenge/ {
             root /var/www/certbot;
+        }
+
+        # 健康检查端点（独立于 HTTPS，不暴露后端，不触发重定向）
+        # 供 Docker HEALTHCHECK 和外部探针使用，仅返回 nginx 自身存活状态
+        location = /health/live {
+            access_log off;
+            add_header Content-Type text/plain;
+            return 200 'ok';
         }
 
         # 其他请求重定向到 HTTPS
