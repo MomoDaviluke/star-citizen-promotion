@@ -29,13 +29,14 @@ const adminRateLimiter = rateLimit({
 /**
  * 获取活动日志列表
  * @description 管理员专用，支持按 action/userId 筛选，分页返回
- *   显式应用 adminRateLimiter（CodeQL 静态分析无法识别 index.ts 中的全局 apiLimiter）
+ *   中间件顺序：adminRateLimiter → authenticate → requireAdmin
+ *   先限流再认证，防止未认证请求压垮认证服务（CodeQL 要求 rateLimit 在 authenticate 之前）
  */
 router.get(
   '/',
+  adminRateLimiter,
   authenticate,
   requireAdmin,
-  adminRateLimiter,
   paginate(50, 200),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
