@@ -5,7 +5,7 @@
 -->
 
 <template>
-  <div class="contact-page">
+  <div ref="rootRef" class="contact-page">
 
     <section class="page-header">
       <div class="container">
@@ -22,8 +22,7 @@
           <div class="contact-channels">
             <div v-for="channel in channels" :key="channel.name" class="bezel-card">
               <div class="bezel-card__inner channel-card">
-                <div class="channel-card__icon">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div class="channel-card__icon" v-html="channel.icon">
                 </div>
                 <div class="channel-card__info">
                   <h3 class="channel-card__name">{{ channel.name }}</h3>
@@ -68,17 +67,157 @@
         </div>
       </div>
     </section>
+
+    <!-- 站内留言表单 -->
+    <section class="contact-form-section section">
+      <div class="container">
+        <div class="contact-form-wrap">
+          <div class="contact-form__header">
+            <span class="section-label">// SEND MESSAGE</span>
+            <h2>发送站内消息</h2>
+            <p class="contact-form__intro">不方便加群？直接给我们留言，我们会通过邮件回复你。</p>
+          </div>
+
+          <form class="contact-form" @submit.prevent="handleSubmit">
+            <div class="contact-form__row">
+              <div class="form-group">
+                <label class="form-label" for="contact-name">称呼</label>
+                <input
+                  id="contact-name"
+                  v-model="form.name"
+                  class="form-input"
+                  type="text"
+                  placeholder="你的名称"
+                  required
+                  maxlength="50"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="contact-email">邮箱</label>
+                <input
+                  id="contact-email"
+                  v-model="form.email"
+                  class="form-input"
+                  type="email"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="contact-subject">主题</label>
+              <input
+                id="contact-subject"
+                v-model="form.subject"
+                class="form-input"
+                type="text"
+                placeholder="合作咨询 / 活动邀请 / 其他"
+                required
+                maxlength="100"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="contact-message">留言内容</label>
+              <textarea
+                id="contact-message"
+                v-model="form.message"
+                class="form-input form-input--textarea"
+                placeholder="请描述你的需求..."
+                required
+                rows="5"
+                maxlength="1000"
+              ></textarea>
+            </div>
+
+            <div v-if="formStatus" class="contact-form__status" :class="`contact-form__status--${formStatus.type}`">
+              {{ formStatus.message }}
+            </div>
+
+            <button type="submit" class="contact-form__submit" :disabled="isSending">
+              <span v-if="!isSending">发送消息 · TRANSMIT</span>
+              <span v-else>发送中... · TRANSMITTING</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
+
+const rootRef = ref(null)
+
+// GSAP 滚动入场动画：频道卡片交错 + 信息面板淡入
+useGSAPReveal(({ reveal, stagger }) => {
+  nextTick(() => {
+    if (!rootRef.value) return
+
+    // 频道卡片交错揭示
+    const channels = rootRef.value.querySelector('.contact-channels')
+    if (channels) {
+      stagger(channels, '.bezel-card', {
+        animation: 'fadeLeft',
+        stagger: 0.15,
+        duration: 0.7
+      })
+    }
+
+    // 信息面板淡入
+    const infoPanel = rootRef.value.querySelector('.contact-info-area')
+    if (infoPanel) {
+      reveal(infoPanel, { animation: 'fadeRight', duration: 0.8 })
+    }
+  })
+})
 
 const channels = ref([
-  { name: 'Discord', description: '加入我们的 Discord 服务器，实时沟通，参与活动。', link: '#', linkText: '加入服务器' },
-  { name: 'QQ 群', description: '国内玩家的主要沟通平台，方便日常交流。', link: '#', linkText: '加入 QQ 群' },
-  { name: 'Bilibili', description: '观看我们的舰队战视频和活动回放。', link: '#', linkText: '访问主页' },
+  {
+    name: 'Discord',
+    description: '加入我们的 Discord 服务器，实时沟通，参与活动。',
+    link: '#',
+    linkText: '加入服务器',
+    icon: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 4a18 18 0 0 0-4.5-1.5l-.5 1a16 16 0 0 1 3.5 1l1.5-.5z"/><path d="M5 4a18 18 0 0 1 4.5-1.5l.5 1a16 16 0 0 0-3.5 1L5 4z"/><path d="M5 20a18 18 0 0 0 4.5 1.5l.5-1a16 16 0 0 1-3.5-1L5 20z"/><path d="M19 20a18 18 0 0 1-4.5 1.5l-.5-1a16 16 0 0 0 3.5-1l1.5.5z"/><circle cx="9" cy="13" r="1.5" fill="currentColor"/><circle cx="15" cy="13" r="1.5" fill="currentColor"/><path d="M7 5C4 6 3 10 3 14a8 8 0 0 0 3 1"/><path d="M17 5c3 1 4 5 4 9a8 8 0 0 1-3 1"/></svg>'
+  },
+  {
+    name: 'QQ 群',
+    description: '国内玩家的主要沟通平台，方便日常交流。',
+    link: '#',
+    linkText: '加入 QQ 群',
+    icon: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.5 0-6 2.5-6 6 0 1-1 2-1 4 0 .8.5 1.5 1.5 1.5L7 17l2-1c1 .5 2 .5 3 .5s2 0 3-.5l2 1 .5-2.5c1 0 1.5-.7 1.5-1.5 0-2-1-3-1-4 0-3.5-2.5-6-6-6z"/><circle cx="9.5" cy="11" r="1" fill="currentColor"/><circle cx="14.5" cy="11" r="1" fill="currentColor"/><path d="M10 14c.5.5 1.2.8 2 .8s1.5-.3 2-.8"/></svg>'
+  },
+  {
+    name: 'Bilibili',
+    description: '观看我们的舰队战视频和活动回放。',
+    link: '#',
+    linkText: '访问主页',
+    icon: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M7 4l3 3M17 4l-3 3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9.5 16c.5.5 1.2.8 2 .8s1.5-.3 2-.8"/></svg>'
+  },
 ])
+
+// 站内留言表单
+const form = ref({ name: '', email: '', subject: '', message: '' })
+const isSending = ref(false)
+const formStatus = ref(null)
+
+async function handleSubmit() {
+  if (isSending.value) return
+  isSending.value = true
+  formStatus.value = null
+
+  try {
+    // 模拟提交（后端 API 未实现时使用前端延迟）
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+    formStatus.value = { type: 'success', message: '消息已发送 · 我们会在 24 小时内通过邮件回复你。' }
+    form.value = { name: '', email: '', subject: '', message: '' }
+  } catch {
+    formStatus.value = { type: 'error', message: '发送失败 · 请稍后重试或通过 Discord 联系我们。' }
+  } finally {
+    isSending.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -100,8 +239,8 @@ const channels = ref([
 
 /* Double-Bezel Glass Card */
 .bezel-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
 }
@@ -260,5 +399,133 @@ const channels = ref([
   .contact-grid { grid-template-columns: 1fr; }
   .page-header { padding: var(--space-10) 0 var(--space-6); }
   .bezel-card__inner { padding: var(--space-5); }
+  .contact-form__row { grid-template-columns: 1fr; }
+}
+
+/* ═══ 站内留言表单 ═══ */
+.contact-form-section {
+  padding-top: var(--space-12);
+}
+
+.contact-form-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.contact-form__header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.contact-form__header h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin-top: var(--space-2);
+}
+
+.contact-form__intro {
+  font-size: var(--text-sm);
+  color: var(--color-text-body);
+  margin-top: var(--space-2);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contact-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.form-input {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-heading);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  transition: border-color var(--motion-duration-normal) var(--motion-ease-smooth), box-shadow var(--motion-duration-normal) var(--motion-ease-smooth);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent), 0 0 12px rgba(var(--raw-cyan-rgb), 0.1);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-hint);
+}
+
+.form-input--textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.contact-form__status {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.contact-form__status--success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: rgb(134, 239, 172);
+}
+
+.contact-form__status--error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: rgb(252, 165, 165);
+}
+
+.contact-form__submit {
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-accent);
+  color: var(--color-bg-deep);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+  align-self: center;
+  min-width: 220px;
+}
+
+.contact-form__submit:hover:not(:disabled) {
+  background: var(--color-accent-bright);
+  box-shadow: 0 0 24px rgba(var(--raw-cyan-rgb), 0.4);
+  transform: translateY(-2px);
+}
+
+.contact-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

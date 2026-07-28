@@ -131,4 +131,30 @@ router.post('/logout', authenticate, (_req: AuthenticatedRequest, res: Response)
   res.json({ success: true, message: '登出成功' })
 })
 
+/**
+ * 请求密码重置
+ * @description 当前为 stub 实现，返回 501 明确告知功能未启用
+ *              完整实现需要：邮件服务 + password_reset_tokens 表 + token 生成与过期校验
+ *              前端 service 调用此端点时会收到 501，可在组件层 catch 并提示用户联系管理员
+ */
+router.post('/password-reset', (_req: Request, res: Response) => {
+  res.status(501).json({
+    success: false,
+    message: '密码重置功能未启用，请联系管理员重置密码',
+    error: 'NOT_IMPLEMENTED'
+  })
+})
+
+/**
+ * 使用重置令牌重置密码
+ * @description 同上，当前为 stub 实现
+ */
+router.post('/password-reset/:token', (_req: Request, res: Response) => {
+  res.status(501).json({
+    success: false,
+    message: '密码重置功能未启用，请联系管理员重置密码',
+    error: 'NOT_IMPLEMENTED'
+  })
+})
+
 export default router

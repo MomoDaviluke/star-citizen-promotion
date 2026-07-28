@@ -27,6 +27,7 @@
       </div>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" :disabled="isQuerying">
+          <span v-if="isQuerying" class="btn-spinner" aria-hidden="true"></span>
           {{ isQuerying ? '查询中...' : '查询状态' }}
         </button>
       </div>
@@ -40,7 +41,7 @@
       </div>
       <div class="result-content">
         <div class="status-banner" :class="`status-${application.status}`">
-          <span class="status-icon">{{ statusIcon }}</span>
+          <span class="status-icon" v-html="statusIcon"></span>
           <span class="status-text">{{ statusText }}</span>
         </div>
 
@@ -89,7 +90,9 @@
   <Transition name="fade">
     <section v-if="notFound" class="card not-found-card">
       <div class="not-found-content">
-        <span class="not-found-icon">🔍</span>
+        <span class="not-found-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </span>
         <h3>未找到申请记录</h3>
         <p>请确认您输入的邮箱地址是否正确，或</p>
         <RouterLink to="/join" class="btn btn-primary">提交新申请</RouterLink>
@@ -120,16 +123,16 @@ const isQuerying = ref(false)
 
 /**
  * 状态图标计算属性
- * @description 根据申请状态返回对应的表情符号图标
- * @returns {string} 状态图标字符
+ * @description 根据申请状态返回对应的 SVG 图标
+ * @returns {string} SVG 图标 HTML
  */
 const statusIcon = computed(() => {
   const icons = {
-    pending: '⏳',
-    approved: '✓',
-    rejected: '✕'
+    pending: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    approved: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    rejected: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
   }
-  return icons[application.value?.status] || '?'
+  return icons[application.value?.status] || ''
 })
 
 /**
@@ -221,15 +224,15 @@ function formatDate(dateStr) {
 .form-input {
   padding: 0.75rem 1rem;
   background: rgba(3, 8, 16, 0.6);
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  color: var(--text);
+  color: var(--color-text-heading);
   font-size: 0.95rem;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 .result-content {
@@ -272,9 +275,9 @@ function formatDate(dateStr) {
   font-weight: 600;
 }
 
-.status-pending .status-text { color: var(--warning); }
-.status-approved .status-text { color: var(--success); }
-.status-rejected .status-text { color: var(--danger); }
+.status-pending .status-text { color: var(--color-status-warning); }
+.status-approved .status-text { color: var(--color-status-online); }
+.status-rejected .status-text { color: var(--color-status-danger); }
 
 .detail-grid {
   display: grid;
@@ -294,7 +297,7 @@ function formatDate(dateStr) {
 
 .detail-label {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-text-body);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -307,13 +310,13 @@ function formatDate(dateStr) {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--text-muted);
+  color: var(--color-text-body);
 }
 
 .next-steps {
   padding: 1.25rem;
   background: rgba(95, 169, 255, 0.05);
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   text-align: center;
 }
@@ -326,7 +329,7 @@ function formatDate(dateStr) {
 .next-steps p {
   margin: 0 0 1rem;
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--color-text-body);
 }
 
 .not-found-content {
@@ -348,7 +351,7 @@ function formatDate(dateStr) {
 
 .not-found-content p {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--color-text-body);
 }
 
 .fade-enter-active,
@@ -369,6 +372,79 @@ function formatDate(dateStr) {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/*
+ * 移动端响应式（≤768px）
+ * 表单输入和按钮适配窄屏，确保触控目标 ≥44px
+ */
+@media (max-width: 768px) {
+  .query-form .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+  }
+
+  .form-actions .btn,
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  /* 加载中 spinner */
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-spinner {
+      animation: none;
+      border-top-color: transparent;
+      border-right-color: #fff;
+    }
+  }
+
+  .status-banner {
+    padding: 0.875rem 1rem;
+  }
+
+  .next-steps {
+    padding: 1rem;
+  }
+
+  .next-steps .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .status-text {
+    font-size: 1rem;
+  }
+
+  .not-found-icon {
+    font-size: 2.5rem;
   }
 }
 </style>

@@ -10,7 +10,6 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
-import { rateLimit } from 'express-rate-limit'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Server } from 'node:http'
@@ -26,6 +25,7 @@ import { requestId } from './middleware/requestId.js'
 import { auditLogger, startAuditCleanupJob } from './middleware/auditLogger.js'
 import { metricsMiddleware, metricsEndpoint } from './middleware/metrics.js'
 import { cacheMiddleware, cacheInvalidationMiddleware } from './middleware/cache.js'
+import { apiLimiter, authLimiter, refreshLimiter } from './middleware/rateLimiters.js'
 import { startWebSocket, closeWebSocket } from './websocket.js'
 
 import authRoutes from './routes/auth.js'
@@ -38,6 +38,8 @@ import fleetRoutes from './routes/fleet.js'
 import eventRoutes from './routes/events.js'
 import settingsRoutes from './routes/settings.js'
 import adminRoutes from './routes/admin.js'
+import rumRoutes from './routes/rum.js'
+import activityLogRoutes from './routes/activityLogs.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -154,28 +156,13 @@ app.use(cacheInvalidationMiddleware)
 
 /**
  * API 速率限制
+ * @description limiters 集中定义在 middleware/rateLimiters.ts，便于路由文件显式引用
  */
-const apiLimiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  keyGenerator: (req: Request) => req.ip || 'unknown',
-  message: { error: '请求过于频繁，请稍后再试' },
-  standardHeaders: true,
-  legacyHeaders: false
-})
 app.use('/api/', apiLimiter)
 
 /**
  * 认证端点严格速率限制
  */
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  keyGenerator: (req: Request) => req.ip || 'unknown',
-  message: { error: '登录尝试过于频繁，请 15 分钟后再试' },
-  standardHeaders: true,
-  legacyHeaders: false
-})
 app.use('/api/auth/login', authLimiter)
 app.use('/api/auth/register', authLimiter)
 
@@ -183,14 +170,6 @@ app.use('/api/auth/register', authLimiter)
  * 令牌刷新端点速率限制
  * @description 防止对刷新端点的滥用和暴力探测
  */
-const refreshLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 小时
-  max: 60,
-  keyGenerator: (req: Request) => req.ip || 'unknown',
-  message: { error: '令牌刷新过于频繁，请稍后再试' },
-  standardHeaders: true,
-  legacyHeaders: false
-})
 app.use('/api/auth/refresh', refreshLimiter)
 
 /**
@@ -297,7 +276,9 @@ const routeMounts = [
   { path: '/fleet', router: fleetRoutes },
   { path: '/events', router: eventRoutes },
   { path: '/settings', router: settingsRoutes },
-  { path: '/admin', router: adminRoutes }
+  { path: '/admin', router: adminRoutes },
+  { path: '/rum', router: rumRoutes },
+  { path: '/activity-logs', router: activityLogRoutes }
 ]
 
 for (const { path: routePath, router } of routeMounts) {

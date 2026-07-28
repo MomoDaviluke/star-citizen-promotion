@@ -13,6 +13,7 @@ import { createStoreHelpers } from '@/utils/storeHelpers'
 
 export const useAuthStore = defineStore('auth', () => {
   // ========== 状态定义 ==========
+  /** @type {import('vue').Ref<{ id: string, username: string, role: string, avatar?: string } | null>} */
   const user = ref(null)
   const loading = ref(false)
   const error = ref(null)
@@ -52,8 +53,9 @@ export const useAuthStore = defineStore('auth', () => {
   /** 用户登录 */
   async function login(credentials) {
     return withLoading(async () => {
+      // authService.login 已通过 response.data 解包，返回 { token, user }
       const response = await authService.login(credentials)
-      user.value = response.data.user
+      user.value = response.user
       return response
     }, '登录失败')
   }

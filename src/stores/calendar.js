@@ -12,11 +12,13 @@ import { createStoreHelpers } from '@/utils/storeHelpers'
 
 export const useCalendarStore = defineStore('calendar', () => {
   // ========== 状态定义 ==========
+  /** @type {import('vue').Ref<Array<{ id: string, title: string, description?: string, startTime: string, endTime?: string, location?: string, status?: string, participants?: string[], creatorId?: string }>>} */
   const events = ref([])
   const loading = ref(false)
   const error = ref(null)
   const currentDate = ref(new Date())
   const viewMode = ref('month') // month|week|list
+  /** @type {import('vue').Ref<{ id: string, title: string, description?: string, startTime: string, endTime?: string, location?: string, status?: string, participants?: string[], creatorId?: string } | null>} */
   const selectedEvent = ref(null)
   const filter = ref('all') // all|upcoming|past|mine
 
@@ -35,14 +37,14 @@ export const useCalendarStore = defineStore('calendar', () => {
     const now = new Date()
     return events.value
       .filter(event => new Date(event.startTime) > now)
-      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
   })
 
   const pastEvents = computed(() => {
     const now = new Date()
     return events.value
       .filter(event => new Date(event.startTime) < now)
-      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
   })
 
   const myEvents = computed(() => {

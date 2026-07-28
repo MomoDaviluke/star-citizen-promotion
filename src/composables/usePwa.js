@@ -39,7 +39,7 @@ export async function registerPWA() {
 
     const { updateServiceWorker, needRefresh: nr, offlineReady: or } = useRegisterSW({
       immediate: true,
-      onRegisteredSW(swUrl, registration) {
+      onRegisteredSW(_swUrl, registration) {
         swRegistered.value = true
         // 每小时检查一次更新
         if (registration) {
@@ -71,8 +71,9 @@ export async function registerPWA() {
     }
   } catch (error) {
     // 开发环境或不支持 PWA 时静默失败
+    const err = /** @type {any} */ (error)
     if (import.meta.env.PROD) {
-      logger.warn('注册跳过:', error.message)
+      logger.warn('注册跳过:', err.message)
     }
   }
 }

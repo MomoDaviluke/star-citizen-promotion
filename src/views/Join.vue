@@ -49,35 +49,131 @@
           <div class="join-form-area">
             <div class="bezel-card">
               <div class="bezel-card__inner">
-                <form @submit.prevent="handleSubmit" class="join-form">
+                <form
+                  @submit.prevent="handleSubmit"
+                  class="join-form"
+                  :aria-busy="isSubmitting"
+                >
                   <div class="form-group">
-                    <label class="form-label">姓名 <span class="required">*</span></label>
-                    <input v-model="form.name" class="form-input" placeholder="你的游戏内名称" required maxlength="50" />
+                    <label class="form-label" for="join-name">姓名 <span class="required">*</span></label>
+                    <input
+                      id="join-name"
+                      v-model="form.name"
+                      class="form-input"
+                      :class="{ 'form-input--error': errors.name, 'form-input--valid': isFieldValid('name') }"
+                      :aria-invalid="errors.name ? 'true' : 'false'"
+                      :aria-describedby="errors.name ? 'join-name-error' : undefined"
+                      placeholder="你的游戏内名称"
+                      required
+                      maxlength="50"
+                      @blur="markTouched('name')"
+                    />
+                    <span v-if="errors.name" id="join-name-error" class="form-error" role="alert">{{ errors.name }}</span>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">邮箱 <span class="required">*</span></label>
-                    <input v-model="form.email" type="email" class="form-input" placeholder="your@email.com" required />
+                    <label class="form-label" for="join-email">邮箱 <span class="required">*</span></label>
+                    <input
+                      id="join-email"
+                      v-model="form.email"
+                      type="email"
+                      class="form-input"
+                      :class="{ 'form-input--error': errors.email, 'form-input--valid': isFieldValid('email') }"
+                      :aria-invalid="errors.email ? 'true' : 'false'"
+                      :aria-describedby="errors.email ? 'join-email-error' : undefined"
+                      placeholder="your@email.com"
+                      required
+                      @blur="markTouched('email')"
+                    />
+                    <span v-if="errors.email" id="join-email-error" class="form-error" role="alert">{{ errors.email }}</span>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Discord</label>
-                    <input v-model="form.discord" class="form-input" placeholder="用户名#0000" maxlength="50" />
+                    <label class="form-label" for="join-discord">Discord</label>
+                    <input
+                      id="join-discord"
+                      v-model="form.discord"
+                      class="form-input"
+                      :class="{ 'form-input--error': errors.discord, 'form-input--valid': isFieldValid('discord') }"
+                      :aria-invalid="errors.discord ? 'true' : 'false'"
+                      :aria-describedby="errors.discord ? 'join-discord-error' : undefined"
+                      placeholder="用户名#0000"
+                      maxlength="50"
+                      @blur="markTouched('discord')"
+                    />
+                    <span v-if="errors.discord" id="join-discord-error" class="form-error" role="alert">{{ errors.discord }}</span>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">游戏经验</label>
-                    <textarea v-model="form.experience" class="form-input form-textarea" placeholder="简述你的星际公民游戏经验..." rows="4" maxlength="500"></textarea>
+                    <label class="form-label" for="join-experience">游戏经验</label>
+                    <textarea
+                      id="join-experience"
+                      v-model="form.experience"
+                      class="form-input form-textarea"
+                      placeholder="简述你的星际公民游戏经验..."
+                      rows="4"
+                      maxlength="500"
+                    ></textarea>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">加入原因</label>
-                    <textarea v-model="form.reason" class="form-input form-textarea" placeholder="你为什么想加入我们？" rows="3" maxlength="500"></textarea>
+                    <label class="form-label" for="join-reason">加入原因</label>
+                    <textarea
+                      id="join-reason"
+                      v-model="form.reason"
+                      class="form-input form-textarea"
+                      placeholder="你为什么想加入我们？"
+                      rows="3"
+                      maxlength="500"
+                    ></textarea>
                   </div>
 
+                  <!-- 提交成功完整面板 -->
                   <Transition name="fade">
-                    <div v-if="submitMessage" class="form-message" :class="submitSuccess ? 'form-message--success' : 'form-message--error'">
+                    <div v-if="submitSuccess" class="success-panel" role="status" aria-live="polite">
+                      <div class="success-panel__icon" aria-hidden="true">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="32" cy="32" r="28" opacity="0.3"/>
+                          <path d="M20 32l8 8 16-16" stroke-width="3"/>
+                        </svg>
+                      </div>
+                      <h3 class="success-panel__title">申请已提交</h3>
+                      <p class="success-panel__desc">我们将在 1-3 天内通过邮件审核回复。在此期间，欢迎加入我们的 Discord 频道了解战队动态。</p>
+                      <div class="success-panel__next-steps">
+                        <div class="success-panel__step">
+                          <span class="success-panel__step-num font-data">01</span>
+                          <span class="success-panel__step-text">等待邮件审核结果</span>
+                        </div>
+                        <div class="success-panel__step">
+                          <span class="success-panel__step-num font-data">02</span>
+                          <span class="success-panel__step-text">加入 Discord 频道互动</span>
+                        </div>
+                        <div class="success-panel__step">
+                          <span class="success-panel__step-num font-data">03</span>
+                          <span class="success-panel__step-text">参加新人试飞训练</span>
+                        </div>
+                      </div>
+                      <div class="success-panel__actions">
+                        <a href="#" class="success-panel__btn-primary">加入 Discord</a>
+                        <button class="success-panel__btn-secondary" @click="resetForm">重新填写</button>
+                      </div>
+                    </div>
+                  </Transition>
+
+                  <!-- 错误消息（保持简单） -->
+                  <Transition name="fade">
+                    <div
+                      v-if="submitMessage && !submitSuccess"
+                      class="form-message form-message--error"
+                      role="alert"
+                      aria-live="polite"
+                    >
                       {{ submitMessage }}
                     </div>
                   </Transition>
 
-                  <button type="submit" class="join-submit" :disabled="isSubmitting">
+                  <button
+                    type="submit"
+                    class="join-submit"
+                    :disabled="isSubmitting"
+                    :aria-label="isSubmitting ? '正在提交申请' : '提交申请'"
+                  >
                     {{ isSubmitting ? '提交中...' : '提交申请' }}
                   </button>
                 </form>
@@ -112,13 +208,73 @@ const processSteps = ref([
 ])
 
 const form = reactive({ name: '', email: '', discord: '', experience: '', reason: '' })
+const errors = reactive({ name: '', email: '', discord: '' })
+const touched = reactive({ name: false, email: false, discord: false })
 const isSubmitting = ref(false)
 const submitMessage = ref('')
 const submitSuccess = ref(false)
 
+/**
+ * 判断字段是否通过验证（用于显示成功态）
+ */
+function isFieldValid(field) {
+  if (!touched[field]) return false
+  if (errors[field]) return false
+  if (field === 'name') return form.name.trim().length > 0
+  if (field === 'email') return isValidEmail(form.email)
+  if (field === 'discord') return !form.discord.trim() || /^[^#]+(#\d{4})?$/.test(form.discord.trim())
+  return false
+}
+
+/** 标记字段已交互 */
+function markTouched(field) {
+  touched[field] = true
+}
+
+/**
+ * 校验邮箱格式
+ * @param {string} email - 邮箱地址
+ * @returns {boolean}
+ */
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+/**
+ * 客户端表单校验
+ * @returns {boolean}
+ */
+function validateForm() {
+  errors.name = ''
+  errors.email = ''
+  errors.discord = ''
+
+  if (!form.name.trim()) {
+    errors.name = '请输入姓名'
+  }
+
+  if (!form.email.trim()) {
+    errors.email = '请输入邮箱'
+  } else if (!isValidEmail(form.email)) {
+    errors.email = '请输入有效的邮箱地址'
+  }
+
+  if (form.discord.trim() && !/^[^#]+(#\d{4})?$/.test(form.discord.trim())) {
+    errors.discord = 'Discord 格式不正确'
+  }
+
+  return !errors.name && !errors.email && !errors.discord
+}
+
 async function handleSubmit() {
-  isSubmitting.value = true
   submitMessage.value = ''
+
+  if (!validateForm()) {
+    submitSuccess.value = false
+    return
+  }
+
+  isSubmitting.value = true
   try {
     await dataService.submitApplication(form)
     submitSuccess.value = true
@@ -130,6 +286,16 @@ async function handleSubmit() {
   } finally {
     isSubmitting.value = false
   }
+}
+
+/**
+ * 重置表单状态
+ */
+function resetForm() {
+  Object.assign(form, { name: '', email: '', discord: '', experience: '', reason: '' })
+  Object.keys(touched).forEach(key => { touched[key] = false })
+  submitSuccess.value = false
+  submitMessage.value = ''
 }
 </script>
 
@@ -152,8 +318,8 @@ async function handleSubmit() {
 
 /* Double-Bezel Glass Card */
 .bezel-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
 }
@@ -289,6 +455,30 @@ async function handleSubmit() {
 
 .required { color: var(--color-status-danger); }
 
+.form-input--error {
+  border-color: var(--color-status-danger) !important;
+  box-shadow: 0 0 0 1px var(--color-status-danger), 0 0 12px rgba(239, 68, 68, 0.1) !important;
+  animation: input-shake 0.3s ease-in-out;
+}
+
+@keyframes input-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* 字段验证通过：青色边框 + 微光 */
+.form-input--valid {
+  border-color: rgba(34, 197, 94, 0.4) !important;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.15), 0 0 12px rgba(34, 197, 94, 0.06) !important;
+}
+
+.form-error {
+  font-size: var(--text-xs);
+  color: var(--color-status-danger);
+  padding-left: 2px;
+}
+
 .form-textarea {
   resize: vertical;
   min-height: 100px;
@@ -358,5 +548,123 @@ async function handleSubmit() {
   .join-grid { grid-template-columns: 1fr; }
   .page-header { padding: var(--space-10) 0 var(--space-6); }
   .bezel-card__inner { padding: var(--space-5); }
+}
+
+/* ═══ 提交成功完整面板 ═══ */
+.success-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, transparent 60%);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: var(--radius-xl);
+}
+
+.success-panel__icon {
+  color: rgb(134, 239, 172);
+  margin-bottom: var(--space-4);
+  animation: success-pop 0.5s var(--motion-ease-smooth);
+}
+
+@keyframes success-pop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.success-panel__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin-bottom: var(--space-2);
+}
+
+.success-panel__desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-body);
+  line-height: 1.7;
+  max-width: 420px;
+  margin-bottom: var(--space-6);
+}
+
+.success-panel__next-steps {
+  display: flex;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.success-panel__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.success-panel__step-num {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-accent);
+  opacity: 0.6;
+}
+
+.success-panel__step-text {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  letter-spacing: 0.05em;
+}
+
+.success-panel__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.success-panel__btn-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-accent);
+  color: var(--color-bg-deep);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+}
+
+.success-panel__btn-primary:hover {
+  background: var(--color-accent-bright);
+  box-shadow: 0 0 24px rgba(var(--raw-cyan-rgb), 0.4);
+  transform: translateY(-2px);
+}
+
+.success-panel__btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  background: transparent;
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-text-heading);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+}
+
+.success-panel__btn-secondary:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-panel__icon {
+    animation: none;
+  }
 }
 </style>

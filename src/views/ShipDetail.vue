@@ -5,7 +5,7 @@
 -->
 
 <template>
-  <div class="ship-detail-page">
+  <div ref="rootRef" class="ship-detail-page">
     <!-- 加载状态 -->
     <div v-if="!ship" class="loading-state">
       <div class="loading-spinner"></div>
@@ -40,14 +40,32 @@
       <!-- 主图区域 -->
       <section class="ship-hero">
         <div class="ship-hero__bg">
-          <img :src="ship.image" :alt="ship.name" />
+          <img :src="ship.image" :alt="ship.name" width="800" height="450" loading="eager" decoding="async" />
         </div>
         <div class="ship-hero__overlay"></div>
+        <div class="ship-hero__vignette" aria-hidden="true"></div>
+        <div class="ship-hero__scanline" aria-hidden="true"></div>
+        <div class="ship-hero__frame" aria-hidden="true">
+          <span class="ship-hero__frame-corner ship-hero__frame-corner--tl" />
+          <span class="ship-hero__frame-corner ship-hero__frame-corner--tr" />
+          <span class="ship-hero__frame-corner ship-hero__frame-corner--bl" />
+          <span class="ship-hero__frame-corner ship-hero__frame-corner--br" />
+        </div>
         <div class="ship-hero__content container">
-          <ShipCategoryBadge :category="ship.category" class="ship-hero__badge" />
+          <div class="ship-hero__top-meta">
+            <ShipCategoryBadge :category="ship.category" class="ship-hero__badge" />
+            <span class="ship-hero__registry font-data">{{ shipRegistry }}</span>
+          </div>
           <h1 class="ship-hero__name">{{ ship.name }}</h1>
           <p class="ship-hero__manufacturer font-data">{{ ship.manufacturer }}</p>
           <p class="ship-hero__role">{{ ship.role }}</p>
+
+          <div class="ship-hero__data-strip">
+            <div v-for="item in heroDataStrip" :key="item.label" class="data-strip__item">
+              <span class="data-strip__label font-data">{{ item.label }}</span>
+              <span class="data-strip__value font-data">{{ item.value }}</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -120,19 +138,88 @@
           </div>
         </div>
       </section>
+
+      <!-- 同类型舰船推荐 -->
+      <section v-if="relatedShips.length" class="related-ships section">
+        <div class="container">
+          <h2 class="section-title font-data">// 同类舰船 · RELATED VESSELS</h2>
+          <div class="related-grid">
+            <RouterLink
+              v-for="rShip in relatedShips"
+              :key="rShip.slug"
+              :to="`/fleet/${rShip.slug}`"
+              class="related-card"
+            >
+              <div class="related-card__image">
+                <img :src="rShip.image" :alt="rShip.name" width="144" height="144" loading="lazy" decoding="async" />
+              </div>
+              <div class="related-card__info">
+                <span class="related-card__category font-data">{{ rShip.categoryEn }}</span>
+                <h3 class="related-card__name">{{ rShip.name }}</h3>
+                <p class="related-card__role">{{ rShip.role }}</p>
+              </div>
+              <div class="related-card__arrow" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+            </RouterLink>
+          </div>
+        </div>
+      </section>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import shipDatabase, { getShipBySlug } from '../data/shipDatabase.js'
+import { getShipBySlug, shipList } from '../data/shipDatabase.js'
 import { HudCorner, TechDivider, ShipCategoryBadge, StatusPulse } from '../components/hud/index.js'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
+import shipDatabase from '../data/shipDatabase.js'
 
 const route = useRoute()
 const router = useRouter()
 const ship = ref(null)
+const rootRef = ref(null)
+
+// GSAP 滚动入场动画：参数条填充 + 区块揭示
+useGSAPReveal(({ reveal, stagger, barFill }) => {
+  nextTick(() => {
+    if (!rootRef.value || !ship.value || ship.value.notFound) return
+
+    // 核心参数条从 0 填充到目标值
+    const specBars = rootRef.value.querySelectorAll('.spec-bar-lg__fill')
+    specBars.forEach((el) => {
+      const targetWidth = el.style.width
+      el.style.width = '0%'
+      barFill(el, {
+        width: targetWidth,
+        duration: 1.2,
+        start: 'top 80%'
+      })
+    })
+
+    // 参数卡片交错揭示
+    const specsGrid = rootRef.value.querySelector('.specs-grid')
+    if (specsGrid) {
+      stagger(specsGrid, '.spec-item', {
+        animation: 'scaleIn',
+        stagger: 0.1,
+        duration: 0.6
+      })
+    }
+
+    // 信息面板交错揭示
+    const infoGrid = rootRef.value.querySelector('.info-grid')
+    if (infoGrid) {
+      stagger(infoGrid, '.info-panel', {
+        animation: 'fadeUp',
+        stagger: 0.15,
+        duration: 0.7
+      })
+    }
+  })
+})
 
 /**
  * 根据路由 slug 加载舰船数据
@@ -151,6 +238,52 @@ function goBack() {
   router.push({ name: 'Fleet' })
 }
 
+/**
+ * 同类型舰船推荐 — 排除当前舰船，取同 category 的最多 3 艘
+ * 若同类型不足 3 艘，用其他类型补齐
+ */
+const relatedShips = computed(() => {
+  if (!ship.value || ship.value.notFound) return []
+  const currentSlug = route.params.slug
+  const sameCategory = shipList
+    .filter((slug) => slug !== currentSlug && shipDatabase[slug].category === ship.value.category)
+    .map((slug) => ({ slug, ...shipDatabase[slug] }))
+  // 同类型不足时用其他类型补齐
+  if (sameCategory.length >= 3) return sameCategory.slice(0, 3)
+  const others = shipList
+    .filter((slug) => slug !== currentSlug && shipDatabase[slug].category !== ship.value.category)
+    .map((slug) => ({ slug, ...shipDatabase[slug] }))
+  return [...sameCategory, ...others].slice(0, 3)
+})
+
+/**
+ * 生成舰船注册号，用于 Hero 装饰性数据展示
+ * 格式：REG-4F-XXX，取舰船名首字母大写并补齐至 3 位
+ */
+const shipRegistry = computed(() => {
+  if (!ship.value || ship.value.notFound) return 'REG-4F-???'
+  const prefix = ship.value.name
+    .replace(/[^a-zA-Z]/g, '')
+    .slice(0, 3)
+    .toUpperCase()
+    .padEnd(3, 'X')
+  return `REG-4F-${prefix}`
+})
+
+/**
+ * Hero 底部快速数据条：船员、长度、战斗评级
+ * 从 details 数组中按中文标签提取，缺失时显示 --
+ */
+const heroDataStrip = computed(() => {
+  if (!ship.value || ship.value.notFound) return []
+  const find = (key) => ship.value.details.find((d) => d.label.includes(key))?.value || '--'
+  return [
+    { label: 'CREW', value: find('船员') },
+    { label: 'LENGTH', value: find('长度') },
+    { label: 'RATING', value: find('战斗评级') }
+  ]
+})
+
 // 首次加载
 loadShip()
 
@@ -162,6 +295,7 @@ watch(() => route.params.slug, loadShip)
 /* 详情页全局容器 */
 .ship-detail-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg-primary, #050508);
   color: var(--color-text-primary, #ffffff);
 }
@@ -231,7 +365,7 @@ watch(() => route.params.slug, loadShip)
   padding: var(--space-3) 0;
   background: rgba(5, 5, 8, 0.85);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .detail-nav .container {
@@ -278,7 +412,7 @@ watch(() => route.params.slug, loadShip)
 /* ── 主图区域 ── */
 .ship-hero {
   position: relative;
-  min-height: 50vh;
+  min-height: 55vh;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -293,44 +427,183 @@ watch(() => route.params.slug, loadShip)
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.6);
+  filter: brightness(0.55) saturate(0.85);
+  transform: scale(1.02);
+  transition: transform 8s var(--ease-smooth), filter 0.6s var(--ease-out);
+}
+
+.ship-hero:hover .ship-hero__bg img {
+  transform: scale(1.06);
+  filter: brightness(0.6) saturate(0.9);
 }
 
 .ship-hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, rgba(5, 5, 8, 1) 0%, rgba(5, 5, 8, 0.3) 50%, rgba(5, 5, 8, 0.6) 100%);
+  background:
+    linear-gradient(0deg, rgba(5, 5, 8, 1) 0%, rgba(5, 5, 8, 0.25) 55%, rgba(5, 5, 8, 0.55) 100%),
+    radial-gradient(ellipse at 50% 100%, rgba(74, 158, 255, 0.08) 0%, transparent 55%);
+  z-index: 1;
+}
+
+/* 电影级暗角：四角压暗 + 底部强化淡出 */
+.ship-hero__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(5, 5, 8, 0.65) 100%),
+    linear-gradient(180deg, transparent 30%, rgba(5, 5, 8, 0.9) 100%);
+}
+
+/* 军事 HUD 扫描线：仅在 hover 时轻微显现，避免常态干扰阅读 */
+.ship-hero__scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(74, 158, 255, 0.04) 2px,
+    rgba(74, 158, 255, 0.04) 4px
+  );
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+}
+
+/* 图片边框角标：与 ShipCard 统一设计语言 */
+.ship-hero__frame {
+  position: absolute;
+  inset: 1.5rem;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.ship-hero__frame-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: rgba(74, 158, 255, 0.25);
+  border-style: solid;
+  transition: border-color 0.4s var(--ease-out);
+}
+
+.ship-hero__frame-corner--tl {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+}
+.ship-hero__frame-corner--tr {
+  top: 0;
+  right: 0;
+  border-width: 2px 2px 0 0;
+}
+.ship-hero__frame-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 2px 2px;
+}
+.ship-hero__frame-corner--br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+}
+
+.ship-hero:hover .ship-hero__frame-corner {
+  border-color: rgba(74, 158, 255, 0.5);
 }
 
 .ship-hero__content {
   position: relative;
-  z-index: 1;
-  padding: var(--space-8) 0;
+  z-index: 5;
+  padding: var(--space-10) 0 var(--space-8);
+}
+
+.ship-hero__top-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .ship-hero__badge {
-  margin-bottom: var(--space-3);
+  margin-bottom: 0;
+}
+
+.ship-hero__registry {
+  padding: 0.35rem 0.75rem;
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  color: var(--color-text-dim);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-sm);
 }
 
 .ship-hero__name {
-  font-size: var(--text-5xl, 3rem);
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, var(--text-5xl, 3.5rem));
   font-weight: 700;
   letter-spacing: -0.03em;
-  margin-bottom: var(--space-2);
+  color: var(--color-text-heading);
+  margin-bottom: var(--space-3);
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
 
 .ship-hero__manufacturer {
   font-size: var(--text-sm);
   color: var(--color-accent);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   margin-bottom: var(--space-3);
 }
 
 .ship-hero__role {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   color: var(--color-text-body);
-  max-width: 600px;
-  line-height: 1.6;
+  max-width: 640px;
+  line-height: 1.7;
+  margin-bottom: var(--space-6);
+}
+
+/* Hero 底部快速数据条 */
+.ship-hero__data-strip {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: rgba(5, 5, 8, 0.6);
+  border: 1px solid var(--color-border-hover);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.data-strip__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.data-strip__item:last-child {
+  border-right: none;
+}
+
+.data-strip__label {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  letter-spacing: 0.1em;
+}
+
+.data-strip__value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-heading);
 }
 
 /* ── 区块标题 ── */
@@ -358,8 +631,8 @@ watch(() => route.params.slug, loadShip)
 .spec-item {
   position: relative;
   padding: var(--space-4);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
 }
 
@@ -423,7 +696,7 @@ watch(() => route.params.slug, loadShip)
   position: relative;
   padding: var(--space-5);
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
 }
 
@@ -446,7 +719,7 @@ watch(() => route.params.slug, loadShip)
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .info-row:last-child {
@@ -490,7 +763,7 @@ watch(() => route.params.slug, loadShip)
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
 }
 
@@ -511,8 +784,37 @@ watch(() => route.params.slug, loadShip)
 
 /* ── 响应式 ── */
 @media (max-width: 768px) {
+  .ship-hero {
+    min-height: 65vh;
+  }
+
+  .ship-hero__frame {
+    inset: 1rem;
+  }
+
+  .ship-hero__top-meta {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
   .ship-hero__name {
     font-size: var(--text-3xl, 2rem);
+  }
+
+  .ship-hero__data-strip {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .data-strip__item {
+    flex: 1 1 calc(33.333% - var(--space-1));
+    min-width: 80px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .data-strip__item:last-child {
+    border-bottom: none;
   }
 
   .detail-nav .container {
@@ -523,6 +825,119 @@ watch(() => route.params.slug, loadShip)
 
   .specs-grid,
   .status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ 同类型舰船推荐区 ═══ */
+.related-ships {
+  padding-top: var(--space-12);
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.related-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+  overflow: hidden;
+}
+
+.related-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(var(--raw-cyan-rgb), 0.05) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-smooth);
+}
+
+.related-card:hover {
+  border-color: var(--color-border-accent);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(var(--raw-cyan-rgb), 0.1);
+}
+
+.related-card:hover::before {
+  opacity: 1;
+}
+
+.related-card__image {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg-deep);
+}
+
+.related-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--motion-duration-slow) var(--motion-ease-smooth);
+}
+
+.related-card:hover .related-card__image img {
+  transform: scale(1.1);
+}
+
+.related-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.related-card__category {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+}
+
+.related-card__name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin: var(--space-1) 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.related-card__role {
+  font-size: var(--text-xs);
+  color: var(--color-text-body);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.related-card__arrow {
+  color: var(--color-text-hint);
+  transition: all var(--motion-duration-normal) var(--motion-ease-smooth);
+  flex-shrink: 0;
+}
+
+.related-card:hover .related-card__arrow {
+  color: var(--color-accent);
+  transform: translateX(4px);
+}
+
+@media (max-width: 768px) {
+  .related-grid {
     grid-template-columns: 1fr;
   }
 }

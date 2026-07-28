@@ -139,6 +139,7 @@ export function initStaggerReveal(container, selector, options = {}) {
  * @param {string} [options.start='top 85%'] - ScrollTrigger 触发位置
  * @param {string} [options.suffix=''] - 数字后缀（如 '%'、'+'）
  * @param {boolean} [options.once=true] - 是否只播放一次
+ * @param {string} [options.ease='power1.out'] - 缓动函数（如 'power2.out'）
  * @returns {ScrollTrigger|null} ScrollTrigger 实例
  */
 export function initCountUp(element, options = {}) {
@@ -149,7 +150,8 @@ export function initCountUp(element, options = {}) {
     duration = 2,
     start = 'top 85%',
     suffix = '',
-    once = true
+    once = true,
+    ease = 'power1.out'
   } = options
 
   const counter = { val: 0 }
@@ -162,7 +164,7 @@ export function initCountUp(element, options = {}) {
       gsap.to(counter, {
         val: endValue,
         duration,
-        ease: 'power1.out',
+        ease,
         onUpdate: () => {
           element.textContent = Math.round(counter.val) + suffix
         }

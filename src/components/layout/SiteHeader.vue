@@ -11,7 +11,7 @@
       <TechDivider vertical class="site-header__divider" />
 
       <!-- Navigation -->
-      <nav class="site-header__nav" :class="{ 'site-header__nav--open': isMobileMenuOpen }">
+      <nav id="site-nav" class="site-header__nav" :class="{ 'site-header__nav--open': isMobileMenuOpen }">
         <router-link
           v-for="(link, index) in navLinks"
           :key="link.path"
@@ -19,6 +19,7 @@
           class="site-header__link"
           :class="{ 'site-header__link--active': isActive(link.path) }"
           :style="{ '--link-index': index }"
+          :aria-current="isActive(link.path) ? 'page' : undefined"
           @click="isMobileMenuOpen = false"
         >
           {{ link.label }}
@@ -37,7 +38,13 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-        <button class="site-header__menu-btn" @click="isMobileMenuOpen = !isMobileMenuOpen" aria-label="菜单">
+        <button
+          class="site-header__menu-btn"
+          @click="isMobileMenuOpen = !isMobileMenuOpen"
+          aria-label="菜单"
+          :aria-expanded="isMobileMenuOpen"
+          aria-controls="site-nav"
+        >
           <span class="hamburger" :class="{ 'hamburger--open': isMobileMenuOpen }">
             <span></span><span></span><span></span>
           </span>
@@ -96,6 +103,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   right: 0;
   z-index: var(--z-header);
   padding: 16px 0 0;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
   pointer-events: none;
 }
 
@@ -229,8 +237,8 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   color: rgba(255, 255, 255, 0.5);
   transition: color var(--duration-fast) var(--ease-out),
@@ -247,8 +255,8 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   display: none;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   color: rgba(255, 255, 255, 0.5);
 }
@@ -288,6 +296,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     justify-content: space-between;
     border-radius: var(--radius-xl);
     margin: 0 auto;
+    padding: 0 0.75rem;
   }
 
   .site-header__menu-btn {
@@ -300,6 +309,10 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     left: 0;
     right: 0;
     bottom: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
     background: rgba(5, 5, 8, 0.97);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
@@ -327,6 +340,9 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
     font-size: 1.5rem;
     letter-spacing: 0.25em;
     padding: 1rem 2rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 }
 

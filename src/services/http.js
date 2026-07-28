@@ -10,6 +10,10 @@
 import { ref } from 'vue'
 
 /**
+ * @typedef {Error & { status?: number, isApiError?: boolean, data?: any }} ApiError
+ */
+
+/**
  * API 基础 URL
  * @description 所有 API 请求的前缀路径
  *              在生产环境由反向代理转发到后端服务
@@ -53,21 +57,13 @@ function onRefreshed() {
 }
 
 /**
- * 已尝试刷新的请求集合
- * @description 防止刷新后重试仍返回 401 时无限递归
- * @type {Set<string>}
- */
-const refreshedRequests = new Set()
-
-/**
  * HTTP 请求客户端
  * @description 封装 fetch API 的核心请求函数，处理请求配置和错误处理
  *              认证通过 httpOnly cookie 自动携带，无需手动设置 Authorization header
  * @param {string} endpoint - API 端点路径（如 '/auth/login'）
- * @param {Object} options - 请求选项，与 fetch API 的 options 参数兼容
- * @param {boolean} [options._isRetry] - 内部标记，标识是否为刷新后重试
+ * @param {RequestInit & { _isRetry?: boolean }} [options] - 请求选项，与 fetch API 的 options 参数兼容
  * @returns {Promise<Object>} 解析后的 JSON 响应数据
- * @throws {Error} 请求失败时抛出包含状态码和错误信息的异常
+ * @throws {ApiError} 请求失败时抛出包含状态码和错误信息的异常
  */
 async function http(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
@@ -78,11 +74,11 @@ async function http(endpoint, options = {}) {
   }
 
   // credentials: 'include' 确保 httpOnly cookie 随请求自动发送
-  const config = {
+  const config = /** @type {RequestInit & { _isRetry?: boolean }} */ ({
     credentials: 'include',
     ...options,
     headers
-  }
+  })
 
   try {
     const response = await fetch(url, config)
@@ -96,7 +92,7 @@ async function http(endpoint, options = {}) {
       try {
         data = JSON.parse(text)
       } catch {
-        const error = new Error('服务响应格式异常，请确认后端服务是否正常运行')
+        const error = /** @type {ApiError} */ (new Error('服务响应格式异常，请确认后端服务是否正常运行'))
         error.status = response.status || 502
         error.isApiError = true
         throw error
@@ -105,7 +101,7 @@ async function http(endpoint, options = {}) {
 
     // 空响应体且状态码非 2xx，说明后端服务不可达
     if (!text && !response.ok) {
-      const error = new Error('后端服务暂不可用，请确认服务已启动')
+      const error = /** @type {ApiError} */ (new Error('后端服务暂不可用，请确认服务已启动'))
       error.status = response.status || 503
       error.isApiError = true
       throw error
@@ -117,7 +113,7 @@ async function http(endpoint, options = {}) {
         return handleTokenRefresh(endpoint, { ...options, _isRetry: true })
       }
 
-      const error = new Error(data?.error || data?.message || '请求失败')
+      const error = /** @type {ApiError} */ (new Error(data?.error || data?.message || '请求失败'))
       error.status = response.status
       error.data = data
       throw error
@@ -125,8 +121,8 @@ async function http(endpoint, options = {}) {
 
     return data
   } catch (err) {
-    // 将 unknown 类型的 err 断言为 Error，确保可以安全访问 message 和 instanceof
-    const error = err instanceof Error ? err : new Error(String(err))
+    // 将 unknown 类型的 err 断言为 ApiError，确保可以安全访问 message 和 instanceof
+    const error = /** @type {ApiError} */ (err instanceof Error ? err : new Error(String(err)))
     // 跳过已标记的 API 错误（避免重复包装）
     if (!error.isApiError && error instanceof TypeError) {
       error.message = '网络连接失败，请检查网络设置'
@@ -218,7 +214,7 @@ export const httpClient = {
   /**
    * 发送 POST 请求
    * @param {string} endpoint - API 端点
-   * @param {Object} data - 请求体数据
+   * @param {Object} [data] - 请求体数据
    * @returns {Promise<Object>} 响应数据
    */
   post(endpoint, data) {
@@ -231,7 +227,7 @@ export const httpClient = {
   /**
    * 发送 PUT 请求
    * @param {string} endpoint - API 端点
-   * @param {Object} data - 请求体数据
+   * @param {Object} [data] - 请求体数据
    * @returns {Promise<Object>} 响应数据
    */
   put(endpoint, data) {
@@ -244,7 +240,7 @@ export const httpClient = {
   /**
    * 发送 PATCH 请求
    * @param {string} endpoint - API 端点
-   * @param {Object} data - 请求体数据
+   * @param {Object} [data] - 请求体数据
    * @returns {Promise<Object>} 响应数据
    */
   patch(endpoint, data) {

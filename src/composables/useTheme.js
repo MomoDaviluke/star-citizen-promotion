@@ -51,8 +51,10 @@ export function useTheme() {
     applyTheme(initial)
   } else if (getStoredTheme() && getStoredTheme() !== currentTheme.value) {
     const stored = getStoredTheme()
-    currentTheme.value = stored
-    applyTheme(stored)
+    if (stored) {
+      currentTheme.value = stored
+      applyTheme(stored)
+    }
   }
 
   const isDark = () => currentTheme.value === THEME_DARK

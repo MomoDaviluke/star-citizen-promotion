@@ -13,6 +13,7 @@
   <div class="profile-grid">
     <section class="card profile-card">
       <div class="card-header">
+        <span class="section-label font-data">// PROFILE</span>
         <h3>基本信息</h3>
       </div>
       <form @submit.prevent="updateProfile" class="profile-form">
@@ -54,6 +55,7 @@
 
     <section class="card security-card">
       <div class="card-header">
+        <span class="section-label font-data">// SECURITY</span>
         <h3>安全设置</h3>
       </div>
       <form @submit.prevent="changePassword" class="security-form">
@@ -85,6 +87,9 @@
             placeholder="请再次输入新密码"
           />
         </div>
+        <Transition name="fade">
+          <p v-if="passwordError" class="form-error-inline" role="alert">{{ passwordError }}</p>
+        </Transition>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" :disabled="isChangingPassword">
             {{ isChangingPassword ? '修改中...' : '修改密码' }}
@@ -95,6 +100,7 @@
 
     <section class="card danger-zone">
       <div class="card-header">
+        <span class="section-label section-label--danger font-data">// DANGER ZONE</span>
         <h3>危险操作</h3>
       </div>
       <div class="danger-content">
@@ -149,6 +155,8 @@ const passwordForm = reactive({
 const isUpdating = ref(false)
 /** 是否正在修改密码 */
 const isChangingPassword = ref(false)
+/** 密码表单内联错误消息 */
+const passwordError = ref('')
 
 /**
  * 加载用户资料
@@ -191,9 +199,10 @@ async function updateProfile() {
 async function changePassword() {
   // 验证两次输入的新密码是否一致
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    alert('两次输入的密码不一致')
+    passwordError.value = '两次输入的密码不一致'
     return
   }
+  passwordError.value = ''
 
   isChangingPassword.value = true
   try {
@@ -241,7 +250,7 @@ onMounted(() => {
 .card-header {
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .card-header h3 {
@@ -271,16 +280,16 @@ onMounted(() => {
 .form-input {
   padding: 0.75rem 1rem;
   background: rgba(3, 8, 16, 0.6);
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  color: var(--text);
+  color: var(--color-text-heading);
   font-size: 0.95rem;
   transition: border-color var(--transition-fast);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 .form-input:disabled {
@@ -290,7 +299,7 @@ onMounted(() => {
 
 .form-hint {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-text-body);
 }
 
 .form-actions {
@@ -302,7 +311,7 @@ onMounted(() => {
 }
 
 .danger-zone .card-header h3 {
-  color: var(--danger);
+  color: var(--color-status-danger);
 }
 
 .danger-content {
@@ -314,13 +323,13 @@ onMounted(() => {
 .danger-content p {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--color-text-body);
 }
 
 .btn-danger {
   background: rgba(255, 107, 107, 0.15);
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: var(--color-status-danger);
+  color: var(--color-status-danger);
 }
 
 .btn-danger:hover {
@@ -336,5 +345,82 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/*
+ * 移动端响应式（≤768px）
+ * profile-grid 自动折叠为单列，表单输入和按钮适配窄屏
+ */
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+  }
+
+  .form-actions .btn,
+  .btn-primary,
+  .btn-danger {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .danger-content {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header h3 {
+    font-size: 1rem;
+  }
+
+  .form-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* 内联错误消息 */
+.form-error-inline {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-status-danger);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+/* 科幻 section-label 标签 */
+.section-label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
+}
+
+.section-label--danger {
+  color: var(--color-status-danger);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

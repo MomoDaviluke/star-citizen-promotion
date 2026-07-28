@@ -40,39 +40,54 @@
             <span class="login-id__text font-data">ACCESS TERMINAL v6.0</span>
           </div>
 
-          <form @submit.prevent="handleLogin" class="login-form">
+          <form
+            @submit.prevent="handleLogin"
+            class="login-form"
+            :aria-busy="isSubmitting"
+          >
             <div class="login-form__group">
               <label for="email" class="login-form__label font-data">EMAIL</label>
               <input
                 id="email"
+                name="email"
                 v-model="form.email"
                 type="email"
                 class="holo-input"
                 :class="{ 'holo-input--error': errors.email }"
+                :aria-invalid="errors.email ? 'true' : 'false'"
+                :aria-describedby="errors.email ? 'email-error' : undefined"
                 placeholder="请输入邮箱"
                 required
               />
-              <span v-if="errors.email" class="login-form__error">{{ errors.email }}</span>
+              <span v-if="errors.email" id="email-error" class="login-form__error" role="alert">{{ errors.email }}</span>
             </div>
 
             <div class="login-form__group">
               <label for="password" class="login-form__label font-data">PASSWORD</label>
               <input
                 id="password"
+                name="password"
                 v-model="form.password"
                 type="password"
                 class="holo-input"
                 :class="{ 'holo-input--error': errors.password }"
+                :aria-invalid="errors.password ? 'true' : 'false'"
+                :aria-describedby="errors.password ? 'password-error' : undefined"
                 placeholder="请输入密码"
                 required
               />
-              <span v-if="errors.password" class="login-form__error">{{ errors.password }}</span>
+              <span v-if="errors.password" id="password-error" class="login-form__error" role="alert">{{ errors.password }}</span>
             </div>
 
             <!-- Global Error -->
             <Transition name="holo-fade">
-              <div v-if="loginError" class="login-alert">
-                <svg class="login-alert__icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <div
+                v-if="loginError"
+                class="login-alert"
+                role="alert"
+                aria-live="polite"
+              >
+                <svg class="login-alert__icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M8 4.5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                   <circle cx="8" cy="11.5" r="0.75" fill="currentColor"/>
                 </svg>
@@ -84,6 +99,7 @@
               type="submit"
               class="login-submit"
               :disabled="isSubmitting"
+              :aria-label="isSubmitting ? '正在验证登录信息' : '登录'"
             >
               <span v-if="isSubmitting" class="btn-loading">
                 <span class="spinner"></span>
@@ -174,6 +190,7 @@ async function handleLogin() {
 <style scoped>
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -189,8 +206,8 @@ async function handleLogin() {
 
 /* Double-Bezel Glass Card */
 .bezel-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
 }
@@ -443,11 +460,26 @@ async function handleLogin() {
   .bezel-card__inner {
     padding: var(--space-6);
   }
+
+  /* iOS 防止输入框聚焦缩放 */
+  .holo-input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .login-submit {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 480px) {
   .bezel-card__inner {
     padding: var(--space-5);
+  }
+
+  /* 窄屏时增加底部 safe-area 间距，避免被 home indicator 遮挡 */
+  .login-page {
+    padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
   }
 }
 </style>

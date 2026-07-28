@@ -28,9 +28,15 @@
       <div class="site-footer__links">
         <h4 class="site-footer__heading">CHANNELS</h4>
         <div class="site-footer__nav">
-          <a href="#">Discord</a>
-          <a href="#">QQ 群</a>
-          <a href="#">Bilibili</a>
+          <a
+            v-for="channel in channels"
+            :key="channel.label"
+            :href="channel.href"
+            :aria-disabled="channel.href === '#' ? 'true' : undefined"
+            :tabindex="channel.href === '#' ? -1 : undefined"
+          >
+            {{ channel.label }}
+          </a>
         </div>
       </div>
     </div>
@@ -39,12 +45,22 @@
     <div class="site-footer__bottom container">
       <div class="site-footer__divider"></div>
       <p class="site-footer__copyright">&copy; {{ year }} Stellar Nexus. All rights reserved.</p>
+      <p class="site-footer__disclaimer">
+        Stellar Nexus 是 Star Citizen 玩家组织网站，所有官方素材版权归 Cloud Imperium Games 所有
+      </p>
     </div>
   </footer>
 </template>
 
 <script setup>
+import { siteConfig } from '../../config/site.config.js'
+
 const year = new Date().getFullYear()
+const channels = [
+  { label: 'Discord', href: siteConfig.siteInfo.discord || '#' },
+  { label: 'QQ 群', href: siteConfig.siteInfo.qqGroup ? `https://qm.qq.com/cgi-bin/qm/qr?k=${siteConfig.siteInfo.qqGroup}` : '#' },
+  { label: 'Bilibili', href: siteConfig.contact.socialLinks.find((l) => l.platform === 'bilibili')?.url || '#' }
+]
 </script>
 
 <style scoped>
@@ -144,7 +160,7 @@ const year = new Date().getFullYear()
 /* Bottom */
 .site-footer__bottom {
   padding-top: var(--space-4);
-  padding-bottom: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .site-footer__divider {
@@ -158,6 +174,16 @@ const year = new Date().getFullYear()
   color: var(--color-text-dim);
   letter-spacing: 0.02em;
   text-align: center;
+}
+
+.site-footer__disclaimer {
+  max-width: 640px;
+  margin: var(--space-2) auto 0;
+  font-size: 11px;
+  color: var(--color-text-dim);
+  line-height: 1.6;
+  text-align: center;
+  opacity: 0.7;
 }
 
 /* Mobile */

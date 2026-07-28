@@ -1,11 +1,11 @@
-﻿<!--
+<!--
   @file 关于我们视图组件
   @description Cinematic Sci-Fi — 团队介绍、数据面板、发展历程
   @version 10.0 - Cinematic Sci-Fi
 -->
 
 <template>
-  <div class="about-page">
+  <div ref="rootRef" class="about-page">
 
     <!-- Hero: Full-width 50vh background -->
     <section class="hero">
@@ -83,7 +83,56 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+import { useGSAPReveal } from '@/composables/useGSAPReveal'
+
+const rootRef = ref(null)
+
+// GSAP 滚动入场动画：dossier 卡片交错、数据面板、时间线节点
+useGSAPReveal(({ reveal, stagger, barFill }) => {
+  nextTick(() => {
+    if (!rootRef.value) return
+
+    // Dossier 卡片交错揭示
+    const dossierCards = rootRef.value.querySelector('.two-col__left')
+    if (dossierCards) {
+      stagger(dossierCards, '.dossier-card', {
+        animation: 'fadeUp',
+        stagger: 0.15,
+        duration: 0.7
+      })
+    }
+
+    // 数据面板整体淡入
+    const dataPanel = rootRef.value.querySelector('.data-panel')
+    if (dataPanel) {
+      reveal(dataPanel, { animation: 'fadeRight', duration: 0.8 })
+    }
+
+    // 时间线节点交错揭示
+    const timeline = rootRef.value.querySelector('.timeline')
+    if (timeline) {
+      stagger(timeline, '.timeline-node', {
+        animation: 'fadeUp',
+        stagger: 0.1,
+        duration: 0.6,
+        start: 'top 80%'
+      })
+    }
+
+    // 数据面板进度条填充动画
+    const barFills = rootRef.value.querySelectorAll('.data-stat__bar-fill')
+    barFills.forEach((el) => {
+      const targetWidth = el.style.width
+      el.style.width = '0%'
+      barFill(el, {
+        width: targetWidth,
+        duration: 1.2,
+        start: 'top 85%'
+      })
+    })
+  })
+})
 
 const teamMetrics = ref([
   { value: '128', label: 'ACTIVE MEMBERS', barWidth: 85 },
@@ -141,7 +190,7 @@ const timeline = ref([
   font-size: var(--text-4xl);
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-top: var(--space-3);
 }
 
@@ -170,8 +219,8 @@ const timeline = ref([
 
 /* ── Double-Bezel Card ── */
 .bezel-shell {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
 }
@@ -206,7 +255,7 @@ const timeline = ref([
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-bottom: var(--space-3);
   letter-spacing: -0.02em;
 }
@@ -249,8 +298,8 @@ const timeline = ref([
 }
 
 .data-panel__inner {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border-hover);
   border-radius: var(--radius-2xl);
   padding: 6px;
 }
@@ -280,7 +329,7 @@ const timeline = ref([
   display: block;
   font-size: var(--text-5xl);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-heading);
   letter-spacing: -0.03em;
   line-height: 1.1;
   text-shadow: 0 0 20px rgba(74, 158, 255, 0.25), 0 0 40px rgba(74, 158, 255, 0.1);
@@ -376,7 +425,7 @@ const timeline = ref([
 .timeline-node__title {
   font-size: var(--text-lg);
   font-weight: 600;
-  color: #fff;
+  color: var(--color-text-heading);
   margin-bottom: var(--space-1);
 }
 

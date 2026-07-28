@@ -1,0 +1,52 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend-builder
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - JWT_SECRET=loadtest-jwt-secret-32chars-minimum-length-required
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=app_user
+      - DB_PASSWORD=loadtest-password-secure
+      - DB_NAME=star_citizen_loadtest
+      - FRONTEND_URL=http://localhost:3000
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX=100
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:80
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3001/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: loadtest-root-password
+      MYSQL_DATABASE: star_citizen_loadtest
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: loadtest-password-secure
+    ports:
+      - "13306:3306"
+    volumes:
+      - mysql_loadtest_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_loadtest_data:

@@ -41,14 +41,14 @@
     </span>
 
     <!-- 科幻边框效果 -->
-    <span v-if="variant === 'primary' || variant === 'accent'" class="button-border-effect"></span>
+    <span v-if="variant === 'primary' || variant === 'cta' || variant === 'accent'" class="button-border-effect"></span>
   </button>
 </template>
 
 <script setup>
 /**
  * 基础按钮组件
- * @props {string} variant - 按钮样式变体 (primary|secondary|outline|ghost|danger|success)
+ * @props {string} variant - 按钮样式变体 (primary|secondary|outline|ghost|danger|success|cta)
  * @props {string} size - 按钮尺寸 (sm|md|lg|xl)
  * @props {boolean} disabled - 是否禁用
  * @props {boolean} loading - 是否加载中
@@ -62,7 +62,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'secondary', 'outline', 'ghost', 'danger', 'success'].includes(value)
+    validator: (value) => ['primary', 'secondary', 'outline', 'ghost', 'danger', 'success', 'cta'].includes(value)
   },
   size: {
     type: String,
@@ -189,7 +189,7 @@ function handleClick(event) {
 }
 
 .base-button--outline:hover:not(.is-disabled):not(.is-loading) {
-  background: rgba(95, 169, 255, 0.1);
+  background: rgba(var(--raw-cyan-rgb), 0.1);
   border-color: var(--color-accent);
 }
 
@@ -201,7 +201,7 @@ function handleClick(event) {
 }
 
 .base-button--ghost:hover:not(.is-disabled):not(.is-loading) {
-  background: rgba(95, 169, 255, 0.05);
+  background: rgba(var(--raw-cyan-rgb), 0.05);
   color: var(--color-text-heading);
 }
 
@@ -215,6 +215,24 @@ function handleClick(event) {
 .base-button--danger:hover:not(.is-disabled):not(.is-loading) {
   background: #ff5252;
   box-shadow: var(--glow-status-danger);
+}
+
+/* CTA 按钮 — 琥珀色主行动按钮，用于 Hero 和 CTA 区 */
+.base-button--cta {
+  background: var(--color-highlight);
+  color: var(--color-bg);
+  border-color: var(--color-highlight);
+  box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
+}
+
+.base-button--cta:hover:not(.is-disabled):not(.is-loading) {
+  background: var(--color-highlight-bright);
+  box-shadow: 0 0 30px rgba(255, 179, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.base-button--cta:active:not(.is-disabled):not(.is-loading) {
+  transform: translateY(0);
 }
 
 /* 成功按钮 */
@@ -301,20 +319,43 @@ function handleClick(event) {
 }
 
 /* ========== 响应式 ========== */
+/*
+ * 移动端触控目标优化（WCAG 2.5.5）
+ * 桌面端按钮通常 30~48px 高度，移动端需保证 ≥44px 最小触控目标
+ * 因此移动端应增大而非缩小尺寸，与桌面端相反
+ */
 @media (max-width: 768px) {
   .base-button {
-    padding: 0.5rem 1rem;
+    min-height: 44px;
+    padding: 0.75rem 1.25rem;
+    font-size: var(--text-base);
+  }
+
+  /* sm 在移动端不再使用紧凑尺寸 */
+  .base-button--sm {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
     font-size: var(--text-sm);
   }
 
   .base-button--lg {
-    padding: 0.75rem 1.5rem;
-    font-size: var(--text-base);
+    padding: 0.875rem 1.5rem;
+    min-height: 48px;
+    font-size: var(--text-lg);
   }
 
   .base-button--xl {
-    padding: 0.875rem 1.75rem;
-    font-size: var(--text-lg);
+    padding: 1rem 1.75rem;
+    min-height: 52px;
+    font-size: var(--text-xl);
+  }
+
+  /* 仅图标按钮：触控目标必须 ≥44×44px */
+  .base-button.is-icon-only {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
   }
 }
 </style>

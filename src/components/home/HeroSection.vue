@@ -1,6 +1,7 @@
 <!--
-  @file 首页英雄区
-  @description 非对称分层电影构图，包含星云背景、舰船侧影、数据读数、CTA
+  @file Hero 区组件
+  @description 全屏沉浸式 Hero — 标题、副标题、行动按钮、背景元素
+  @module components/home/HeroSection
 -->
 <template>
   <section class="hero-section">
@@ -16,25 +17,31 @@
         <StatusPulse variant="online" label="RECRUITING NOW" />
       </div>
 
-      <h1 class="hero-section__title">
+      <h1 ref="titleRef" class="hero-section__title">
         <span class="hero-section__title-line">STELLAR</span>
         <span class="hero-section__title-line hero-section__title-line--accent">NEXUS</span>
       </h1>
 
       <TechDivider class="hero-section__divider" />
 
-      <p class="hero-section__tagline">EXPLORE · FIGHT · CONQUER</p>
+      <p ref="taglineRef" class="hero-section__tagline">EXPLORE · FIGHT · CONQUER</p>
 
       <slot name="data-panel"></slot>
 
-      <div class="hero-section__actions">
-        <RouterLink to="/join" class="hero-section__btn hero-section__btn--primary">
+      <div ref="actionsRef" class="hero-section__actions">
+        <BaseButton variant="cta" size="lg" class="hero-section__cta" @click="router.push('/join')">
           START APPLICATION
-        </RouterLink>
-        <RouterLink to="/fleet" class="hero-section__btn hero-section__btn--ghost">
+        </BaseButton>
+        <BaseButton variant="outline" size="lg" @click="router.push('/fleet')">
           EXPLORE FLEET
-        </RouterLink>
+        </BaseButton>
       </div>
+    </div>
+
+    <!-- 滚动指示器：引导用户向下探索 -->
+    <div class="hero-section__scroll-indicator" aria-hidden="true">
+      <span class="hero-section__scroll-text">SCROLL</span>
+      <span class="hero-section__scroll-line"></span>
     </div>
 
     <HudCorner position="top-left" size="lg" class="hero-section__corner hero-section__corner--tl" />
@@ -43,13 +50,69 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import gsap from 'gsap'
 import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.js'
+import BaseButton from '../common/BaseButton.vue'
+
+const router = useRouter()
+
+// 入场动画 ref
+const titleRef = ref(null)
+const taglineRef = ref(null)
+const actionsRef = ref(null)
+let ctx = null
+
+onMounted(() => {
+  // prefers-reduced-motion 降级：跳过动画，保持内容可见
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  // 防御性检查：确保所有 ref 已挂载，避免 GSAP 找不到目标抛出错误
+  if (!titleRef.value || !taglineRef.value || !actionsRef.value) return
+
+  // 创建 GSAP context，便于组件卸载时统一清理动画资源
+  ctx = gsap.context(() => {
+    // Hero 标题入场时间轴
+    // 顺序：标题逐行滑入 → 副标题淡入 → 按钮组交错出现
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+    // 1. 标题逐行从下方滑入（y:60, opacity:0, duration:1, stagger:0.15）
+    //    选择 .hero-section__title-line 的两个 span，交错出现形成逐行效果
+    tl.from(titleRef.value.querySelectorAll('.hero-section__title-line'), {
+      y: 60,
+      opacity: 0,
+      duration: 1,
+      stagger: 0.15
+    })
+      // 2. 副标题淡入（y:30, opacity:0, duration:0.6）
+      //    position '-=0.4' 表示在上一段动画结束前 0.4s 开始，形成重叠过渡
+      .from(taglineRef.value, {
+        y: 30,
+        opacity: 0,
+        duration: 0.6
+      }, '-=0.4')
+      // 3. 按钮组子元素交错出现（y:20, opacity:0, duration:0.5, stagger:0.1）
+      //    position '-=0.3' 与副标题动画重叠
+      .from(actionsRef.value.children, {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        stagger: 0.1
+      }, '-=0.3')
+  })
+})
+
+onUnmounted(() => {
+  ctx?.revert()
+})
 </script>
 
 <style scoped>
 .hero-section {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
@@ -134,43 +197,74 @@ import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.j
   flex-wrap: wrap;
 }
 
-.hero-section__btn {
-  display: inline-flex;
+/* 主 CTA 脉冲呼吸动画：增强视觉吸引力 */
+.hero-section__cta {
+  animation: cta-pulse 3s ease-in-out infinite;
+}
+
+@keyframes cta-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 179, 0, 0.3), 0 0 0 0 rgba(255, 179, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 179, 0, 0.5), 0 0 0 8px rgba(255, 179, 0, 0);
+  }
+}
+
+/* 滚动指示器：底部居中，引导用户向下 */
+.hero-section__scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: var(--radius-md);
-  transition: all var(--duration-normal) var(--ease-out);
+  gap: var(--space-2);
+  z-index: 3;
+  opacity: 0.5;
 }
 
-.hero-section__btn--primary {
-  background: var(--color-highlight);
-  color: var(--color-bg);
-  box-shadow: 0 0 20px rgba(255, 179, 0, 0.3);
+.hero-section__scroll-text {
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  letter-spacing: 0.3em;
+  color: var(--color-text-label);
 }
 
-.hero-section__btn--primary:hover {
-  background: var(--color-highlight-bright);
-  box-shadow: 0 0 30px rgba(255, 179, 0, 0.5);
-  transform: translateY(-2px);
+.hero-section__scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, var(--color-accent), transparent);
+  position: relative;
+  overflow: hidden;
 }
 
-.hero-section__btn--ghost {
-  background: transparent;
-  color: var(--color-text-heading);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.hero-section__scroll-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: var(--color-accent);
+  animation: scroll-drop 2s ease-in-out infinite;
 }
 
-.hero-section__btn--ghost:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  box-shadow: 0 0 20px rgba(74, 158, 255, 0.15);
+@keyframes scroll-drop {
+  0% { transform: translateY(-12px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(40px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-section__cta {
+    animation: none;
+  }
+  .hero-section__scroll-line::after {
+    animation: none;
+    opacity: 0.5;
+  }
 }
 
 .hero-section__corner {
@@ -187,12 +281,15 @@ import { StarMapGrid, StatusPulse, TechDivider, HudCorner } from '../hud/index.j
     padding: var(--space-16) var(--space-5);
   }
   .hero-section__ship {
-    width: 120vw;
+    width: 100vw;
     right: -30%;
     opacity: 0.4;
   }
   .hero-section__content {
     max-width: 100%;
+  }
+  .hero-section__scroll-indicator {
+    display: none;
   }
 }
 </style>

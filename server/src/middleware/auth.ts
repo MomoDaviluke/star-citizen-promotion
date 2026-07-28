@@ -14,6 +14,7 @@ export interface AuthenticatedUser {
   id: string
   role?: string
   email?: string
+  username?: string
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -86,13 +87,14 @@ export async function optionalAuth(req: AuthenticatedRequest, _res: Response, ne
     const decoded = jwt.verify(token, config.jwt.secret) as { userId: string }
 
     // 查库验证用户是否仍然存在，与 authenticate 保持一致
-    const user = await queryOne<{ id: string; role: string }>(
-      'SELECT id, role FROM users WHERE id = ?',
+    // 同时取出 email/username 供 applications 等路由做资源归属校验
+    const user = await queryOne<{ id: string; role: string; email: string; username: string }>(
+      'SELECT id, role, email, username FROM users WHERE id = ?',
       [decoded.userId]
     )
 
     if (user) {
-      req.user = { id: user.id, role: user.role }
+      req.user = { id: user.id, role: user.role, email: user.email, username: user.username }
     }
   } catch {
     // Token 无效或过期，继续处理但不带用户信息

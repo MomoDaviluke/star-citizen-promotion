@@ -418,6 +418,117 @@ open coverage/lcov-report/index.html
 
 ---
 
+## 压力测试
+
+> **更新日期**: 2026-07-23
+> **设计文档**: `docs/superpowers/specs/2026-07-23-load-testing-design.md`
+> **实现计划**: `docs/superpowers/plans/2026-07-23-load-testing.md`
+
+### 压测体系
+
+| 层级 | 场景 | 工具 | 目标 |
+|:---|:---|:---|:---|
+| L1 基线 | 单端点递增并发 | autocannon | P50/P95/P99/QPS 基线 |
+| L2 混合 | 读写 8:2 混合 | autocannon | 缓存失效、写竞争 |
+| L3 长跑 | 30min 持续负载 | autocannon + prom-client | heap/eventloop/pool 稳定性 |
+| L4 策略 | 限流/缓存验证 | autocannon + fetch | 429 行为、HIT/MISS 切换 |
+| L5 端到端 | WS/Nginx/前端 | autocannon + Playwright + Lighthouse | 全栈链路、前端性能 |
+
+### 目录结构
+
+```
+load-tests/
+├── config/                 # 配置
+│   ├── targets.mjs         # 目标 URL + 测试账号
+│   └── thresholds.mjs      # 各层级阈值
+├── docker-compose.loadtest.yml  # 独立压测环境（端口 3001/13306）
+├── lib/                    # 工具库
+│   ├── client.mjs          # autocannon 封装 + 参数解析
+│   ├── auth.mjs            # token 缓存 + authHeaders
+│   ├── seeds.mjs           # 测试账号注册/验证
+│   ├── monitor.mjs         # Prometheus 指标采样
+│   ├── report.mjs          # 结果保存 + 阈值评估 + 汇总
+│   └── probe.mjs           # 目标可达性探测
+└── scenarios/              # 场景脚本
+    ├── l1-baseline/        # L1 基线（3 脚本）
+    ├── l2-mixed/           # L2 混合（1 脚本）
+    ├── l3-soak/            # L3 长跑（2 脚本）
+    ├── l4-policy/          # L4 策略（2 脚本）
+    ├── l5-e2e/             # L5 端到端（4 脚本）
+    └── run-all.mjs         # 顶层编排器
+```
+
+### 快速命令
+
+```bash
+# 启动压测环境（Docker Compose 模拟生产）
+npm run load:up
+
+# 运行全套压测（L1→L2→L4→L3→L5，约 40 分钟）
+npm run test:load
+
+# 运行单层压测
+npm run test:load:l1   # L1 基线
+npm run test:load:l2   # L2 混合
+npm run test:load:l3   # L3 长跑（30 分钟）
+npm run test:load:l4   # L4 限流/缓存
+npm run test:load:l5   # L5 前端性能
+
+# 烟雾测试（5s + 1 并发，用于 CI 验证脚本可用性）
+node load-tests/scenarios/l1-baseline/readme-endpoints.mjs --smoke
+
+# 单独运行 L3 旁路监控
+node load-tests/scenarios/l3-soak/monitor.mjs
+
+# 关闭并清理压测环境
+npm run load:down
+```
+
+### 压测阈值
+
+| 层级 | 指标 | 阈值 |
+|:---|:---|:---|
+| L1 公开读 | P95 | < 200ms |
+| L1 公开读 | 错误率 | < 1% |
+| L1 公开读 | QPS | >= 50 |
+| L1 认证 | P95 | < 500ms（bcrypt 12 轮）|
+| L2 混合 | P95 | < 300ms |
+| L3 长跑 | heap 增长 | < 30% |
+| L3 长跑 | event loop lag P95 | < 50ms |
+| L5 前端 | LCP | < 2.5s |
+| L5 前端 | CLS | < 0.1 |
+| L5 前端 | INP | < 200ms |
+| L5 前端 | 动画 FPS | > 50 |
+
+### 执行顺序
+
+编排器（`run-all.mjs`）按以下顺序运行，避免限流污染和基线依赖问题：
+
+```
+L1 基线 → L2 混合 → L4 策略 → [等 90s 限流恢复] → L3 长跑 → L5 端到端
+```
+
+- L4 在 L3 前：避免限流窗口耗尽影响长跑
+- L3 在 L4 后：可从 L1 基线推导并发数（`/api/stats` P95<200ms 时的最大并发 × 0.8）
+- L5 最后：避免前端测试与后端压测资源竞争
+
+### 报告位置
+
+- 原始结果: `load-tests/reports/<layer>/`
+- 汇总报告: `load-tests/reports/summary.md`
+- L3 时序数据: `load-tests/reports/l3/timeseries.json`
+
+### 注意事项
+
+- 压测环境使用独立 MySQL volume（`mysql_loadtest_data`），与生产数据隔离
+- L4 限流验证会耗尽限流窗口，后续 auth 测试前需 `docker compose -f load-tests/docker-compose.loadtest.yml restart backend`
+- L3 长跑并发数从 L1 基线自动推导（`/api/stats` P95<200ms 时的最大并发 × 0.8）
+- Lighthouse 本地 HTTP/1.1 评分仅供参考（参考 DBG-03），生产环境需结合 HTTP/2 结果
+- 所有场景支持 `--smoke` 参数（5s + 1 并发），用于快速验证脚本可用性
+- `--duration <秒>` 和 `--connections <数>` 可覆盖默认值
+
+---
+
 ## 测试检查清单
 
 ### 提交前检查

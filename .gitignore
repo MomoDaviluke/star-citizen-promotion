@@ -58,7 +58,9 @@ playwright/.cache/
 .env.*.local
 .env.development
 .env.production
+.env.prod
 !.env.example
+!.env.production.example
 
 # Database files
 *.sqlite
@@ -98,6 +100,10 @@ docker-volumes/
 # Database backups
 backups/
 
+# SSL 证书与 Let's Encrypt 配置（含私钥，禁止提交）
+ssl/
+certbot/
+
 # Test output (手动重定向产生的临时文件)
 test-output.txt
 server/.jest-cache/
@@ -129,3 +135,7 @@ reasonix.toml
 
 # Temporary scripts
 screenshot.cjs
+
+# 压测报告
+load-tests/reports/
+load-tests/.env.local

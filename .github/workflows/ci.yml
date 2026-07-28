@@ -159,6 +159,28 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: e2e_password
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: e2e_password
+      DB_NAME: test_db
+      JWT_SECRET: e2e-secret-key-with-at-least-32-characters
+      NODE_ENV: test
+      VITE_BACKEND_URL: http://localhost:3001
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -168,10 +190,63 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: 安装依赖
+      - name: 安装前端依赖
         run: npm ci
 
-      - name: 构建项目
+      - name: 安装后端依赖
+        working-directory: ./server
+        run: npm ci
+
+      - name: 等待 MySQL 就绪
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -pe2e_password --silent; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 1
+          done
+
+      - name: 运行数据库迁移
+        working-directory: ./server
+        run: npm run db:migrate
+
+      - name: 构建后端
+        working-directory: ./server
+        run: npm run build
+
+      - name: 启动后端服务
+        working-directory: ./server
+        run: |
+          nohup npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+          sleep 2
+          echo "Backend started, PID: $(cat backend.pid)"
+
+      - name: 等待后端就绪
+        working-directory: ./server
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:3001/health/live > /dev/null 2>&1; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 1
+          done
+          echo "❌ Backend failed to start"
+          echo "===== backend.log 内容 ====="
+          if [ -f backend.log ]; then
+            cat backend.log
+          else
+            echo "(backend.log 不存在，后端进程可能未启动)"
+          fi
+          echo "===== ps 输出 ====="
+          ps aux | grep -E 'node|npm' | grep -v grep || true
+          exit 1
+
+      - name: 构建前端
         run: npm run build
 
       - name: 安装 Playwright 浏览器
@@ -187,6 +262,14 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 7
+
+      - name: 上传后端日志
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: backend-log
+          path: server/backend.log
           retention-days: 7
 
   security-scan:
@@ -208,15 +291,18 @@ jobs:
         run: npm ci
 
       - name: 前端安全审计
-        run: npm audit --audit-level=high
+        # 仅审计生产依赖：devDependencies 中的 jest/autocannon/eslint 工具链漏洞
+        # 不进入生产镜像（Dockerfile --omit=dev），生产环境只关心运行时漏洞
+        run: npm audit --omit=dev --audit-level=high
 
       - name: 安装后端依赖
         working-directory: ./server
         run: npm ci
 
       - name: 后端安全审计
+        # 同上：仅审计生产依赖，devDependencies 漏洞不构成运行时风险
         working-directory: ./server
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
       - name: 运行 Snyk 扫描
         uses: snyk/actions/node@master

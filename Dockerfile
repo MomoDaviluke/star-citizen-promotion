@@ -2,8 +2,8 @@
 # 多阶段构建 Dockerfile
 # @description 优化镜像体积和构建效率
 #   - frontend-builder: 构建前端静态资源
-#   - backend-builder: 编译后端 TypeScript
-#   - production: 最小化生产镜像
+#   - backend-builder: 编译后端 TypeScript（含 dev deps 用于编译）
+#   - production: 最小化生产镜像（仅 dependencies）
 # ============================================
 
 # --------------------------------------------
@@ -50,14 +50,19 @@ RUN apk add --no-cache wget ca-certificates && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# 复制生产环境依赖（仅 package.json 中 dependencies）
+# 复制 package.json 后重新安装生产依赖（仅 dependencies，不含 devDependencies）
+# 关键：不能直接 COPY builder 的 node_modules，否则会带入 typescript/jest 等 dev 依赖
 COPY --from=backend-builder /app/server/package*.json ./server/
-COPY --from=backend-builder /app/server/node_modules ./server/node_modules
+WORKDIR /app/server
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+WORKDIR /app
 
-# 复制编译后的后端代码
+# 复制编译后的后端代码、迁移文件与 knex 配置（供独立 migrate 服务复用）
 COPY --from=backend-builder /app/server/dist ./server/dist
+COPY --from=backend-builder /app/server/migrations ./server/migrations
+COPY --from=backend-builder /app/server/knexfile.js ./server/knexfile.js
 
-# 复制前端构建产物
+# 前端构建产物（供 backend 直接 serve 兜底；nginx 服务通过 Dockerfile.nginx 单独引用）
 COPY --from=frontend-builder /app/dist ./dist
 
 # 创建数据目录并设置权限
@@ -67,7 +72,7 @@ RUN mkdir -p /app/server/data /app/logs && \
 # 切换到非 root 用户运行，提升安全性
 USER nodejs
 
-# 设置环境变量
+# 环境变量
 ENV NODE_ENV=production
 ENV PORT=3001
 ENV STATIC_FILES_PATH=/app/dist
@@ -82,5 +87,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -q -O /dev/null http://localhost:3001/health/live || exit 1
 
-# 启动命令：直接运行编译后的 JS（无需 entrypoint 脚本）
+# 启动命令：直接运行编译后的 JS
 CMD ["node", "server/dist/index.js"]

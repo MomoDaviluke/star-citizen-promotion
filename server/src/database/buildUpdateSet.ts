@@ -18,8 +18,8 @@ export interface UpdateSetResult {
  * @description 只更新传入的字段，忽略 undefined 值，自动过滤白名单外的字段
  * @param data 包含待更新字段的对象
  * @param allowedColumns 允许更新的列名白名单
- * @returns SET 子句和参数值
- * @throws 当没有任何字段需要更新时抛出错误
+ * @returns SET 子句和参数值；当没有任何字段需要更新时返回空子句和空数组，
+ *          由调用方根据业务语义决定抛出何种错误
  *
  * @example
  * const { setClause, values } = buildUpdateSet(
@@ -41,7 +41,7 @@ export function buildUpdateSet(data: Record<string, unknown>, allowedColumns: st
   }
 
   if (updates.length === 0) {
-    throw new Error('没有要更新的内容')
+    return { setClause: '', values: [] }
   }
 
   const setClause = updates.map((col) => `${col} = ?`).join(', ')

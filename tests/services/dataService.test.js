@@ -4,7 +4,11 @@
  */
 
 import { describe, it, expect, vi } from 'vitest'
-import { dataService } from '@/services/dataService.js'
+
+// .env 文件设了 VITE_USE_API=true，vitest 会加载它。
+// vi.stubEnv 必须在 dataService 模块加载前调用，但 ESM 静态 import 会被提升，
+// 导致 stubEnv 晚于模块加载。改用动态 import 确保 stub 先生效。
+vi.stubEnv('VITE_USE_API', 'false')
 
 vi.mock('@/services/http.js', () => ({
   default: {
@@ -19,6 +23,8 @@ vi.mock('@/services/http.js', () => ({
     setStoredUser: vi.fn()
   }
 }))
+
+const { dataService } = await import('@/services/dataService.js')
 
 describe('数据服务', () => {
   describe('getNavItems', () => {

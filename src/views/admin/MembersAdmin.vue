@@ -33,19 +33,19 @@
           </thead>
           <tbody>
             <tr v-for="member in filteredMembers" :key="member.id">
-              <td>
+              <td data-label="成员">
                 <div class="member-info">
                   <span class="member-name">{{ member.name }}</span>
                 </div>
               </td>
-              <td>{{ member.role }}</td>
-              <td>
+              <td data-label="角色">{{ member.role }}</td>
+              <td data-label="状态">
                 <span class="status-badge" :class="`status-${member.status}`">
                   {{ getMemberStatusLabel(member.status) }}
                 </span>
               </td>
-              <td>{{ formatDate(member.created_at) }}</td>
-              <td>
+              <td data-label="加入时间">{{ formatDate(member.created_at) }}</td>
+              <td data-label="操作">
                 <div class="action-buttons">
                   <button class="btn btn-sm" @click="editMember(member)">编辑</button>
                   <button class="btn btn-sm btn-danger" @click="deleteMember(member.id)">删除</button>
@@ -346,5 +346,92 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+/*
+ * 移动端表格卡片化（≤768px）
+ * 将行转为卡片，每个 td 显示为带 label 的块
+ */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .btn-primary,
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .table-container {
+    border-radius: 8px;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(15, 30, 50, 0.4);
+  }
+
+  .data-table td {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid rgba(95, 169, 255, 0.08);
+    text-align: right;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    margin-right: auto;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .data-table td:first-child {
+    border-bottom: 1px solid var(--line);
+    background: rgba(95, 169, 255, 0.05);
+  }
+
+  /* 操作按钮区在卡片中保持左对齐 */
+  .data-table td:last-child {
+    justify-content: flex-end;
+  }
+
+  .action-buttons {
+    gap: 0.5rem;
+  }
+
+  .action-buttons .btn-sm {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
 }
 </style>

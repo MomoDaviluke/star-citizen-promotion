@@ -4,7 +4,7 @@
  * @module server/routes/applications
  */
 
-import { Router, Response, NextFunction } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { body, param } from 'express-validator'
 import { ApiError } from '../middleware/errorHandler.js'
 import { authenticate, requireAdmin, optionalAuth, AuthenticatedRequest } from '../middleware/auth.js'
@@ -13,6 +13,7 @@ import { validate } from '../middleware/validator.js'
 import {
   getApplications,
   getApplicationById,
+  getApplicationByEmail,
   submitApplication,
   updateApplicationStatus,
   deleteApplication
@@ -51,6 +52,30 @@ router.get(
         throw ApiError.forbidden('无权查看此申请')
       }
 
+      res.json({ success: true, data: application })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
+/**
+ * 按邮箱查询申请状态
+ * @description 供申请人自助查询入队申请进度，无需登录
+ *              返回该邮箱最近一条申请（避免泄露历史申请列表）
+ */
+router.get(
+  '/by-email/:email',
+  validate([
+    param('email').isEmail().withMessage('请输入有效的邮箱地址').normalizeEmail()
+  ]),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const application = await getApplicationByEmail(req.params.email as string)
+      if (!application) {
+        res.json({ success: true, data: null, message: '未找到该邮箱对应的申请记录' })
+        return
+      }
       res.json({ success: true, data: application })
     } catch (error) {
       next(error)

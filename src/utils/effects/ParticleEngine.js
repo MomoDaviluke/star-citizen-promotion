@@ -12,10 +12,15 @@ export class ParticleEngine {
    */
   constructor(canvas, options = {}) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    /** @type {CanvasRenderingContext2D} */
+    this.ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
     this.particles = [];
     this.isRunning = false;
     this.animationId = null;
+    /** @type {number} */
+    this.width = 0;
+    /** @type {number} */
+    this.height = 0;
 
     // 默认配置
     this.config = {
@@ -33,6 +38,7 @@ export class ParticleEngine {
     };
 
     // 保存 resize 处理函数引用，确保 destroy 时能正确移除
+    /** @type {(() => void) | null} */
     this._resizeHandler = () => this.resize();
 
     this.resize();
@@ -127,10 +133,10 @@ export class ParticleEngine {
           this.updateStar(p, deltaTime);
           break;
         case 'engine':
-          this.updateEngine(p, deltaTime);
+          this.updateEngine(p);
           break;
         case 'warp':
-          this.updateWarp(p, deltaTime);
+          this.updateWarp(p);
           break;
       }
     }
@@ -156,7 +162,7 @@ export class ParticleEngine {
   /**
    * 更新引擎粒子
    */
-  updateEngine(p, deltaTime) {
+  updateEngine(p) {
     p.size *= 0.98;
     p.alpha = p.life;
     p.vx += (Math.random() - 0.5) * 0.5;
@@ -165,7 +171,7 @@ export class ParticleEngine {
   /**
    * 更新跃迁粒子
    */
-  updateWarp(p, deltaTime) {
+  updateWarp(p) {
     p.vx *= 1.05;
     p.vy *= 1.05;
     p.size *= 1.02;
@@ -313,8 +319,10 @@ export class ParticleEngine {
    */
   destroy() {
     this.stop();
-    window.removeEventListener('resize', this._resizeHandler);
-    this._resizeHandler = null;
+    if (this._resizeHandler) {
+      window.removeEventListener('resize', this._resizeHandler);
+      this._resizeHandler = null;
+    }
     this.particles = [];
   }
 }

@@ -40,7 +40,6 @@
     "db:make:seed": "knex seed:make"
   },
   "dependencies": {
-    "@types/cookie-parser": "^1.4.10",
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -65,6 +64,7 @@
     "@swc/core": "^1.15.33",
     "@swc/jest": "^0.2.39",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -76,6 +76,7 @@
     "@types/ws": "^8.18.1",
     "eslint": "^9.22.0",
     "jest": "^29.7.0",
+    "knex": "^3.3.0",
     "supertest": "^7.0.0",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",

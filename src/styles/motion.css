@@ -1,0 +1,82 @@
+/**
+ * @file 全局动效工具类
+ * @description 基于 Motion Token 的复用动画类，覆盖入场、悬停、减弱动效降级
+ */
+
+/* 入场动画：从下方淡入 */
+.motion-fade-up {
+  opacity: 0;
+  transform: translateY(var(--motion-distance-md));
+  transition:
+    opacity var(--motion-duration-slow) var(--motion-ease-out),
+    transform var(--motion-duration-slow) var(--motion-ease-out);
+}
+
+.motion-fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 入场动画：从小放大 */
+.motion-scale-in {
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-out),
+    transform var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.motion-scale-in.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 悬停发光提升 */
+.motion-lift {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-out),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.motion-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* 按钮脉冲 */
+@keyframes motion-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 179, 0, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 179, 0, 0); }
+}
+
+.motion-pulse {
+  animation: motion-pulse 2s var(--motion-ease-in-out) infinite;
+}
+
+/* 环境漂移 */
+@keyframes motion-drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.motion-drift {
+  animation: motion-drift 6s var(--motion-ease-in-out) infinite;
+}
+
+/* 级联入场辅助：通过内联 style 使用 --motion-index 控制延迟 */
+.motion-stagger > * {
+  transition-delay: calc(var(--motion-index, 0) * var(--motion-stagger-normal));
+}
+
+/* 减弱动效降级 */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade-up,
+  .motion-scale-in,
+  .motion-lift,
+  .motion-pulse,
+  .motion-drift,
+  .motion-stagger > * {
+    animation: none !important;
+    transition: opacity 0.01ms linear !important;
+    transform: none !important;
+  }
+}
