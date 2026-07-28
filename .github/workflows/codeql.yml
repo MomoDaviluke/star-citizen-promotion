@@ -44,6 +44,16 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
+          # 排除非生产代码路径：load-tests、e2e、各类测试目录不进入生产镜像
+          # （Dockerfile --omit=dev + .dockerignore 排除），扫描它们只会产生噪音
+          config: |
+            paths-ignore:
+              - load-tests
+              - e2e
+              - server/tests
+              - tests
+              - playwright-report
+              - test-results
 
       - name: 自动构建
         uses: github/codeql-action/autobuild@v3
