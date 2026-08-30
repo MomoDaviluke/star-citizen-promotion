@@ -12,7 +12,7 @@
 - **架构**: Vue 3 + Vite 8 前端 / Express 4 + TypeScript 后端（三层 Routes→Services→DB）
 - **存储**: MySQL 8.0（主库，11 张表）+ PostgreSQL/pgvector（AI 向量库）+ Redis（LLM 缓存）
 - **AI**: 多 Provider 降级链（豆包/DeepSeek/Anthropic，无 key 自动 disabled 不阻断启动）
-- **测试**: 后端 58 套件 / 656 tests；前端 45 套件 / 404 tests；前端覆盖率门禁 49/42/42/47（lines/funcs/branches/stmts）
+- **测试**: 后端 58 套件 / 656 tests；前端 45 套件 / 413 tests（2026-08-30 独立复审实测，Node 26 本机需 NODE_OPTIONS=--localstorage-file，见 DBG-24）；前端覆盖率门禁 49/42/42/47（lines/funcs/branches/stmts）
 - **安全**: JWT httpOnly cookie + helmet + 速率限制 + metrics IP 白名单
 
 ## 当前进度（2026-08-30 实测）
@@ -28,6 +28,10 @@
 - [x] Monitor.vue 组件测试（12 用例，行覆盖 94.15%，消除前端盲区）
 - [x] 监控模块细节打磨（browser 限长 / reports 分页 / 时间戳统一 / 滚动定位）
 - [x] 仓库收尾（84 个未提交文件分 6 组提交；临时诊断脚本清理；.gitignore 补 *.bak）
+- [x] M0 Admin CRUD 补齐 + M3 E2E 扩展（spec 7→9 fleet/admin，连带修复 TD-25/26/27、E2E-SW-01，2026-08-30）
+- [x] RX 修正批次（2026-08-30 复审产出）：W1 git 恢复 push（远程 main=976bcf4，旧历史备份远程分支 backup/pre-rebuild-20260728）+ TD-28 测试环境加固（DBG-24 polyfill，双路径 413/413）+ TD-29 版本对齐 1.6.5（含 lockfile 1.5.0 漂移修复）+ TD-30 文档失真修正（C6 基线/M3 状态/旧 ROADMAP 归档横幅/M4-1 攻击顺序入图）
+- [x] M4-1 覆盖率基线实测：语句 56.57%/行 57.5%/分支 54.64%/函数 51.29%（M0/M3 已抬升基线）；第一批攻击目标=dataService(70)/router(33)/calendar store(39) 等 ~182 语句；planet/rendering 5 文件 ~477 语句明确不追（R7）
+- [ ] M4-2/3: 覆盖率 56.6% → 70%（第一批逻辑层补测后门禁 49→55）
 - [ ] 正式上线部署（nginx + certbot production profile 未启用）
 
 ## 本地运行环境拓扑（实测验证 2026-08-29）
@@ -120,6 +124,7 @@ npm run dev
 - DBG-21: **ts-jest ESM 下 `jest.mock` 模块 + 运行时 `import()` 会触发 'Unexpected token export' / 'import after Jest teardown'**（monitor.test.ts 动态导入、monitorStore.test.ts mock pool.js 均中招）。规避：动态 import 一律改顶部静态导入；需要替身的模块改为给生产函数加 `deps?` 注入参数而非 jest.mock（2026-08-30）
 - DBG-22: 大函数编辑（如给 purgeReportsBefore 加注入参数）可能误删闭合括号，typecheck 报 TS1005——多文件改完必须跑一次 `npm run typecheck` 兜底，而不是只跑测试（测试套件加载失败即语法错误信号）
 - DBG-23: vitest `--coverage` 会先删除已有 coverage/ 目录，沙箱拦截导致 Unhandled Error；用 `--coverage.reportsDirectory` 指向临时目录可绕过
+- DBG-24: **Node 25+/26 内置实验性 webstorage 遮蔽 jsdom**（2026-08-30 实测，Node 26.5.1）——无 flag 时全局 localStorage 存在但访问即告警 'not available because --localstorage-file was not provided'，`localStorage.clear()` 直接 TypeError，useTheme 套件 11 连挂且单文件运行也挂（与代码无关，是环境漂移）。修复：跑测试带 `NODE_OPTIONS=--localstorage-file=<临时文件>` 全绿 413/413；根治建议 tests/setup.js 判 `typeof localStorage === 'undefined'` 后从 window.localStorage 兜底 defineProperty。CI 用 Node 20 不受影响——**"测试全绿"声明必须绑定 Node 版本**（engines 允许 >=22.12 掩盖了此坑）
 
 ## Change Log
 
@@ -132,5 +137,6 @@ npm run dev
 | 2026-08-29 | **修复 Admin 页面白屏**：AdminLayout.vue / Profile.vue 调用不存在的 `authService.getUser()`，改为 `useAuthStore()`。同时 Profile.test.js 注入 Pinia 适配新依赖 |
 | 2026-08-29 | **监控系统稳定性加固**：仓储层读故障降级（null/[]）；调度器健康追踪 + 连续失败 3 次内存自警；`/monitor/health` 自检端点；过期告警 30 天保留期自动清理；`MONITOR_THRESHOLDS` 环境变量覆盖阈值；前端面板自检状态灯。后端 621/621、前端 391/391、端到端 10/10 全绿 |
 | 2026-08-30 | **监控模块评审闭环（v1.6.4）**：A 仓库收尾（84 文件分 6 组提交 + M4/M5 修复）；B Monitor.vue 组件测试 12 用例（行覆盖 94.15%）；C 告警外部通知系统（Notifier + WebhookNotifier 四格式 + 三事件触发）；D 数据治理（reports 90 天清理 + /metrics 降采样）；E 细节打磨（browser 限长 / reports 分页 / 时间戳统一 / 滚动定位）。后端 656/656、前端 404/404、typecheck 0 错误，工作树干净 |
+| 2026-08-30 | **技术线路图独立复审**（M0~M7 对照实测）：后端 656/656 ✅、前端 413/413 ✅（需 DBG-24 的 NODE_OPTIONS）、typecheck/lint/CSS lint 0 错误、M0 死链 grep 清零、9 个 E2E spec 就位、docker 容器全停（Redis 未跑）。记录 5 项文档失真：① ROADMAP.md 停留在 v1.6.2 视角未归档，与新路线图并存易误导 ② 版本号三处不一致（package.json 1.6.2 / CHANGELOG 1.6.4 / TECH_ROADMAP 声称 v1.6.5 已交付但 CHANGELOG 无条目）③ TECH_ROADMAP 矩阵 M3 标 ✅ 但 §3.4 标题仍"排队" ④ EXECUTION_PLAN C6 基线 404 过时（实为 413）⑤ R13 缓解未执行——git 重建后从未 push，远程 main 6a91fc5 不在本地历史 |
 | 2026-08-28 | 全链路连通性实测通过（smoke 11/11 + write 5/5 + WS + 代理）；启动 Redis 容器 sc-redis-dev；重建本记忆文件 |
 | 2026-08-28 | 修复 env 漂移（DB_PORT 3307、REDIS_URL、VITE_WS_URL 3001/ws）；修复 hindsight-local 崩溃循环（根因: pg0 instance.json 0字节损坏，移开即恢复）；LLM 最终定为用户主模型 glm-5.3-flash（opencode zen 端点，key 复用 OpenCode CLI 凭据），retain ~50s，70+ 条历史记忆完好 |
