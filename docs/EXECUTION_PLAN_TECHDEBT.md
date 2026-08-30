@@ -22,7 +22,7 @@
 | C3 | Vue 模板数字/布尔/Object prop 必须 `:` 动态绑定（QUAL-18） |
 | C4 | 验证 = 实际运行命令并确认输出，禁止"应该能过"式断言 |
 | C5 | commit 遵循 Conventional Commits；多行 body 用多个 `-m` |
-| C6 | 测试基线不得回退：后端 **656/656**、前端 **404/404**（2026-08-30 实测） |
+| C6 | 测试基线不得回退：后端 **656/656**、前端 **413/413**（2026-08-30 复审实测；TD-28 后与 Node 版本无关） |
 | C7 | M0 弹窗样式复用既有 CSS 变量与 ProjectsAdmin 模式，不新增变量、不新增路由（否决 `/admin/members/new` 方案） |
 
 ### 0.2 验证命令速查
@@ -31,7 +31,7 @@
 # 前端（仓库根目录）
 npm run lint                 # ESLint，期望 0 error
 npm run typecheck            # tsc --noEmit -p jsconfig.json，期望 0 error
-npm test                     # vitest run（全量单测，基线 404/404）
+npm test                     # vitest run（全量单测，基线 413/413）
 
 # 后端（server/ 目录）
 cd server && npm test        # jest，基线 656/656
