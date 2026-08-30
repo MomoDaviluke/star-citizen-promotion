@@ -181,6 +181,11 @@ jobs:
       JWT_SECRET: e2e-secret-key-with-at-least-32-characters
       NODE_ENV: test
       VITE_BACKEND_URL: http://localhost:3001
+      # E2E-CI-01：API mock（page.route）依赖前端以 API 模式构建。本地 .env 有
+      # VITE_USE_API=true 但该文件被 gitignore，CI checkout 后不存在 →
+      # 构建产物回退静态数据 → 组件不发 /api 请求 → 所有 API mock 失效。
+      # 此处显式注入，与本地 E2E 行为对齐
+      VITE_USE_API: 'true'
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
