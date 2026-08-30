@@ -244,6 +244,10 @@ const submitSuccess = ref(false)
  *              解析失败静默忽略,不阻塞正常表单流程
  */
 onMounted(() => {
+  // 转化埋点：进入申请表（漏斗起点）——必须在任何提前 return 之前，
+  // 否则无 AI 画像的正常访问不会发漏斗起点埋点（QUAL-21）
+  trackEvent('application_form_start')
+
   const aiProfile = route.query.ai_profile
   if (!aiProfile || typeof aiProfile !== 'string') return
 
@@ -276,9 +280,6 @@ onMounted(() => {
   } catch {
     // 忽略解析错误,不预填
   }
-
-  // 转化埋点：进入申请表（漏斗起点）
-  trackEvent('application_form_start')
 })
 
 /**

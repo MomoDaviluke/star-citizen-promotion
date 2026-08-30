@@ -33,12 +33,12 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'tests/', 'src/main.js', 'server/', '.reasonix/', '.codegraph/', 'dist/', 'coverage/', 'e2e/', 'patches/', 'playwright-report/', 'test-results/'],
-      // M4-3 门禁逐步上调：49 → 55（2026-08-30，实测 Lines 63.01 / Stmts 62.03 / Branch 58.33 / Funcs 56.33）→ 60 → 65 → 70
+      // M4 第二批门禁上调：55 → 60（2026-08-30，实测 Lines 68.12 / Stmts 66.96 / Branch 66.73 / Funcs 63.38）→ 65 → 70
       thresholds: {
-        lines: 55,
-        functions: 55,
-        branches: 55,
-        statements: 55
+        lines: 60,
+        functions: 60,
+        branches: 60,
+        statements: 60
       }
     }
   },
