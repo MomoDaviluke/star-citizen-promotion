@@ -1,0 +1,438 @@
+<!--
+  @file 个人中心视图组件
+  @description 用户个人资料管理和设置
+  @module views/Profile
+-->
+
+<template>
+  <div class="container">
+    <PageTitle
+      title="个人中心"
+      subtitle="管理您的账户信息和偏好设置"
+    />
+
+    <div class="profile-grid">
+    <section class="card profile-card">
+      <div class="card-header">
+        <span class="section-label font-data">// PROFILE</span>
+        <h3>基本信息</h3>
+      </div>
+      <form @submit.prevent="updateProfile" class="profile-form">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input
+            v-model="profile.username"
+            type="text"
+            class="form-input"
+            placeholder="请输入用户名"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">邮箱</label>
+          <input
+            v-model="profile.email"
+            type="email"
+            class="form-input"
+            disabled
+          />
+          <span class="form-hint">邮箱不可修改</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">头像 URL</label>
+          <input
+            v-model="profile.avatar"
+            type="url"
+            class="form-input"
+            placeholder="请输入头像图片地址"
+          />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" :disabled="isUpdating">
+            {{ isUpdating ? '保存中...' : '保存修改' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card security-card">
+      <div class="card-header">
+        <span class="section-label font-data">// SECURITY</span>
+        <h3>安全设置</h3>
+      </div>
+      <form @submit.prevent="changePassword" class="security-form">
+        <div class="form-group">
+          <label class="form-label">当前密码</label>
+          <input
+            v-model="passwordForm.currentPassword"
+            type="password"
+            class="form-input"
+            placeholder="请输入当前密码"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">新密码</label>
+          <input
+            v-model="passwordForm.newPassword"
+            type="password"
+            class="form-input"
+            placeholder="请输入新密码"
+          />
+          <span class="form-hint">至少8个字符，包含大小写字母和数字</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">确认新密码</label>
+          <input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            class="form-input"
+            placeholder="请再次输入新密码"
+          />
+        </div>
+        <Transition name="fade">
+          <p v-if="passwordError" class="form-error-inline" role="alert">{{ passwordError }}</p>
+        </Transition>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" :disabled="isChangingPassword">
+            {{ isChangingPassword ? '修改中...' : '修改密码' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card danger-zone">
+      <div class="card-header">
+        <span class="section-label section-label--danger font-data">// DANGER ZONE</span>
+        <h3>危险操作</h3>
+      </div>
+      <div class="danger-content">
+        <p>注销登录将清除您的会话信息，需要重新登录才能访问需要认证的功能。</p>
+        <button class="btn btn-danger" @click="handleLogout">
+          退出登录
+        </button>
+      </div>
+    </section>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { createLogger } from '../utils/logger.js'
+const logger = createLogger('Profile')
+
+/**
+ * 个人中心视图组件逻辑
+ * @description 用户资料管理、密码修改和账户安全操作
+ * @summary 提供用户基本信息编辑、密码修改和退出登录功能
+ */
+
+import { ref, reactive, onMounted } from 'vue'
+import PageTitle from '@/components/common/PageTitle.vue'
+import { authService } from '@/services'
+import { useAuthStore } from '@/stores/auth'
+
+/** 认证状态仓库 */
+const authStore = useAuthStore()
+
+/**
+ * 用户资料表单数据
+ * @property {string} username - 用户名
+ * @property {string} email - 邮箱（只读）
+ * @property {string} avatar - 头像 URL
+ */
+const profile = reactive({
+  username: '',
+  email: '',
+  avatar: ''
+})
+
+/**
+ * 密码修改表单数据
+ * @property {string} currentPassword - 当前密码
+ * @property {string} newPassword - 新密码
+ * @property {string} confirmPassword - 确认新密码
+ */
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+/** 是否正在更新资料 */
+const isUpdating = ref(false)
+/** 是否正在修改密码 */
+const isChangingPassword = ref(false)
+/** 密码表单内联错误消息 */
+const passwordError = ref('')
+
+/**
+ * 加载用户资料
+ * @description 从认证服务获取当前用户信息并填充表单
+ * @async
+ */
+async function loadProfile() {
+  // authService 未提供 getUser()，用户信息统一从认证仓库读取
+  const user = authStore.user
+  if (user) {
+    profile.username = user.username || ''
+    profile.email = user.email || ''
+    profile.avatar = user.avatar || ''
+  }
+}
+
+/**
+ * 更新用户资料
+ * @description 提交用户名和头像修改请求
+ * @async
+ */
+async function updateProfile() {
+  isUpdating.value = true
+  try {
+    await authService.updateProfile({
+      username: profile.username,
+      avatar: profile.avatar
+    })
+  } catch (error) {
+    logger.error('更新资料失败:', error)
+  } finally {
+    isUpdating.value = false
+  }
+}
+
+/**
+ * 修改用户密码
+ * @description 验证新密码一致性后提交密码修改请求
+ * @async
+ */
+async function changePassword() {
+  // 验证两次输入的新密码是否一致
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    passwordError.value = '两次输入的密码不一致'
+    return
+  }
+  passwordError.value = ''
+
+  isChangingPassword.value = true
+  try {
+    await authService.changePassword({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword
+    })
+    // 密码修改成功后清空表单
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (error) {
+    logger.error('修改密码失败:', error)
+  } finally {
+    isChangingPassword.value = false
+  }
+}
+
+/**
+ * 处理用户登出
+ * @description 清除认证状态并重定向到首页
+ */
+function handleLogout() {
+  authService.logout()
+  window.location.href = '/'
+}
+
+/** 组件挂载时加载用户资料 */
+onMounted(() => {
+  loadProfile()
+})
+</script>
+
+<style scoped>
+/* 页面容器垂直节奏（与全站 page-header 节奏对齐） */
+.container {
+  padding-block: var(--space-6) var(--space-16);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  animation: fadeInUp 0.5s ease both;
+}
+
+.card-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.profile-form,
+.security-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.form-input {
+  padding: 0.75rem 1rem;
+  background: rgba(3, 8, 16, 0.6);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-heading);
+  font-size: 0.95rem;
+  transition: border-color var(--duration-fast);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-body);
+}
+
+.form-actions {
+  margin-top: 0.5rem;
+}
+
+.danger-zone {
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.danger-zone .card-header h3 {
+  color: var(--color-status-danger);
+}
+
+.danger-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.danger-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-body);
+}
+
+.btn-danger {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: var(--color-status-danger);
+  color: var(--color-status-danger);
+}
+
+.btn-danger:hover {
+  background: rgba(255, 107, 107, 0.25);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * 移动端响应式（≤768px）
+ * profile-grid 自动折叠为单列，表单输入和按钮适配窄屏
+ */
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+  }
+
+  .form-actions .btn,
+  .btn-primary,
+  .btn-danger {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .danger-content {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header h3 {
+    font-size: 1rem;
+  }
+
+  .form-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* 内联错误消息 */
+.form-error-inline {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-status-danger);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+/* 科幻 section-label 标签 */
+.section-label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
+}
+
+.section-label--danger {
+  color: var(--color-status-danger);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

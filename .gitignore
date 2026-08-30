@@ -1,0 +1,153 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+dist-ssr
+coverage
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint
+.eslintcache
+
+# Cypress
+/cypress/videos/
+/cypress/screenshots/
+
+# Vitest
+__screenshots__/
+
+# Vite
+*.timestamp-*-*.mjs
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Git worktrees
+.worktrees/
+
+# Upload temp directories
+.uploads/
+
+# Environment files (keep examples only)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.prod
+!.env.example
+!.env.production.example
+
+# Database files
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+server/data/*.sqlite*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Visual Studio
+.vs/
+
+# Debug
+*.cpuprofile
+*.heapsnapshot
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# IDE
+*.iml
+.project
+.classpath
+.settings/
+
+# Test coverage
+.nyc_output/
+lcov.info
+
+# Docker volumes (local)
+docker-volumes/
+
+# Database backups
+backups/
+
+# SSL 证书与 Let's Encrypt 配置（含私钥，禁止提交）
+ssl/
+certbot/
+
+# Test output (手动重定向产生的临时文件)
+test-output.txt
+server/.jest-cache/
+
+# WorkBuddy local data
+.workbuddy/
+
+# CodeBuddy local data
+.codebuddy/
+
+# CodeGraph local data
+.codegraph/
+
+# Reasonix local data
+.reasonix/
+reasonix.toml
+
+# Trae local data
+.trae/
+
+# IDE HTML share packages（非项目源码）
+.trae-html-share-packages/
+
+# Environment backups（敏感信息可能残留，禁止入库）
+*.bak
+
+# Agents local data (IDE skill files, not project source)
+.agents/
+
+# Claude local data
+.claude-crap/
+
+# Superpowers skill local data
+.superpowers/
+
+# Temporary scripts
+screenshot.cjs
+
+# 压测报告
+load-tests/reports/
+load-tests/.env.local
+
+# 布局审计截图（report.md 保留入库）
+docs/superpowers/audits/**/screenshots/

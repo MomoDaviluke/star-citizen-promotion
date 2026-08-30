@@ -1,0 +1,29 @@
+# robots.txt — Star Citizen 战队官网
+# 允许所有爬虫访问（含 AI 爬虫，为 GEO 生成式搜索优化铺路）
+
+User-agent: *
+Allow: /
+
+# 通用 AI 爬虫显式放行（GEO 优化）
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Anthropic-ai
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://star-citizen-team.cn/sitemap.xml

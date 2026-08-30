@@ -1,0 +1,504 @@
+/**
+ * @file 后端服务入口
+ * @description Express 服务器启动和配置
+ * @module server/index
+ */
+
+import express, { Request, Response, NextFunction } from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import compression from 'compression'
+import cookieParser from 'cookie-parser'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { Server } from 'node:http'
+
+import { config } from './config/index.js'
+import { setupSwagger } from './config/swagger.js'
+import { initDatabase, closePool } from './database/init.js'
+import logger from './utils/logger.js'
+import { query, getPoolStatus } from './database/pool.js'
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
+import { requestLogger } from './middleware/requestLogger.js'
+import { requestId } from './middleware/requestId.js'
+import { auditLogger, startAuditCleanupJob } from './middleware/auditLogger.js'
+import { metricsMiddleware, metricsEndpoint } from './middleware/metrics.js'
+import { cacheMiddleware, cacheInvalidationMiddleware } from './middleware/cache.js'
+import { apiLimiter, authLimiter, refreshLimiter } from './middleware/rateLimiters.js'
+import { startWebSocket, closeWebSocket } from './websocket.js'
+import { MetricsCollector } from './monitoring/collector.js'
+import { AlertEngine } from './monitoring/alertEngine.js'
+import { MonitorScheduler } from './monitoring/scheduler.js'
+import { MysqlAlertRepository, purgeReportsBefore } from './database/monitorStore.js'
+import { createMonitorRouter } from './routes/monitor.js'
+import { WebhookNotifier, type WebhookFormat as WebhookNotifierFormat } from './monitoring/webhookNotifier.js'
+
+import authRoutes from './routes/auth.js'
+import memberRoutes from './routes/members.js'
+import projectRoutes from './routes/projects.js'
+import applicationRoutes from './routes/applications.js'
+import statsRoutes from './routes/stats.js'
+import pilotRoutes from './routes/pilots.js'
+import fleetRoutes from './routes/fleet.js'
+import eventRoutes from './routes/events.js'
+import settingsRoutes from './routes/settings.js'
+import adminRoutes from './routes/admin.js'
+import rumRoutes from './routes/rum.js'
+import activityLogRoutes from './routes/activityLogs.js'
+import analyticsRoutes from './routes/analytics.js'
+import { createAiRouter } from './routes/ai.js'
+import { getRegistry } from './services/ai/providers/index.js'
+import { Embedder } from './services/ai/rag/embedder.js'
+import { Retriever } from './services/ai/rag/retriever.js'
+import { LlmService } from './services/ai/llmService.js'
+import { RagService } from './services/ai/ragService.js'
+import { pgQuery } from './services/ai/pgPool.js'
+import { cacheGet, cacheSet, closeRedis } from './services/ai/redisClient.js'
+import { closePgPool } from './services/ai/pgPool.js'
+import { SessionStore } from './services/ai/sessionStore.js'
+import { ProfileEngine } from './services/ai/profileEngine.js'
+import { RecruiterService } from './services/ai/recruiterService.js'
+import { getRedisClient } from './services/ai/redisClient.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const app = express()
+
+/**
+ * 安全中间件配置
+ */
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      connectSrc: ["'self'", config.frontendUrl, 'ws:', 'wss:'],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}))
+
+/**
+ * CORS 配置
+ * @description 生产环境严格限制来源，开发环境允许前端地址
+ */
+const corsOptions: cors.CorsOptions = {
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}
+
+if (config.nodeEnv === 'production') {
+  // 生产环境必须配置 ALLOWED_ORIGINS
+  if (!process.env.ALLOWED_ORIGINS) {
+    logger.warn('ALLOWED_ORIGINS 未设置，CORS 将拒绝所有跨域请求')
+  }
+  corsOptions.origin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) {
+      // 允许无 Origin 的请求（如直接 curl 调用）
+      callback(null, true)
+    } else if (config.cors.allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      logger.warn(`CORS 拒绝来源: ${origin}`)
+      callback(new Error(`CORS: Origin ${origin} not allowed`))
+    }
+  }
+} else {
+  // 开发环境允许前端地址和本地开发服务器
+  const devOrigins = [config.frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000']
+  corsOptions.origin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin || devOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS: Origin ${origin} not allowed in development`))
+    }
+  }
+}
+
+app.use(cors(corsOptions))
+
+/**
+ * 响应压缩中间件
+ */
+app.use(compression({
+  level: 6,
+  threshold: 1024,
+  filter: (req: Request, res: Response) => {
+    if (req.headers['x-no-compression']) return false
+    return compression.filter(req, res)
+  }
+}))
+
+/**
+ * 监控系统初始化
+ * @description 采集器负责采样、告警引擎负责阈值判定、调度器把两者串成 5 秒一次的 tick。
+ *              告警落 MySQL 以支持历史追溯，采样点只存内存环形缓冲，避免高频写入。
+ *              调度器同时负责过期告警清理（已恢复告警默认保留 30 天，每小时清一次）。
+ *              配置 MONITOR_WEBHOOK_URL 后告警事件（新开/恢复/升级）会推送到外部 webhook；
+ *              未配置时使用 NullNotifier，零开销。
+ */
+const metricsCollector = new MetricsCollector()
+const alertRepository = new MysqlAlertRepository()
+const alertEngine = new AlertEngine({
+  repository: alertRepository,
+  notifier: process.env.MONITOR_WEBHOOK_URL
+    ? new WebhookNotifier({
+        url: process.env.MONITOR_WEBHOOK_URL,
+        format: process.env.MONITOR_WEBHOOK_FORMAT as WebhookNotifierFormat | undefined
+      })
+    : undefined
+})
+const monitorScheduler = new MonitorScheduler(metricsCollector, alertEngine, {
+  purger: alertRepository,
+  reportPurger: { purgeResolvedBefore: purgeReportsBefore }
+})
+
+/**
+ * 请求 ID 追踪
+ */
+app.use(requestId)
+
+/**
+ * 监控请求记录
+ * @description 请求结束时把状态码与耗时写入采集器的滑动窗口，用于统计 5xx 错误率；
+ *              告警快照会带上这些 requestId，使后端错误能与前端回报串联成一条链路。
+ *              注册在所有业务路由之前，确保覆盖全部接口。
+ */
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now()
+  res.on('finish', () => {
+    metricsCollector.recordRequest({
+      requestId: (req as Request & { id?: string }).id ?? '',
+      method: req.method,
+      route: (req as Request & { route?: { path?: string } }).route?.path || req.path,
+      statusCode: res.statusCode,
+      durationMs: Date.now() - start,
+      timestamp: Date.now()
+    })
+  })
+  next()
+})
+
+/**
+ * 请求体解析
+ */
+app.use(express.json({ limit: '100kb' }))
+app.use(express.urlencoded({ extended: true, limit: '100kb' }))
+app.use(cookieParser())
+
+/**
+ * 请求日志
+ */
+if (config.nodeEnv !== 'test') {
+  app.use(morgan('combined'))
+  app.use(requestLogger)
+}
+
+/**
+ * Prometheus 指标收集
+ */
+app.use(metricsMiddleware)
+
+/**
+ * HTTP 缓存中间件
+ * @description 对读密集端点启用 TTL 内存缓存 + ETag 条件请求
+ *              已认证路由（/api/auth/*、/api/admin/*）跳过缓存
+ */
+app.use(cacheMiddleware({ skipAuthRoutes: true }))
+
+/**
+ * 缓存失效
+ * @description POST/PUT/DELETE 操作后自动清除相关路由缓存
+ */
+app.use(cacheInvalidationMiddleware)
+
+/**
+ * API 速率限制
+ * @description limiters 集中定义在 middleware/rateLimiters.ts，便于路由文件显式引用
+ */
+app.use('/api/', apiLimiter)
+
+/**
+ * 认证端点严格速率限制
+ */
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/register', authLimiter)
+
+/**
+ * 令牌刷新端点速率限制
+ * @description 防止对刷新端点的滥用和暴力探测
+ */
+app.use('/api/auth/refresh', refreshLimiter)
+
+/**
+ * 健康检查端点
+ * @description 三级健康检查体系：
+ *   - /health/live  : 进程存活（始终返回 ok，仅证明进程未退出）
+ *   - /health/ready : 就绪探针（数据库连通性，决定是否接收入流量）
+ *   - /health       : 综合状态（含连接池指标，供监控面板使用）
+ *
+ *   memory 检查已移除：V8 堆动态扩展时 heapUsed/heapTotal 比值不稳定，
+ *   会导致误报。Node.js 进程内存监控应由 Kubernetes/容器运行时的 OOM 处理，
+ *   而非应用层自我判定。真正的就绪判定只有 database 连通性。
+ */
+interface HealthChecks {
+  database: boolean
+  poolStatus: ReturnType<typeof getPoolStatus>
+}
+
+async function performHealthCheck(): Promise<HealthChecks> {
+  const checks: HealthChecks = {
+    database: false,
+    poolStatus: getPoolStatus()
+  }
+
+  try {
+    await query('SELECT 1')
+    checks.database = true
+  } catch {
+    checks.database = false
+  }
+
+  return checks
+}
+
+app.get('/health', async (_req: Request, res: Response) => {
+  const checks = await performHealthCheck()
+  const allHealthy = checks.database
+
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
+    checks
+  })
+})
+
+app.get('/health/live', (_req: Request, res: Response) => {
+  res.json({ status: 'ok' })
+})
+
+app.get('/health/ready', async (_req: Request, res: Response) => {
+  const checks = await performHealthCheck()
+  const allHealthy = checks.database
+  // 生产环境仅返回状态码，不暴露内部检查详情
+  if (config.nodeEnv === 'production') {
+    res.status(allHealthy ? 200 : 503).json({
+      status: allHealthy ? 'ok' : 'not ready'
+    })
+    return
+  }
+  // 开发/测试环境返回详细检查信息，便于调试
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'ok' : 'not ready',
+    checks
+  })
+})
+
+app.get('/metrics', metricsEndpoint)
+
+// Swagger API 文档（仅开发环境）
+if (config.nodeEnv !== 'production') {
+  setupSwagger(app)
+}
+
+/**
+ * API 版本控制
+ * @description 当前主版本为 v1，同时保留 /api/ 前缀作为兼容入口
+ *              未来发布 v2 时，可通过添加 /api/v2/ 前缀逐步迁移
+ */
+const API_VERSION = 'v1'
+const apiV1Prefix = `/api/${API_VERSION}`
+const apiCompatPrefix = '/api'
+
+// 审计日志中间件（仅对写操作生效）
+app.use(apiCompatPrefix + '/', auditLogger)
+app.use(apiV1Prefix + '/', auditLogger)
+
+/**
+ * AI 服务初始化
+ * @description 组装 RAG 链路:Embedder → Retriever → LlmService → RagService
+ *              pgPool/redis 均为懒连接,此处仅构造对象,不触发实际网络连接
+ */
+const aiRegistry = getRegistry()
+const embedder = new Embedder(aiRegistry)
+const retriever = new Retriever(embedder, pgQuery)
+const llmService = new LlmService(aiRegistry, { get: cacheGet, set: cacheSet })
+const ragService = new RagService(retriever, llmService)
+
+/**
+ * AI 招募官服务初始化
+ * @description SessionStore(Redis) + ProfileEngine(规则) + RecruiterService(编排)
+ */
+const profileEngine = new ProfileEngine()
+const sessionStore = new SessionStore(getRedisClient())
+const recruiterService = new RecruiterService(ragService, sessionStore, profileEngine)
+
+// 挂载路由 — 同时支持 /api/v1/ 和 /api/ 两种前缀
+const routeMounts = [
+  { path: '/auth', router: authRoutes },
+  { path: '/members', router: memberRoutes },
+  { path: '/projects', router: projectRoutes },
+  { path: '/applications', router: applicationRoutes },
+  { path: '/stats', router: statsRoutes },
+  { path: '/pilots', router: pilotRoutes },
+  { path: '/fleet', router: fleetRoutes },
+  { path: '/events', router: eventRoutes },
+  { path: '/settings', router: settingsRoutes },
+  { path: '/admin', router: adminRoutes },
+  { path: '/rum', router: rumRoutes },
+  { path: '/activity-logs', router: activityLogRoutes },
+  { path: '/analytics', router: analyticsRoutes }
+]
+
+for (const { path: routePath, router } of routeMounts) {
+  // 兼容前缀 /api/*（已标记为弃用，建议使用 /api/v1/*）
+  app.use(`${apiCompatPrefix}${routePath}`, (_req: Request, res: Response, next: NextFunction) => {
+    // 添加弃用警告头，提醒客户端迁移到新版本
+    res.setHeader('Deprecation', 'true')
+    res.setHeader('Sunset', new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString())
+    res.setHeader('Link', `<${config.frontendUrl}${apiV1Prefix}${routePath}>; rel="successor-version"`)
+    next()
+  }, router)
+  // 版本化前缀 /api/v1/*（推荐）
+  app.use(`${apiV1Prefix}${routePath}`, router)
+}
+
+/**
+ * AI 路由(仅 v1 前缀,不提供兼容入口)
+ */
+app.use(`${apiV1Prefix}/ai`, createAiRouter({ ragService, recruiterService }))
+
+/**
+ * 监控路由（仅 v1 前缀）
+ * @description 资源指标、告警列表与前端问题回报
+ */
+app.use(`${apiV1Prefix}/monitor`, createMonitorRouter({
+  collector: metricsCollector,
+  alertEngine,
+  scheduler: monitorScheduler
+}))
+
+// 生产环境提供前端静态文件
+if (config.nodeEnv === 'production') {
+  const staticPath = process.env.STATIC_FILES_PATH || path.join(__dirname, '../../dist')
+  app.use(express.static(staticPath))
+
+  // SPA 路由回退
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+      res.sendFile(path.join(staticPath, 'index.html'))
+    } else {
+      next()
+    }
+  })
+}
+
+/**
+ * 错误处理
+ */
+app.use(notFoundHandler)
+app.use(errorHandler)
+
+/**
+ * 优雅关闭
+ */
+function gracefulShutdown(server: Server) {
+  let isShuttingDown = false
+
+  return async (signal: string) => {
+    if (isShuttingDown) return
+    isShuttingDown = true
+
+    logger.info(`收到 ${signal} 信号，正在优雅关闭...`)
+
+    // 设置超时强制退出，unref 允许正常退出时不被阻塞
+    const forceExit = setTimeout(() => {
+      logger.error('⚠️ 优雅关闭超时，强制退出')
+      process.exit(1)
+    }, 30000)
+    forceExit.unref()
+
+    // 等待 HTTP 服务器停止接受新连接
+    await new Promise<void>((resolve) => {
+      server.close(() => {
+        logger.info('HTTP 服务器已停止接受新连接')
+        resolve()
+      })
+    })
+
+    closeWebSocket()
+
+    // 停止监控采样，避免定时器阻止进程退出
+    monitorScheduler.stop()
+    logger.info('监控调度器已停止')
+
+    try {
+      await closePool()
+    } catch (err) {
+      const error = err as Error
+      logger.error('关闭数据库连接池失败', { error: error.message })
+    }
+
+    // 关闭 AI 基础设施连接(PostgreSQL pgvector + Redis 缓存)
+    try {
+      await closePgPool()
+    } catch (err) {
+      const error = err as Error
+      logger.error('关闭 PostgreSQL 连接池失败', { error: error.message })
+    }
+
+    try {
+      await closeRedis()
+    } catch (err) {
+      const error = err as Error
+      logger.error('关闭 Redis 连接失败', { error: error.message })
+    }
+
+    logger.info('✅ 服务器已优雅关闭')
+    process.exit(0)
+  }
+}
+
+/**
+ * 初始化数据库并启动服务器
+ */
+async function startServer() {
+  try {
+    await initDatabase()
+    logger.info('✅ 数据库初始化完成')
+
+    const server = app.listen(config.port, () => {
+      logger.info(`🚀 服务器运行在 http://localhost:${config.port}`)
+      logger.info(`📡 环境: ${config.nodeEnv}`)
+      logger.info(`📋 API 版本: v1 (${apiV1Prefix}/*) + 兼容 (/api/*)`)
+    })
+
+    startWebSocket(server)
+    startAuditCleanupJob()
+
+    // 启动后台资源采样与告警评估（5 秒一次）
+    monitorScheduler.start()
+    logger.info('📊 资源监控与告警调度已启动')
+
+    const shutdown = gracefulShutdown(server)
+    process.on('SIGTERM', () => shutdown('SIGTERM'))
+    process.on('SIGINT', () => shutdown('SIGINT'))
+
+    return server
+  } catch (error) {
+    logger.error('❌ 服务器启动失败', { error })
+    process.exit(1)
+  }
+}
+
+startServer()
+
+export default app

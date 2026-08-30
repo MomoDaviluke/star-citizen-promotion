@@ -1,0 +1,457 @@
+<!--
+  @file 申请状态查询视图组件
+  @description 用户查询入队申请状态
+  @module views/ApplicationStatus
+-->
+
+<template>
+  <div class="container-narrow">
+    <PageTitle
+      title="申请状态"
+      subtitle="查询您的入队申请进度"
+    />
+
+  <section class="card query-card">
+    <div class="card-header">
+      <h3>查询申请</h3>
+    </div>
+    <form @submit.prevent="queryApplication" class="query-form">
+      <div class="form-group">
+        <label class="form-label">申请邮箱</label>
+        <input
+          v-model="queryEmail"
+          type="email"
+          class="form-input"
+          placeholder="请输入您提交申请时使用的邮箱"
+          required
+        />
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" :disabled="isQuerying">
+          <span v-if="isQuerying" class="btn-spinner" aria-hidden="true"></span>
+          {{ isQuerying ? '查询中...' : '查询状态' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <Transition name="fade">
+    <section v-if="application" class="card result-card">
+      <div class="card-header">
+        <h3>申请详情</h3>
+      </div>
+      <div class="result-content">
+        <div class="status-banner" :class="`status-${application.status}`">
+          <span class="status-icon" v-html="statusIcon"></span>
+          <span class="status-text">{{ statusText }}</span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">申请人</span>
+            <span class="detail-value">{{ application.name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">提交时间</span>
+            <span class="detail-value">{{ formatDate(application.created_at) }}</span>
+          </div>
+          <div class="detail-item" v-if="application.discord">
+            <span class="detail-label">Discord</span>
+            <span class="detail-value">{{ application.discord }}</span>
+          </div>
+          <div class="detail-item" v-if="application.availability">
+            <span class="detail-label">在线时间</span>
+            <span class="detail-value">{{ availabilityLabel }}</span>
+          </div>
+          <div class="detail-item full" v-if="application.experience">
+            <span class="detail-label">游戏经验</span>
+            <p class="detail-text">{{ application.experience }}</p>
+          </div>
+          <div class="detail-item full" v-if="application.reason">
+            <span class="detail-label">加入原因</span>
+            <p class="detail-text">{{ application.reason }}</p>
+          </div>
+        </div>
+
+        <div v-if="application.status === 'approved'" class="next-steps">
+          <h4>下一步</h4>
+          <p>恭喜！您的申请已通过审核。请加入我们的 Discord 服务器完成后续流程。</p>
+          <a href="#" class="btn btn-primary">加入 Discord</a>
+        </div>
+
+        <div v-if="application.status === 'rejected'" class="next-steps">
+          <h4>说明</h4>
+          <p>很遗憾，您的申请未能通过审核。您可以在一段时间后重新提交申请。</p>
+          <RouterLink to="/join" class="btn btn-outline">重新申请</RouterLink>
+        </div>
+      </div>
+    </section>
+  </Transition>
+
+  <Transition name="fade">
+    <section v-if="notFound" class="card not-found-card">
+      <div class="not-found-content">
+        <span class="not-found-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </span>
+        <h3>未找到申请记录</h3>
+        <p>请确认您输入的邮箱地址是否正确，或</p>
+        <RouterLink to="/join" class="btn btn-primary">提交新申请</RouterLink>
+      </div>
+    </section>
+  </Transition>
+  </div>
+</template>
+
+<script setup>
+/**
+ * 申请状态查询视图组件逻辑
+ * @description 提供用户通过邮箱查询入队申请状态的功能
+ * @summary 支持查询申请详情、展示审核状态和相关操作指引
+ */
+
+import { ref, computed } from 'vue'
+import PageTitle from '@/components/common/PageTitle.vue'
+import { dataService } from '@/services'
+
+/** 查询邮箱输入值 */
+const queryEmail = ref('')
+/** 查询到的申请数据 */
+const application = ref(null)
+/** 是否未找到申请记录 */
+const notFound = ref(false)
+/** 是否正在查询中 */
+const isQuerying = ref(false)
+
+/**
+ * 状态图标计算属性
+ * @description 根据申请状态返回对应的 SVG 图标
+ * @returns {string} SVG 图标 HTML
+ */
+const statusIcon = computed(() => {
+  const icons = {
+    pending: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    approved: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    rejected: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+  }
+  return icons[application.value?.status] || ''
+})
+
+/**
+ * 状态文本计算属性
+ * @description 根据申请状态返回对应的中文描述
+ * @returns {string} 状态文本
+ */
+const statusText = computed(() => {
+  const texts = {
+    pending: '审核中',
+    approved: '已通过',
+    rejected: '未通过'
+  }
+  return texts[application.value?.status] || '未知'
+})
+
+/**
+ * 在线时间标签计算属性
+ * @description 将 availability 值转换为中文标签
+ * @returns {string} 在线时间中文描述
+ */
+const availabilityLabel = computed(() => {
+  const labels = {
+    weekdays: '工作日晚上',
+    weekends: '周末全天',
+    flexible: '时间灵活',
+    limited: '时间有限'
+  }
+  return labels[application.value?.availability] || application.value?.availability
+})
+
+/**
+ * 查询申请状态
+ * @description 根据输入的邮箱地址查询对应的入队申请信息
+ * @async
+ */
+async function queryApplication() {
+  if (!queryEmail.value) return
+
+  isQuerying.value = true
+  notFound.value = false
+  application.value = null
+
+  try {
+    const response = await dataService.getApplicationByEmail(queryEmail.value)
+    if (response.success && response.data) {
+      application.value = response.data
+    } else {
+      notFound.value = true
+    }
+  } catch {
+    notFound.value = true
+  } finally {
+    isQuerying.value = false
+  }
+}
+
+/**
+ * 格式化日期字符串
+ * @description 将 ISO 日期字符串格式化为中文本地化格式
+ * @param {string} dateStr - ISO 格式日期字符串
+ * @returns {string} 格式化后的中文日期
+ */
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+</script>
+
+<style scoped>
+/* 页面容器垂直节奏（与全站 page-header 节奏对齐） */
+.container-narrow {
+  padding-block: var(--space-6) var(--space-16);
+}
+
+.query-card,
+.result-card,
+.not-found-card {
+  animation: fadeInUp 0.5s ease both;
+}
+
+.query-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-input {
+  padding: 0.75rem 1rem;
+  background: rgba(3, 8, 16, 0.6);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-heading);
+  font-size: 0.95rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.status-pending {
+  background: rgba(255, 159, 67, 0.1);
+  border: 1px solid rgba(255, 159, 67, 0.3);
+}
+
+.status-approved {
+  background: rgba(78, 205, 196, 0.1);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+.status-rejected {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.status-icon {
+  font-size: 1.5rem;
+}
+
+.status-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.status-pending .status-text { color: var(--color-status-warning); }
+.status-approved .status-text { color: var(--color-status-online); }
+.status-rejected .status-text { color: var(--color-status-danger); }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-item.full {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: var(--color-text-body);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.detail-value {
+  font-size: 0.95rem;
+}
+
+.detail-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text-body);
+}
+
+.next-steps {
+  padding: 1.25rem;
+  background: rgba(95, 169, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.next-steps h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.next-steps p {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-body);
+}
+
+.not-found-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.not-found-icon {
+  font-size: 3rem;
+}
+
+.not-found-content h3 {
+  margin: 0;
+}
+
+.not-found-content p {
+  margin: 0;
+  color: var(--color-text-body);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * 移动端响应式（≤768px）
+ * 表单输入和按钮适配窄屏，确保触控目标 ≥44px
+ */
+@media (max-width: 768px) {
+  .query-form .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* iOS 防 zoom */
+  }
+
+  .form-actions .btn,
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  /* 加载中 spinner */
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-spinner {
+      animation: none;
+      border-top-color: transparent;
+      border-right-color: #fff;
+    }
+  }
+
+  .status-banner {
+    padding: 0.875rem 1rem;
+  }
+
+  .next-steps {
+    padding: 1rem;
+  }
+
+  .next-steps .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .status-text {
+    font-size: 1rem;
+  }
+
+  .not-found-icon {
+    font-size: 2.5rem;
+  }
+}
+</style>

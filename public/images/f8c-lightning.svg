@@ -1,0 +1,39 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#07101b"/>
+      <stop offset="100%" stop-color="#0f2236"/>
+    </linearGradient>
+    <linearGradient id="ship" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c7d6ea"/>
+      <stop offset="100%" stop-color="#7b90ab"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg)"/>
+
+  <g opacity="0.35" fill="#96b8df">
+    <circle cx="190" cy="110" r="2"/>
+    <circle cx="300" cy="170" r="1.5"/>
+    <circle cx="520" cy="90" r="2"/>
+    <circle cx="740" cy="130" r="1.5"/>
+    <circle cx="990" cy="110" r="2"/>
+    <circle cx="1080" cy="220" r="1.5"/>
+  </g>
+
+  <g transform="translate(140 170)">
+    <polygon points="140,180 500,120 900,170 1020,210 900,250 500,300" fill="url(#ship)"/>
+    <polygon points="200,175 420,75 470,95 300,190" fill="#9eb4cf"/>
+    <polygon points="430,95 560,20 620,35 500,122" fill="#8ea5c2"/>
+    <polygon points="600,130 740,70 810,95 690,165" fill="#9ab0ca"/>
+    <polygon points="620,285 760,325 810,305 690,245" fill="#7f95b1"/>
+    <polygon points="430,310 560,385 620,370 500,297" fill="#7a91ad"/>
+    <rect x="510" y="145" width="45" height="35" rx="8" fill="#4ea1ff"/>
+    <rect x="560" y="152" width="75" height="20" rx="10" fill="#2f6fb7"/>
+    <polygon points="1020,205 1080,195 1080,225" fill="#ceddf0"/>
+  </g>
+
+  <text x="72" y="612" fill="#e8f1ff" font-size="40" font-family="Segoe UI, Arial, sans-serif" letter-spacing="2">
+    ANVIL F8C LIGHTNING · ACE PILOT SHOWCASE
+  </text>
+</svg>

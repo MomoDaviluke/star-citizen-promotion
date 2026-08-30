@@ -1,0 +1,270 @@
+# ============================================
+# Docker Compose 生产环境编排
+# @description
+#   - 默认 profile: backend + mysql + migrate（开发调试用）
+#   - production profile: 完整生产栈（含 nginx + backup + certbot）
+# @usage
+#   开发: docker compose up -d
+#   生产: docker compose --profile production up -d
+# ============================================
+
+services:
+  # ============================================
+  # 数据库迁移服务（一次性运行）
+  # ============================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-builder
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      # JWT_SECRET 在 config 模块加载时校验，migrate 脚本虽不使用 JWT，
+      # 但需透传以避免 config 模块抛出 FATAL 错误
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-app_user}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set}
+      - DB_NAME=${DB_NAME:-star_citizen_promotion}
+    # 执行迁移脚本后退出
+    command: ["node", "dist/database/migrate.js"]
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # 后端 API 服务
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # 默认使用 production 阶段（不指定 target 即用最终阶段）
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-30d}
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-app_user}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set}
+      - DB_NAME=${DB_NAME:-star_citizen_promotion}
+      - DB_CONNECTION_LIMIT=${DB_CONNECTION_LIMIT:-20}
+      - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS:-12}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://localhost}
+      - FRONTEND_URL=${FRONTEND_URL:-https://localhost}
+      - METRICS_ENABLED=${METRICS_ENABLED:-true}
+      - METRICS_ALLOWED_IPS=${METRICS_ALLOWED_IPS:-127.0.0.1,::1}
+      - WS_PORT=${WS_PORT:-3003}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FILE_ENABLED=${LOG_FILE_ENABLED:-true}
+      - LOG_FILE_ERROR=/app/logs/error.log
+      - LOG_FILE_COMBINED=/app/logs/combined.log
+      # AI 集成
+      - DOUBAO_API_KEY=${DOUBAO_API_KEY:-}
+      - DOUBAO_BASE_URL=${DOUBAO_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+      - LLM_CHAT_MODEL=${LLM_CHAT_MODEL:-doubao-pro-32k-241215}
+      - LLM_CHAT_STREAM_MODEL=${LLM_CHAT_STREAM_MODEL:-deepseek-chat}
+      - LLM_EMBEDDING_MODEL=${LLM_EMBEDDING_MODEL:-doubao-embedding-text-240715}
+      - EMBEDDING_DIM=${EMBEDDING_DIM:-1024}
+      - PGVECTOR_URL=postgres://${PG_USER:-app_user}:${PG_PASSWORD}@postgres:5432/${PG_DB:-star_citizen_ai}
+      - REDIS_URL=redis://redis:6379
+      - LLM_CACHE_TTL=${LLM_CACHE_TTL:-86400}
+      - LLM_REQUEST_TIMEOUT_MS=${LLM_REQUEST_TIMEOUT_MS:-30000}
+    volumes:
+      - ./server/data:/app/server/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3001/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # MySQL 数据库
+  # ============================================
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    # 使用 mysql_native_password 认证插件，兼容 alpine mysql-client（mariadb-client）
+    # alpine 的 mysql-client 不支持 MySQL 8.0 默认的 caching_sha2_password 插件
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-${DB_PASSWORD:?DB_PASSWORD must be set}}
+      MYSQL_DATABASE: ${DB_NAME:-star_citizen_promotion}
+      MYSQL_USER: ${DB_USER:-app_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # PostgreSQL + pgvector(向量知识库)
+  # ============================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER:-app_user}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD must be set}
+      POSTGRES_DB: ${PG_DB:-star_citizen_ai}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${PG_USER:-app_user}", "-d", "${PG_DB:-star_citizen_ai}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Redis(LLM 响应缓存)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # nginx 反向代理 + SSL 终止（production profile）
+  # ============================================
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - SERVER_NAME=${SERVER_NAME:-localhost}
+    volumes:
+      # SSL 证书（自签名或预放证书）
+      - ./ssl:/etc/nginx/ssl:ro
+      # Let's Encrypt webroot 挑战路径
+      - ./certbot/www:/var/www/certbot:ro
+      # Let's Encrypt 证书归档（供 sync 脚本同步到 ./ssl/）
+      - ./certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["production"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # 数据库自动备份服务（production profile）
+  # ============================================
+  backup:
+    build:
+      context: ./backup
+    restart: unless-stopped
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=${DB_ROOT_PASSWORD:-${DB_PASSWORD:?DB_PASSWORD must be set}}
+      - DB_NAME=${DB_NAME:-star_citizen_promotion}
+      - RETENTION_DAYS=30
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles: ["production"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Let's Encrypt 证书自动续期（production profile）
+  # ============================================
+  certbot:
+    image: certbot/certbot:v2.6.0
+    restart: unless-stopped
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    # 每 12 小时检查一次续期
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done'"
+    profiles: ["production"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mysql_data:
+  postgres_data:
+  redis_data:

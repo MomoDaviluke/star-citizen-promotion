@@ -1,0 +1,89 @@
+{
+  "info": {
+    "name": "Star Citizen Promotion · 探索测试",
+    "_postman_id": "star-citizen-exploration",
+    "description": "对着 test:integration 真实环境(http://localhost:3101)做探索/边界测试。导入后先设集合变量 baseUrl=http://localhost:3101。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3101" }
+  ],
+  "item": [
+    {
+      "name": "① 存活 / 连通",
+      "item": [
+        { "name": "GET /health", "request": { "method": "GET", "url": "{{baseUrl}}/health", "header": [] }, "event": [] },
+        { "name": "GET /health/live", "request": { "method": "GET", "url": "{{baseUrl}}/health/live", "header": [] }, "event": [] },
+        { "name": "GET /health/ready", "request": { "method": "GET", "url": "{{baseUrl}}/health/ready", "header": [] }, "event": [] }
+      ]
+    },
+    {
+      "name": "② 公开读接口",
+      "item": [
+        { "name": "GET /api/v1/stats", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/stats", "header": [] }, "event": [] },
+        { "name": "GET /api/v1/fleet", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/fleet", "header": [] }, "event": [] },
+        { "name": "GET /api/v1/pilots", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/pilots", "header": [] }, "event": [] },
+        { "name": "GET /api/v1/members", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/members", "header": [] }, "event": [] },
+        { "name": "GET /api/v1/projects", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/projects", "header": [] }, "event": [] },
+        { "name": "GET /api/v1/events", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events", "header": [] }, "event": [] }
+      ]
+    },
+    {
+      "name": "③ 探索 / 边界 / 乱输入（重点）",
+      "item": [
+        {
+          "name": "POST applications · 空 body",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/applications", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{}" } }, "event": []
+        },
+        {
+          "name": "POST applications · 缺 name",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/applications", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"email\":\"a@b.com\"}" } }, "event": []
+        },
+        {
+          "name": "POST applications · 非法 email",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/applications", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"name\":\"张三\",\"email\":\"not-an-email\"}" } }, "event": []
+        },
+        {
+          "name": "POST applications · 正常提交",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/applications", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"name\":\"探索用户\",\"email\":\"explore@example.com\",\"discord\":\"explore#0001\",\"reason\":\"探索测试\"}" } }, "event": []
+        },
+        {
+          "name": "GET events · limit=2000(超上限)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events?limit=2000", "header": [] }, "event": []
+        },
+        {
+          "name": "GET events · page=0(边界)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events?page=0", "header": [] }, "event": []
+        },
+        {
+          "name": "GET 未认证 admin(应 401/403)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/cache-stats", "header": [] }, "event": []
+        },
+        {
+          "name": "GET 未知路由(应 404)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/does-not-exist", "header": [] }, "event": []
+        },
+        {
+          "name": "POST analytics · 合法事件(应 204)",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/analytics", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"event\":\"page_view\",\"properties\":{\"page\":\"/about\"}}" } }, "event": []
+        },
+        {
+          "name": "POST analytics · 白名单外事件(应 400)",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/analytics", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"event\":\"hack_me\"}" } }, "event": []
+        },
+        {
+          "name": "POST 注册 · 正常",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/auth/register", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"username\":\"explore00\",\"email\":\"explore00@test.local\",\"password\":\"Pass12345\"}" } }, "event": []
+        },
+        {
+          "name": "POST 注册 · 重复邮箱",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/auth/register", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"username\":\"explore00\",\"email\":\"explore00@test.local\",\"password\":\"Pass12345\"}" } }, "event": []
+        },
+        {
+          "name": "POST 注册 · 弱密码",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/auth/register", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"username\":\"explore01\",\"email\":\"explore01@test.local\",\"password\":\"1\"}" } }, "event": []
+        }
+      ]
+    }
+  ]
+}

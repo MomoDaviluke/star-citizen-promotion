@@ -1,0 +1,103 @@
+# ============================================
+# 真实集成测试编排（非 mock，后端完整往返）
+# @description 一键拉起「MySQL + 迁移 + 后端」隔离栈，供 connectivity-smoke 做真实往返验证
+#              解决主 docker-compose 的几个坑：
+#                - JWT_SECRET 用 32+（config 生产 FATAL 校验）
+#                - 密码用无特殊字符值（避免 ! 等转义导致认证失败）
+#                - backend 用 backend-builder（编译最新源码），避开生产镜像 dist 缓存过期(DBG-13)
+# @usage 由 scripts/test-integration.mjs 编排；也可手动：
+#   docker compose -f docker-compose.test.yml up -d mysql
+#   docker compose -f docker-compose.test.yml run --rm migrate
+#   docker compose -f docker-compose.test.yml up -d backend
+# ============================================
+
+services:
+  # 数据库迁移（一次运行后退出）
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-builder
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${TEST_JWT_SECRET:-IntegrationTestJwtSecret32CharMin}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=app_user
+      - DB_PASSWORD=${TEST_DB_PASSWORD:-TestPass123456}
+      - DB_NAME=${TEST_DB_NAME:-star_citizen_test}
+    command: ["node", "dist/database/migrate.js"]
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "2"
+
+  # 后端 API（backend-builder 编译最新源码，避免镜像缓存缺新路由）
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-builder
+    depends_on:
+      mysql:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${TEST_BACKEND_PORT:-3101}:3101"
+    environment:
+      - NODE_ENV=production
+      - PORT=3101
+      - JWT_SECRET=${TEST_JWT_SECRET:-IntegrationTestJwtSecret32CharMin}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=app_user
+      - DB_PASSWORD=${TEST_DB_PASSWORD:-TestPass123456}
+      - DB_NAME=${TEST_DB_NAME:-star_citizen_test}
+      - FRONTEND_URL=http://localhost:${TEST_BACKEND_PORT:-3101}
+      - ALLOWED_ORIGINS=http://localhost:${TEST_BACKEND_PORT:-3101}
+      - LOG_LEVEL=info
+    command: ["node", "/app/server/dist/index.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3101/health/live').then(r=>{if(!r.ok||r.status!==200)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # MySQL（端口 13306 与本地开发 3306 隔离）
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${TEST_DB_PASSWORD:-TestPass123456}
+      MYSQL_DATABASE: ${TEST_DB_NAME:-star_citizen_test}
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: ${TEST_DB_PASSWORD:-TestPass123456}
+    ports:
+      - "127.0.0.1:${TEST_MYSQL_PORT:-13306}:3306"
+    volumes:
+      - test_mysql_data:/var/lib/mysql
+    healthcheck:
+      # 显式走 TCP(-h 127.0.0.1) 而非 unix socket：确保 mysqld 的 3306 端口真正可连接
+      # （socket ping 在 TCP 未绑定时也可能成功，导致 migrate 连接被拒）
+      # root 密码认证同时在 init 完成前返回非零 → 未就绪
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  test_mysql_data:

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" fill="#060b14"/>
+  <defs>
+    <radialGradient id="nebulaGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <circle cx="96" cy="96" r="80" fill="url(#nebulaGlow)"/>
+  <g transform="translate(96 96)">
+    <path d="M 0 -40 L 30 30 L 0 18 L -30 30 Z" fill="url(#amberGrad)" stroke="#fbbf24" stroke-width="2"/>
+    <circle cx="0" cy="-5" r="6" fill="#06b6d4" opacity="0.9"/>
+    <path d="M -50 40 L 50 40" stroke="#06b6d4" stroke-width="1.5" opacity="0.5"/>
+    <path d="M -55 45 L 55 45" stroke="#06b6d4" stroke-width="0.8" opacity="0.3"/>
+  </g>
+  <g stroke="#f59e0b" stroke-width="2" fill="none" opacity="0.6">
+    <path d="M 8 8 L 24 8 L 24 12 L 12 12 L 12 24 L 8 24 Z"/>
+    <path d="M 184 8 L 168 8 L 168 12 L 180 12 L 180 24 L 184 24 Z"/>
+    <path d="M 8 184 L 24 184 L 24 180 L 12 180 L 12 168 L 8 168 Z"/>
+    <path d="M 184 184 L 168 184 L 168 180 L 180 180 L 180 168 L 184 168 Z"/>
+  </g>
+</svg>
