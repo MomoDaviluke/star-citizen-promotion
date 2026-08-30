@@ -2,7 +2,7 @@
 
 > **项目**: Star Citizen 战队宣传网站
 > **更新日期**: 2026-08-30
-> **当前版本**: v1.6.4（告警通知 + 数据治理 + 测试补全，2026-08-30）
+> **当前版本**: v1.6.5（上线前修正批次：M0/M3 补齐 + 测试环境加固，2026-08-30）
 
 ---
 
@@ -15,6 +15,25 @@
 - **修订号 (PATCH)**: 向下兼容的问题修复
 
 ---
+
+## [1.6.5] - 2026-08-30
+
+### 上线前修正批次（技术线路图独立复审产出）
+
+#### 功能补齐（M0 / M3）
+
+- Admin CRUD 系统性补齐：修复 4 文件 6 处 `/admin/*/new` 死链；MembersAdmin 弹窗式 create+edit 补成可用 CRUD；ProjectsAdmin / PilotsAdmin 补「新增」能力（commit b9018aa）
+- E2E spec 7 → 9：新增 `fleet.spec.js` / `admin.spec.js`（60 用例），端到端验收 M0 成果（commit 976bcf4）
+- E2E 暴露并修复 4 个真实缺陷：TD-25 路由守卫未等待 auth 初始化（刷新/直访 /admin 被误踢）、TD-26 六个 admin 子页面双重 AdminLayout 致内容不渲染、TD-27 ApplicationsAdmin pagination 未兜底致模板崩溃、E2E-SW-01 PWA Service Worker 绕过 page.route 致 502
+
+#### 测试环境加固（TD-28）
+
+- `tests/setup.js` 增加 Node 25+/26 内置实验性 webstorage 兜底：缺 `--localstorage-file` 启动参数时，Node 的 storage getter 遮蔽 jsdom 注入（window===globalThis）致 `localStorage.clear()` 抛 TypeError（DBG-24，useTheme 套件 11 连挂根因）；现以内存 polyfill 覆盖坏态 getter，前端测试与 Node 版本解耦
+- 验证：无参数（原挂 11）与带参数（原正常）双路径 413/413 全绿；CI（Node 20）行为零变化
+
+#### 版本一致性
+
+- `package.json` / `server/package.json` 1.6.2 → 1.6.5（此前落后 CHANGELOG 三个版本）；两份 package-lock.json 同步（根 lockfile 此前停在 1.5.0）
 
 ## [1.6.4] - 2026-08-30
 
