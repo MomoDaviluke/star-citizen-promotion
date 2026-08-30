@@ -31,7 +31,9 @@
 - [x] M0 Admin CRUD 补齐 + M3 E2E 扩展（spec 7→9 fleet/admin，连带修复 TD-25/26/27、E2E-SW-01，2026-08-30）
 - [x] RX 修正批次（2026-08-30 复审产出）：W1 git 恢复 push（远程 main=976bcf4，旧历史备份远程分支 backup/pre-rebuild-20260728）+ TD-28 测试环境加固（DBG-24 polyfill，双路径 413/413）+ TD-29 版本对齐 1.6.5（含 lockfile 1.5.0 漂移修复）+ TD-30 文档失真修正（C6 基线/M3 状态/旧 ROADMAP 归档横幅/M4-1 攻击顺序入图）
 - [x] M4-1 覆盖率基线实测：语句 56.57%/行 57.5%/分支 54.64%/函数 51.29%（M0/M3 已抬升基线）；第一批攻击目标=dataService(70)/router(33)/calendar store(39) 等 ~182 语句；planet/rendering 5 文件 ~477 语句明确不追（R7）
-- [ ] M4-2/3: 覆盖率 56.6% → 70%（第一批逻辑层补测后门禁 49→55）
+- [x] M4-2 第一批逻辑层补测（2026-08-30）：+126 用例（前端 413→509）；dataService USE_API 分支/降级回退、真实路由器守卫全分支（旧 router 测试是玩具路由表，真身从未被测，ENG-07）、monitorService/calendarService 错误形态、calendar store join/leave 与视图导航、BaseModal/BaseTooltip 摆设测试重写（旧用例 props 名错误组件从未渲染，QUAL-18 同类）
+- [x] M4-3 门禁 49→55（2026-08-30）：实测 62.03/63.01/58.33/56.33（stmts/lines/branch/funcs）四项过线（G4：实测≥目标才上调）；下一档 60
+- [ ] M4 第二批：覆盖率 62% → 70%（Join.vue 69 / Calendar.vue 92 / ApplicationsAdmin 36 等转化流 + 门禁 55→60）
 - [ ] 正式上线部署（nginx + certbot production profile 未启用）
 
 ## 本地运行环境拓扑（实测验证 2026-08-29）
@@ -107,6 +109,9 @@ npm run dev
 | 2026-08-30 | `/metrics` 历史降采样默认 60 点（`?points` 参数） | 300 点全量每 5s 轮询浪费带宽；等距抽样保留首尾，趋势不变 |
 
 ## Lessons Learned（本次新增）
+
+- QUAL-19: 组件测试"摆设用例"——BaseModal 旧测试用 `props:{ show:true }` 挂载但组件实际 prop 是 `modelValue`，断言只查 `wrapper.exists()` 恒真，组件从未真正渲染，行覆盖 0% 却显示"测试通过"。教训：组件测试必须断言真实渲染产物（DOM 结构/交互事件），props 名对不上要查 defineProps
+- QUAL-20: fake timers 下 `trigger()` 返回 Promise 且 Vue patch 是异步的——`vi.advanceTimersByTime` 后必须 `await nextTick()` 再断言 DOM，否则拿到的是更新前快照（单文件跑过、合跑污染的表象多源于此类时序）
 
 - DBG-14: kill 带 npx 前缀的后台进程时，实际监听端口的 tsx/node 子进程可能残留，重启前必须检查端口占用
 - ENV-01: 项目 .env 端口配置与实际容器拓扑漂移（3306 vs 3307、WS 3003 vs 实际 3001/ws），覆盖式启动参数优于改文件 → **2026-08-28 已修复；2026-08-29 再次漂移**（.env.development DB_PORT 被改回 3307 而实际库在 3306，已实测修正，见 DBG-19）
