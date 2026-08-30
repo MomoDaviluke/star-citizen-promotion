@@ -245,23 +245,34 @@ describe('useCalendarStore', () => {
     it('goNext 月视图应该前进一个月', () => {
       const store = useCalendarStore()
       store.viewMode = 'month'
-      const originalMonth = store.currentDate.getMonth()
+      // 锚定 1 月 15 日：月初锚定消除月末日溢出（如 8/31 setMonth(+1) → 10/1 溢出陷阱）
+      store.currentDate = new Date(2026, 0, 15)
 
       store.goNext()
 
-      const expectedMonth = originalMonth === 11 ? 0 : originalMonth + 1
-      expect(store.currentDate.getMonth()).toBe(expectedMonth)
+      expect(store.currentDate.getMonth()).toBe(1)
+    })
+
+    it('goNext 月视图跨年（12月 → 次年1月）', () => {
+      const store = useCalendarStore()
+      store.viewMode = 'month'
+      store.currentDate = new Date(2026, 11, 15)
+
+      store.goNext()
+
+      expect(store.currentDate.getMonth()).toBe(0)
+      expect(store.currentDate.getFullYear()).toBe(2027)
     })
 
     it('goPrev 月视图应该后退一个月', () => {
       const store = useCalendarStore()
       store.viewMode = 'month'
-      const originalMonth = store.currentDate.getMonth()
+      // 同样锚定月中日期，避免月末日 setMonth(-1) 溢出
+      store.currentDate = new Date(2026, 2, 15) // 2026-03-15
 
       store.goPrev()
 
-      const expectedMonth = originalMonth === 0 ? 11 : originalMonth - 1
-      expect(store.currentDate.getMonth()).toBe(expectedMonth)
+      expect(store.currentDate.getMonth()).toBe(1)
     })
 
     it('goToday 应该回到今天', () => {
