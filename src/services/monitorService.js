@@ -19,6 +19,30 @@ const REPORT_ENDPOINT = '/monitor/reports'
 const ALLOWED_CATEGORIES = new Set(['frontend_error', 'slow_page', 'api_failure', 'manual'])
 
 /**
+ * 从 catch 的 unknown 错误中提取可读消息
+ * @param {unknown} err - 捕获的错误
+ * @returns {string} 错误描述
+ */
+function getErrorMessage(err) {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && 'message' in err) return String(err.message)
+  return String(err)
+}
+
+/**
+ * 提取错误响应体（若为 HTTP 错误）
+ * @param {unknown} err - 捕获的错误
+ * @returns {{ data?: unknown } | null} 响应体或 null
+ */
+function getErrorResponse(err) {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const response = err.response
+    return response && typeof response === 'object' ? /** @type {{ data?: unknown }} */ (response) : null
+  }
+  return null
+}
+
+/**
  * 获取实时监控指标
  * @description 返回最新采样点、历史序列、告警规则与活跃告警统计
  * @param {object} [params] 查询参数
@@ -30,7 +54,8 @@ async function getMetrics(params = {}) {
     const response = await httpClient.get(`${BASE_URL}/metrics`, { params })
     return response.data
   } catch (error) {
-    logger.warn('获取监控指标失败:', error.response?.data || error.message)
+    const response = getErrorResponse(error)
+    logger.warn('获取监控指标失败:', response?.data || getErrorMessage(error))
     throw error
   }
 }
@@ -48,7 +73,8 @@ async function getAlerts(params = {}) {
     const response = await httpClient.get(`${BASE_URL}/alerts`, { params })
     return response.data
   } catch (error) {
-    logger.warn('获取告警列表失败:', error.response?.data || error.message)
+    const response = getErrorResponse(error)
+    logger.warn('获取告警列表失败:', response?.data || getErrorMessage(error))
     throw error
   }
 }
@@ -63,7 +89,8 @@ async function ackAlert(id) {
     const response = await httpClient.post(`${BASE_URL}/alerts/${id}/ack`)
     return response.data
   } catch (error) {
-    logger.warn('认领告警失败:', error.response?.data || error.message)
+    const response = getErrorResponse(error)
+    logger.warn('认领告警失败:', response?.data || getErrorMessage(error))
     throw error
   }
 }
@@ -79,7 +106,8 @@ async function getReports(params = {}) {
     const response = await httpClient.get(`${BASE_URL}/reports`, { params })
     return response.data
   } catch (error) {
-    logger.warn('获取问题回报失败:', error.response?.data || error.message)
+    const response = getErrorResponse(error)
+    logger.warn('获取问题回报失败:', response?.data || getErrorMessage(error))
     throw error
   }
 }
@@ -145,7 +173,7 @@ async function reportIssue({ category = 'manual', message, payload, requestId } 
       logger.warn('问题回报失败:', response.status)
     }
   } catch (error) {
-    logger.warn('问题回报异常:', error.message)
+    logger.warn('问题回报异常:', getErrorMessage(error))
   }
 }
 
