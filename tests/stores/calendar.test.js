@@ -19,10 +19,11 @@ vi.mock('@/services/calendarService', () => ({
   }
 }))
 
-// Mock authStore
+// Mock authStore（authMock 可编程，供 myEvents 无用户分支切换）
+const authMock = vi.hoisted(() => ({ user: { id: 'user-1', role: 'member' } }))
 vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({
-    user: { id: 'user-1', role: 'member' }
+    get user() { return authMock.user }
   })
 }))
 
@@ -290,6 +291,137 @@ describe('useCalendarStore', () => {
       expect(store.filter).toBe('all')
       expect(store.viewMode).toBe('month')
       expect(store.selectedEvent).toBeNull()
+    })
+  })
+
+  // ---- M4-2 补测：join/leave、日期分组、月度筛选、我的活动、视图导航 ----
+  describe('joinEvent / leaveEvent', () => {
+    it('joinEvent 应合并返回数据到对应活动', async () => {
+      const store = useCalendarStore()
+      store.events = [{ id: '1', title: '活动', participants: [] }]
+      calendarService.joinEvent.mockResolvedValue({ success: true, data: { id: '1', participants: ['user-1'] } })
+
+      await store.joinEvent('1')
+
+      expect(calendarService.joinEvent).toHaveBeenCalledWith('1')
+      expect(store.events[0].participants).toEqual(['user-1'])
+    })
+
+    it('joinEvent 缺 eventId 抛错且不调服务', async () => {
+      const store = useCalendarStore()
+      await expect(store.joinEvent('')).rejects.toThrow('eventId is required')
+      expect(calendarService.joinEvent).not.toHaveBeenCalled()
+    })
+
+    it('joinEvent 失败时设置 error 并复位 loading', async () => {
+      const store = useCalendarStore()
+      calendarService.joinEvent.mockRejectedValue(new Error('活动已满员'))
+
+      await expect(store.joinEvent('1')).rejects.toThrow('活动已满员')
+
+      expect(store.error).toBe('活动已满员')
+      expect(store.loading).toBe(false)
+    })
+
+    it('leaveEvent 应合并返回数据到对应活动', async () => {
+      const store = useCalendarStore()
+      store.events = [{ id: '1', title: '活动', participants: ['user-1'] }]
+      calendarService.leaveEvent.mockResolvedValue({ success: true, data: { id: '1', participants: [] } })
+
+      await store.leaveEvent('1')
+
+      expect(calendarService.leaveEvent).toHaveBeenCalledWith('1')
+      expect(store.events[0].participants).toEqual([])
+    })
+
+    it('leaveEvent 缺 eventId 抛错且不调服务', async () => {
+      const store = useCalendarStore()
+      await expect(store.leaveEvent('')).rejects.toThrow('eventId is required')
+      expect(calendarService.leaveEvent).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('计算属性补充', () => {
+    it('myEvents 无登录用户时为空数组', () => {
+      const store = useCalendarStore()
+      store.events = [...mockEvents]
+      const saved = authMock.user
+      authMock.user = null
+      try {
+        expect(store.myEvents).toEqual([])
+      } finally {
+        authMock.user = saved
+      }
+    })
+
+    it('eventsByDate 按 toDateString 分组', () => {
+      const store = useCalendarStore()
+      store.events = [...mockEvents]
+
+      const groups = store.eventsByDate
+      // mockEvents 中 1/3 同一未来日期、2 为过去日期 → 2 组
+      const futureKey = new Date(futureDate).toDateString()
+      expect(groups[futureKey]).toHaveLength(2)
+      expect(groups[new Date(pastDate).toDateString()]).toHaveLength(1)
+    })
+
+    it('currentMonthEvents 只保留当月活动', () => {
+      const store = useCalendarStore()
+      const now = new Date()
+      const inMonth = {
+        id: '9',
+        title: '当月活动',
+        startTime: new Date(now.getFullYear(), now.getMonth(), 15).toISOString()
+      }
+      const otherMonth = (now.getMonth() + 5) % 12
+      const outMonth = {
+        id: '10',
+        title: '跨月活动',
+        startTime: new Date(now.getFullYear(), otherMonth, 15).toISOString()
+      }
+      store.events = [inMonth, outMonth]
+
+      expect(store.currentMonthEvents).toHaveLength(1)
+      expect(store.currentMonthEvents[0].id).toBe('9')
+    })
+  })
+
+  describe('周/列表视图导航', () => {
+    it('goNext/goPrev 周视图 ±7 天', () => {
+      const store = useCalendarStore()
+      store.viewMode = 'week'
+      const before = store.currentDate.getTime()
+
+      store.goNext()
+      expect(store.currentDate.getTime() - before).toBe(7 * 86400000)
+
+      store.goPrev()
+      store.goPrev()
+      expect(before - store.currentDate.getTime()).toBe(7 * 86400000)
+    })
+
+    it('goNext/goPrev 列表视图 ±1 天', () => {
+      const store = useCalendarStore()
+      store.viewMode = 'list'
+      const before = store.currentDate.getTime()
+
+      store.goNext()
+      expect(store.currentDate.getTime() - before).toBe(86400000)
+
+      store.goPrev()
+      expect(store.currentDate.getTime()).toBe(before)
+    })
+  })
+
+  describe('clearError', () => {
+    it('清除后 error 为 null', async () => {
+      const store = useCalendarStore()
+      calendarService.getEvents.mockRejectedValue(new Error('x'))
+      await expect(store.fetchEvents()).rejects.toThrow('x')
+      expect(store.error).toBe('x')
+
+      store.clearError()
+      expect(store.error).toBeNull()
     })
   })
 })

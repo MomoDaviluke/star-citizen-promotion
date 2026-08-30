@@ -33,13 +33,12 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'tests/', 'src/main.js', 'server/', '.reasonix/', '.codegraph/', 'dist/', 'coverage/', 'e2e/', 'patches/', 'playwright-report/', 'test-results/'],
-      // 门槛基于 2026-08-24 实测总覆盖率（Lines 51.05 / Stmts 50.27 / Branch 43.25 / Funcs 43.36）
-      // 设远高于原 8%，形成有约束力的快速失败门禁；后续随覆盖率提升逐步上调
+      // M4-3 门禁逐步上调：49 → 55（2026-08-30，实测 Lines 63.01 / Stmts 62.03 / Branch 58.33 / Funcs 56.33）→ 60 → 65 → 70
       thresholds: {
-        lines: 49,
-        functions: 42,
-        branches: 42,
-        statements: 47
+        lines: 55,
+        functions: 55,
+        branches: 55,
+        statements: 55
       }
     }
   },

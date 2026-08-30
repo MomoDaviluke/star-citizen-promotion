@@ -189,4 +189,53 @@ describe('monitorService', () => {
       expect(global.fetch).not.toHaveBeenCalled()
     })
   })
+
+  // ---- M4-2 补测：getter 错误分支与错误形态提取 ----
+  describe('getter 错误分支（重抛与日志降级）', () => {
+    it.each([
+      ['getMetrics', 'get'],
+      ['getAlerts', 'get'],
+      ['getReports', 'get']
+    ])('%s 失败时原样重抛 Error', async (fn, verb) => {
+      httpClientMock[verb].mockRejectedValue(new Error('boom'))
+      const mod = await import('@/services/monitorService.js')
+      await expect(mod[fn]()).rejects.toThrow('boom')
+    })
+
+    it('ackAlert 失败时原样重抛', async () => {
+      httpClientMock.post.mockRejectedValue(new Error('ack failed'))
+      const { ackAlert } = await import('@/services/monitorService.js')
+      await expect(ackAlert('a1')).rejects.toThrow('ack failed')
+    })
+
+    it('Error 实例错误提取 message（getErrorMessage L27）', async () => {
+      httpClientMock.get.mockRejectedValue(new Error('network down'))
+      const { getMetrics } = await import('@/services/monitorService.js')
+      await expect(getMetrics()).rejects.toThrow('network down')
+    })
+
+    it('带 response.data 的 HTTP 错误走响应体提取（getErrorResponse L40 true 分支）', async () => {
+      httpClientMock.get.mockRejectedValue({ response: { data: { error: 'forbidden' } }, message: '403' })
+      const { getAlerts } = await import('@/services/monitorService.js')
+      await expect(getAlerts()).rejects.toMatchObject({ response: { data: { error: 'forbidden' } } })
+    })
+
+    it('response 非 object 时返回 null（getErrorResponse L40 false 分支）', async () => {
+      httpClientMock.get.mockRejectedValue({ response: null, message: 'bad' })
+      const { getReports } = await import('@/services/monitorService.js')
+      await expect(getReports()).rejects.toMatchObject({ message: 'bad' })
+    })
+
+    it('普通对象无 response 时提取 message 字段（getErrorMessage L28）', async () => {
+      httpClientMock.get.mockRejectedValue({ message: 'custom failure' })
+      const { getMetrics } = await import('@/services/monitorService.js')
+      await expect(getMetrics()).rejects.toMatchObject({ message: 'custom failure' })
+    })
+
+    it('字符串错误直接 String() 化（getErrorMessage L29）', async () => {
+      httpClientMock.post.mockRejectedValue('plain string error')
+      const { ackAlert } = await import('@/services/monitorService.js')
+      await expect(ackAlert('a1')).rejects.toBe('plain string error')
+    })
+  })
 })

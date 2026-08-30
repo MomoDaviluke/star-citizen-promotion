@@ -257,4 +257,100 @@ describe('calendarService', () => {
       expect(calendarService.exportCalendar).toBe(exportCalendar)
     })
   })
+
+  // ---- M4-2 补测：错误传播、参数校验与转换函数边界 ----
+  describe('错误传播（重抛并保留原始错误）', () => {
+    it.each([
+      ['getEvents', 'get', []],
+      ['getEvent', 'get', ['e1']],
+      ['updateEvent', 'patch', ['e1', { startTime: '2026-06-02' }]],
+      ['deleteEvent', 'delete', ['e1']],
+      ['joinEvent', 'post', ['e1']],
+      ['leaveEvent', 'post', ['e1']]
+    ])('%s 失败时重抛原始错误', async (fn, verb, args) => {
+      httpClient[verb].mockRejectedValue(new Error('api exploded'))
+      await expect(calendarService[fn](...args)).rejects.toThrow('api exploded')
+    })
+
+    it('createEvent 失败时重抛原始错误', async () => {
+      httpClient.post.mockRejectedValue(new Error('create failed'))
+      await expect(createEvent({ title: 'T', startTime: '2026-06-01T10:00:00Z' })).rejects.toThrow('create failed')
+    })
+
+    it('exportCalendar 失败时重抛原始错误', async () => {
+      httpClient.get.mockRejectedValue(new Error('export failed'))
+      await expect(exportCalendar()).rejects.toThrow('export failed')
+    })
+
+    it('getEvents 错误日志读取 err.response?.data 不抛次生异常', async () => {
+      httpClient.get.mockRejectedValue({ message: 'no response body' })
+      await expect(getEvents()).rejects.toMatchObject({ message: 'no response body' })
+    })
+  })
+
+  describe('参数校验（httpClient 不应被调用）', () => {
+    it('getEvent 缺 eventId 抛错', async () => {
+      await expect(getEvent('')).rejects.toThrow('eventId is required')
+      expect(httpClient.get).not.toHaveBeenCalled()
+    })
+
+    it('createEvent 缺标题抛错', async () => {
+      await expect(createEvent({ startTime: '2026-06-01T10:00:00Z' })).rejects.toThrow('活动标题和时间不能为空')
+      expect(httpClient.post).not.toHaveBeenCalled()
+    })
+
+    it('createEvent 缺开始时间抛错', async () => {
+      await expect(createEvent({ title: '只有标题' })).rejects.toThrow('活动标题和时间不能为空')
+      expect(httpClient.post).not.toHaveBeenCalled()
+    })
+
+    it('updateEvent 缺 eventId 抛错', async () => {
+      await expect(updateEvent('', { startTime: 'x' })).rejects.toThrow('eventId is required')
+      expect(httpClient.patch).not.toHaveBeenCalled()
+    })
+
+    it('deleteEvent 缺 eventId 抛错', async () => {
+      await expect(deleteEvent(undefined)).rejects.toThrow('eventId is required')
+      expect(httpClient.delete).not.toHaveBeenCalled()
+    })
+
+    it.each(['joinEvent', 'leaveEvent'])('%s 缺 eventId 抛错', async (fn) => {
+      await expect(calendarService[fn]('')).rejects.toThrow('eventId is required')
+      expect(httpClient.post).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('字段转换边界', () => {
+    it('getEvents 返回 data 为 null 时原样透传不崩溃', async () => {
+      httpClient.get.mockResolvedValue({ success: true, data: null })
+      const r = await getEvents()
+      expect(r.data).toBeNull()
+    })
+
+    it('getEvent 返回非对象 data 时原样透传', async () => {
+      httpClient.get.mockResolvedValue({ success: true, data: 'raw-string' })
+      const r = await getEvent('e1')
+      expect(r.data).toBe('raw-string')
+    })
+
+    it('createEvent 发送前转 snake_case（startTime→start_time）', async () => {
+      httpClient.post.mockResolvedValue({ success: true, data: { id: '1' } })
+      await createEvent({ title: 'T', startTime: '2026-06-01T10:00:00Z', creatorId: 'u9' })
+      expect(httpClient.post).toHaveBeenCalledWith('/events', {
+        title: 'T',
+        start_time: '2026-06-01T10:00:00Z',
+        creator_id: 'u9'
+      })
+    })
+
+    it('updateEvent 发送前转 snake_case 且返回转回 camelCase', async () => {
+      httpClient.patch.mockResolvedValue({
+        success: true,
+        data: { id: 'e1', start_time: '2026-06-02T10:00:00Z' }
+      })
+      const r = await updateEvent('e1', { startTime: '2026-06-02T10:00:00Z' })
+      expect(httpClient.patch).toHaveBeenCalledWith('/events/e1', { start_time: '2026-06-02T10:00:00Z' })
+      expect(r.data.startTime).toBe('2026-06-02T10:00:00Z')
+    })
+  })
 })
