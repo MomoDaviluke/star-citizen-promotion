@@ -1,6 +1,6 @@
 {
   "name": "star-citizen-promotion-server",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "type": "module",
   "description": "Star Citizen 战队宣传网站后端服务",
   "license": "MIT",

@@ -1,34 +1,31 @@
 <div align="center">
 
-# 🚀 星际公民战队宣传网站
+# 🚀 星际公民战队宣传网站 · Stellar Nexus
 
-**企业级全栈项目 · 后端 656 测试用例全通过 · 完整 CI/CD 流水线 · AI 招募官 Agent（已实测上线链路）**
+**企业级全栈项目 · 前后端 1247 个测试用例全通过 · AI 招募官 Agent 全链路实测 · v1.7.1**
 
-*面向星际公民玩家的专业团队门户*
+*面向星际公民玩家的专业团队门户 — 科幻风格 UI · RAG 语义检索 · SSE 流式对话 · 完整可观测性*
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.21-000000?style=flat-square&logo=express)](https://expressjs.com/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![Knex.js](https://img.shields.io/badge/Knex.js-latest-E16426?style=flat-square&logo=knex)](https://knexjs.org/)
-[![Vitest](https://img.shields.io/badge/Vitest-4.x-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
-[![Playwright](https://img.shields.io/badge/Playwright-1.58-45ba4c?style=flat-square&logo=playwright)](https://playwright.dev/)
-[![Jest](https://img.shields.io/badge/Jest-29.7-C21325?style=flat-square&logo=jest)](https://jestjs.io/)
-[![Docker](https://img.shields.io/badge/Docker-latest-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Prometheus](https://img.shields.io/badge/Prometheus-latest-E6522C?style=flat-square&logo=prometheus)](https://prometheus.io/)
-[![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=flat-square&logo=swagger)](https://swagger.io/)
-[![Sentry](https://img.shields.io/badge/Sentry-latest-362D59?style=flat-square&logo=sentry)](https://sentry.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
+[![Vitest](https://img.shields.io/badge/前端测试-591✓-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
+[![Jest](https://img.shields.io/badge/后端测试-656✓-C21325?style=flat-square&logo=jest)](https://jestjs.io/)
+[![Playwright](https://img.shields.io/badge/E2E-9_spec-45ba4c?style=flat-square&logo=playwright)](https://playwright.dev/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
 
-[功能特性](#-功能特性) ·
+[功能特性](#-项目简介) ·
+[AI 能力](#-ai-能力) ·
 [技术架构](#-技术架构) ·
 [快速开始](#-快速开始) ·
-[核心模块](#-核心模块解析) ·
-[配置指南](#-配置指南) ·
-[API 文档](#-api-接口文档) ·
 [测试体系](#-测试体系) ·
-[部署方案](#-部署方案) ·
-[常见问题](#-常见问题)
+[配置指南](#-配置指南) ·
+[部署方案](#-部署方案)
 
 </div>
 
@@ -36,23 +33,70 @@
 
 ## 📖 项目简介
 
-基于 **Vue 3 + Vite + Express.js + MySQL** 构建的企业级全栈星际公民战队宣传网站。采用科幻风格 UI 设计，三层架构分层设计，为战队提供专业的展示、招募与管理平台。
+**Stellar Nexus（星渊枢纽）** 是一个面向星际公民（Star Citizen）玩家公会的全栈宣传与招募平台，单人开发者按企业级标准打造。
+
+前端采用 Vue 3 + Vite 8 的科幻风格 SPA（MFD 面板式 UI / GSAP 动效 / PWA 离线支持），后端为 Express 4 + TypeScript 三层架构（Routes → Services → Database），AI 层基于 **pgvector RAG + 通用槽位制 LLM 配置**，实现对话式招募官与知识库语义检索。
+
+### 核心数据（v1.7.1 实测）
+
+| 指标 | 数值 |
+|:-----|:-----|
+| 后端测试 | **58 套件 / 656 用例** 100% 通过（Jest） |
+| 前端测试 | **47 套件 / 591 用例** 100% 通过（Vitest） |
+| 前端覆盖率门禁 | **60%** 四项统一门禁（实测语句 66.96% / 行 68.12% / 分支 66.73% / 函数 63.38%） |
+| 后端覆盖率 | 语句 75.35%（AI 模块 88.94%） |
+| E2E | **9 个 spec**（含 real-backend 真实往返、admin CRUD 往返、AI 招募官链路） |
+| ESLint / TypeScript | 0 错误 |
+| 高危安全漏洞 | 0 |
 
 ### 核心亮点
 
 | 特性 | 说明 |
 |:-----|:-----|
-| 🏗️ **分层架构** | Routes → Services → Database 严格分层，职责清晰 |
-| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试（9 spec），后端 656 用例、前端 509 用例全通过，AI 模块覆盖率 88.94% |
-| 🚀 **CI/CD** | GitHub Actions 自动化代码检查、测试、安全扫描、构建流水线 |
-| 🔐 **安全加固** | JWT 认证、bcrypt 加密、Helmet 安全头、速率限制、CORS 策略、敏感数据脱敏 |
-| 📝 **企业日志** | Winston 结构化日志，支持多级别输出与文件归档 |
-| 📊 **可观测性** | Prometheus 指标监控、Sentry 错误追踪、Swagger API 文档 |
-| 🤖 **AI 服务** | 通用槽位制 LLM 配置（聊天/嵌入自由指向任意 OpenAI 兼容端点）+ pgvector 语义检索（RAG）+ 对话式 AI 招募官（SSE 流式 + 画像预填），Redis 缓存与会话，全链路已实测验证 |
-| 🗄️ **数据库迁移** | Knex.js 专业迁移工具，支持版本追踪与回滚 |
-| 🔍 **类型安全** | JSDoc + TypeScript 渐进式类型检查 |
-| 🐳 **容器化** | Docker 多阶段构建、docker-compose 编排、Nginx 反向代理 |
-| 📚 **完整文档** | 16+ 份文档覆盖架构设计、需求规格、API 接口、质量标准等 |
+| 🏗️ **分层架构** | Routes → Services → Database 严格分层；knex 迁移版本化 + schema 单一来源 |
+| 🧪 **测试防线** | 单测 1247 + E2E 9 spec + 覆盖率门禁（随覆盖率上调，49→55→60 已三档）；真实路由守卫/AI 链路/转化流全覆盖 |
+| 🤖 **AI 招募官** | RAG 语义检索（pgvector）+ SSE 流式对话 + 用户画像提取与申请表预填，全链路实测（入库幂等 / 检索带相似度 / 125 token 流式） |
+| 🔌 **AI-SLOT 槽位制** | 聊天/嵌入两个通用 OpenAI 兼容槽位，DeepSeek/豆包/Ollama/vLLM 任意端点自由指向，降级链自动跳过未配置槽位 |
+| 🔐 **安全加固** | httpOnly Cookie JWT、bcrypt、Helmet、速率限制、输入校验、日志脱敏、生产弱密钥拒绝 |
+| 📊 **自研监控** | 后端资源采集（CPU/RSS/事件循环）+ 分级告警引擎（冷却去重/升级）+ Webhook 通知（企微/钉钉/飞书）+ 前端问题回报 |
+| 📈 **转化埋点** | 申请漏斗 8 事件白名单埋点（表单进入/提交成功/失败/AI 预填），数据驱动招募优化 |
+| 🎨 **科幻 UI 体系** | CSS 变量设计系统 + CI lint 守护、GSAP ScrollTrigger 动效、MFD 面板组件、亮暗双主题 |
+| 🐳 **容器化** | Docker 多阶段构建、compose 编排（MySQL/Redis/pgvector/Nginx/certbot）、每日自动备份 |
+
+---
+
+## 🤖 AI 能力
+
+### 招募官 Agent（全链路已实测）
+
+```
+用户提问 → RAG 检索（pgvector 余弦相似度）→ Prompt 组装 → LLM 生成 → SSE 流式返回
+                                              ↓
+                                    画像提取（玩法偏好/技能等级/时间投入）
+                                              ↓
+                                    申请表自动预填（?ai_profile= 传递）
+```
+
+- **语义检索**：舰船/活动/公会信息 5 类知识源自动入库（`ai:ingest` 幂等），检索结果带相似度分数
+- **流式对话**：SSE 逐 token 返回（实测 125 token），AD-11：`fetch + ReadableStream` 手动解析
+- **画像提取**：多轮对话自动构建用户画像，一键预填申请表
+- **零成本嵌入**：本地 Ollama bge-m3（1024 维），云端仅付费聊天 token
+
+### AI-SLOT 槽位制配置
+
+```bash
+# 聊天槽位：DeepSeek / 豆包 / vLLM / 任意 OpenAI 兼容端点
+LLM_CHAT_API_KEY=sk-xxx
+LLM_CHAT_BASE_URL=https://api.deepseek.com/v1
+LLM_CHAT_MODEL=deepseek-chat
+
+# 嵌入槽位：本地 Ollama（零 API 成本）或其他 embeddings 服务
+LLM_EMBED_API_KEY=ollama
+LLM_EMBED_BASE_URL=http://localhost:11434/v1
+LLM_EMBEDDING_MODEL=bge-m3
+```
+
+> 不配置任何 key 时服务正常启动，AI 端点优雅降级为"服务不可用"（预期行为，非故障）。
 
 ---
 
@@ -94,20 +138,26 @@
            ┌───────────┴───────────┐
            ▼                       ▼
 ┌──────────────────┐    ┌──────────────────┐
-│    前端 (Vue 3)   │    │   后端 (Express)  │
+│    前端 (Vue 3)   │    │  后端 (Express+TS)│
 │                  │    │                  │
-│  Vue Router 5.0  │◄──►│  JWT 认证中间件    │
-│  Vitest 3.0      │    │  Helmet 安全加固   │
-│  Playwright 1.58 │    │  Winston 日志     │
-│  Vite 7.3        │    │  Rate Limit      │
+│  Vue Router      │◄──►│  JWT 认证中间件    │
+│  GSAP 动效       │    │  告警引擎+通知     │
+│  PWA 离线        │    │  Winston 日志     │
+│  Vitest 591✓     │    │  Jest 656✓       │
 └──────────────────┘    └────────┬─────────┘
                                  │
-                        ┌────────┴─────────┐
-                        ▼                  ▼
-                ┌──────────────┐   ┌──────────────┐
-                │  MySQL 8.0   │   │  WebSocket   │
-                │  (连接池)     │   │  (ws 实时通信) │
-                └──────────────┘   └──────────────┘
+                 ┌───────────────┼───────────────┐
+                 ▼               ▼               ▼
+        ┌──────────────┐ ┌─────────────┐ ┌──────────────────┐
+        │  MySQL 8.0   │ │  Redis 7    │ │ PostgreSQL+pgvec │
+        │  (11 表主库)  │ │ (缓存/会话) │ │ (AI 向量知识库)   │
+        └──────────────┘ └─────────────┘ └────────┬─────────┘
+                                                  │
+                                        ┌─────────┴─────────┐
+                                        │  AI-SLOT 槽位层    │
+                                        │ chat→LLM 云端      │
+                                        │ embed→Ollama 本地  │
+                                        └───────────────────┘
 ```
 
 ### 前端技术栈
@@ -737,22 +787,20 @@ Content-Type: application/json
 
 ### 测试统计
 
-| 测试类型 | 框架 | 文件数 | 覆盖范围 |
+| 测试类型 | 框架 | 规模 | 覆盖范围 |
 |:---------|:-----|:-------|:---------|
-| 前端单元测试 | Vitest | 37（分布在 components/composables/router/services/stores/views/utils） | 服务层、组合式函数、组件、路由、视图、工具 |
-| 后端集成测试 | Jest + Supertest | 26+ 文件（469 用例） | API 接口、认证中间件、错误处理、仓储层、缓存、AI（Providers/RAG/招募官） |
-| E2E 测试 | Playwright | 5 spec | 首页、加入流程、认证流程、申请流程、导航 |
+| 前端单元测试 | Vitest | **47 文件 / 591 用例** | 服务层、组合式函数、真实路由守卫、Store、核心视图（含转化流）、AI 组件、监控面板 |
+| 后端测试 | Jest + Supertest | **58 套件 / 656 用例** | API 接口、认证中间件、错误处理、仓储层、缓存、AI（Providers/RAG/招募官）、监控告警 |
+| E2E 测试 | Playwright | **9 spec / 60 用例** | 首页、加入流程、认证流程、申请流程、导航、船队、Admin CRUD 往返、AI 招募官、真实后端往返 |
 
-### 核心模块覆盖率（AI 模块 88.94%，以下为高覆盖模块）
+### 覆盖率门禁（随覆盖率逐步上调）
 
-| 模块 | 覆盖率 |
-|:-----|:-------|
-| `routes/admin.ts` | **98%** |
-| `routes/auth.ts` | **97%** |
-| `services/*` | **93~100%** |
-| `middleware/cache.ts` | **100%** |
-| `database/pool.ts` | **88%** |
-| `services/ai/*`（Providers/RAG/招募官） | **88.94%** |
+| 指标 | 门禁 | 实测 |
+|:-----|:-------|:-------|
+| 前端语句/行/分支/函数 | **60%** 四项统一 | 66.96% / 68.12% / 66.73% / 63.38% |
+| 后端语句 | ≥60% | 75.35%（AI 模块 **88.94%**） |
+
+> 门禁规则（G4）：实测 ≥ 目标才允许上调，禁止"先调门禁再补测试"。历史：8% → 49 → 55 → 60。
 
 ### 运行测试
 

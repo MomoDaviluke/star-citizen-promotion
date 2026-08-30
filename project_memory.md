@@ -35,7 +35,9 @@
 - [x] M4-3 门禁 49→55（2026-08-30）：实测 62.03/63.01/58.33/56.33（stmts/lines/branch/funcs）四项过线（G4：实测≥目标才上调）；下一档 60
 - [x] M1 AI 部署验证 ✅（2026-08-30，G2 满足）：AI-SLOT 槽位制重构（AD-13，LLM_CHAT_*/LLM_EMBED_*/LLM_FALLBACK_* 通用 OpenAI 兼容槽位）；实测入库 7/7 幂等、RAG 检索带 similarity、DeepSeek 真实回答、SSE 125 token 流式；DBG-25 修复（脚本不加载 .env 静默连错库）+ SEC-01 违规清除（aiConfig 硬编码凭据 fallback 移除）
 - [x] v1.7.0 发布：CHANGELOG + README 美化（测试数字/AI 指南/端口修正）+ .env.example 槽位模板 + DeepSeek key 验证后立即删除（三路扫描零残留）
-- [ ] M4 第二批：覆盖率 62% → 70%（Join.vue 69 / Calendar.vue 92 / ApplicationsAdmin 36 等转化流 + 门禁 55→60）
+- [x] M4-2 第二批转化流补测（2026-08-30）：+82 用例（前端 509→591）；Register/Join/Calendar/Profile/ApplicationsAdmin 五视图重写；**QUAL-21 修复**（Join.vue 漏斗起点埋点被提前 return 跳过，自上线从未发送）；实测 66.96/68.12/66.73/63.38
+- [x] M4-3 门禁 55→60（2026-08-30）：四项过线（G4）；M4 累计 49→60
+- [ ] M4 第三批（可选）：68% → 70% 需评估 ROI（剩余主要是 planet/rendering 不追项与散点组件）
 - [ ] 正式上线部署（nginx + certbot production profile 未启用）
 
 ## 本地运行环境拓扑（实测验证 2026-08-29）
