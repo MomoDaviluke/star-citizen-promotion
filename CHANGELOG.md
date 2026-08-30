@@ -16,6 +16,31 @@
 
 ---
 
+## [1.7.0] - 2026-08-30
+
+### 新增功能
+
+#### M1 AI 部署验证（AI-DEP-1/2 ✅ 全链路实测通过）
+
+- AI 链路从"代码就绪"升级为"真实可用"：知识入库 7/7（幂等实测二次运行仍 7 条无膨胀）→ pgvector 语义检索带 similarity 来源 → DeepSeek 真实生成回答 → SSE 流式 125 token 逐个返回 + 画像 turnCount 更新
+- G2 决策门满足：ai:ingest 幂等 ✅ / ai:health 200 ✅ / SSE 流式真实返回 ✅
+
+#### AI-SLOT 通用槽位制（架构决策，AD-13）
+
+- `aiConfig` 从硬编码厂商清单（doubao/deepseek/claude）重构为**通用功能槽位**：`LLM_CHAT_*`（聊天）/ `LLM_EMBED_*`（嵌入）/ `LLM_FALLBACK_*`（可选降级），全部 OpenAI 兼容协议，指向哪家服务商完全由环境变量决定
+- 动因：DeepSeek 官方 API 无 embeddings 接口（实测 404），厂商直配模式无法表达"聊天走云端、嵌入走本地"的真实拓扑；槽位制同时让 Ollama/vLLM/OpenRouter 等任意兼容端点开箱即用
+- 嵌入默认走本地 Ollama bge-m3（1024 维，与 pgvector 列定义精确对齐，零 API 成本）；Anthropic 原生协议独立保留为聊天降级
+
+#### 修复
+
+- **DBG-25**：`ai:migrate` / `ai:ingest` 脚本独立运行不加载 .env，静默回退到硬编码连接串连错库（401 认证失败）。根因同 SEC-01 违规——旧 aiConfig 内置含凭据的 fallback 连接串，已改为"显式配置 > 本地无凭据默认 > test 默认"三级解析
+- `openaiCompatible.embed()` model 硬编码空串 → 正确消费 `LLM_EMBEDDING_MODEL`（该配置此前是死配置）
+
+### 文档
+
+- README 更新：测试数字 656/509、AI 槽位制说明与启用指南、前端端口 5173 修正
+- `server/.env.example` 同步槽位制模板
+
 ## [1.6.5] - 2026-08-30
 
 ### 上线前修正批次（技术线路图独立复审产出）

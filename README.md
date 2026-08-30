@@ -2,7 +2,7 @@
 
 # 🚀 星际公民战队宣传网站
 
-**企业级全栈项目 · 后端 469 测试用例全通过 · 完整 CI/CD 流水线 · AI 招募官 Agent**
+**企业级全栈项目 · 后端 656 测试用例全通过 · 完整 CI/CD 流水线 · AI 招募官 Agent（已实测上线链路）**
 
 *面向星际公民玩家的专业团队门户*
 
@@ -43,12 +43,12 @@
 | 特性 | 说明 |
 |:-----|:-----|
 | 🏗️ **分层架构** | Routes → Services → Database 严格分层，职责清晰 |
-| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试，后端 469 用例全通过，AI 模块覆盖率 88.94% |
+| 🧪 **全面测试** | 单元测试 + 集成测试 + E2E 测试（9 spec），后端 656 用例、前端 509 用例全通过，AI 模块覆盖率 88.94% |
 | 🚀 **CI/CD** | GitHub Actions 自动化代码检查、测试、安全扫描、构建流水线 |
 | 🔐 **安全加固** | JWT 认证、bcrypt 加密、Helmet 安全头、速率限制、CORS 策略、敏感数据脱敏 |
 | 📝 **企业日志** | Winston 结构化日志，支持多级别输出与文件归档 |
 | 📊 **可观测性** | Prometheus 指标监控、Sentry 错误追踪、Swagger API 文档 |
-| 🤖 **AI 服务** | LLM Provider 抽象 + pgvector 语义检索（RAG）+ 对话式 AI 招募官（SSE 流式 + 画像预填），Redis 缓存与会话 |
+| 🤖 **AI 服务** | 通用槽位制 LLM 配置（聊天/嵌入自由指向任意 OpenAI 兼容端点）+ pgvector 语义检索（RAG）+ 对话式 AI 招募官（SSE 流式 + 画像预填），Redis 缓存与会话，全链路已实测验证 |
 | 🗄️ **数据库迁移** | Knex.js 专业迁移工具，支持版本追踪与回滚 |
 | 🔍 **类型安全** | JSDoc + TypeScript 渐进式类型检查 |
 | 🐳 **容器化** | Docker 多阶段构建、docker-compose 编排、Nginx 反向代理 |
@@ -303,6 +303,7 @@ star-citizen-promotion/
 |:-----|:---------|:---------|
 | Node.js | 20.0 | 20.19+ |
 | MySQL | 8.0 | 8.0 |
+| PostgreSQL + pgvector | 15 | 16（AI RAG 知识库，可选） |
 | npm | 9.0 | 10+ |
 
 ### 安装部署
@@ -327,7 +328,7 @@ cp server/.env.example server/.env.development
 cd server && npm run db:init && cd ..
 
 # 6. 启动开发服务器
-npm run dev                    # 前端 → http://localhost:3000
+npm run dev                    # 前端 → http://localhost:5173
 cd server && npm run dev       # 后端 → http://localhost:3001
 ```
 
@@ -567,6 +568,40 @@ RATE_LIMIT_MAX=100
 
 # WebSocket
 WS_PORT=3001
+
+# AI 槽位制配置（AI-SLOT，可选）——OpenAI 兼容端点自由指向
+# 聊天槽位：DeepSeek / 豆包 / vLLM / 任意兼容网关
+LLM_CHAT_API_KEY=
+LLM_CHAT_BASE_URL=https://api.deepseek.com/v1
+LLM_CHAT_MODEL=deepseek-chat
+# 嵌入槽位：本地 Ollama（bge-m3，1024 维）/ 其他 embeddings 服务
+LLM_EMBED_API_KEY=ollama
+LLM_EMBED_BASE_URL=http://localhost:11434/v1
+LLM_EMBEDDING_MODEL=bge-m3
+# pgvector 连接（AI 知识库，可选）
+PGVECTOR_URL=postgres://app_user:app_password@localhost:5432/star_citizen_ai
+```
+
+#### AI 能力启用（可选）
+
+AI 功能采用**槽位制**设计——不配置任何 key 时服务正常启动，AI 端点自动降级为"服务不可用"（非 bug）；配置后即可获得完整 RAG + 流式招募官能力：
+
+```bash
+# 1. 启动 pgvector（AI 向量知识库）
+docker run -d --name sc-pgvector-dev -e POSTGRES_USER=app_user \
+  -e POSTGRES_PASSWORD=app_password -e POSTGRES_DB=star_citizen_ai \
+  -p 127.0.0.1:5432:5432 pgvector/pgvector:pg16
+
+# 2. 启动本地嵌入模型（Ollama bge-m3，1024 维，零 API 成本）
+ollama pull bge-m3
+
+# 3. 建表 + 知识入库（幂等，可重复执行）
+cd server && npm run ai:migrate && npm run ai:ingest
+
+# 4. 验证
+curl http://localhost:3001/api/v1/ai/health
+curl -X POST http://localhost:3001/api/v1/ai/retrieve \
+  -H "Content-Type: application/json" -d '{"question":"推荐一艘适合新手的战斗机"}'
 ```
 
 ### 站点内容定制

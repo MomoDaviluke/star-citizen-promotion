@@ -16,9 +16,9 @@ describe('LlmService', () => {
     mockCacheGet = jest.fn().mockResolvedValue(null)
     mockCacheSet = jest.fn().mockResolvedValue(undefined)
     mockRegistry = {
-      doubao: {
-        name: 'doubao',
-        chat: jest.fn().mockResolvedValue({ content: '回答', usage: { totalTokens: 10 }, provider: 'doubao', model: 'm' }),
+      chat: {
+        name: 'chat',
+        chat: jest.fn().mockResolvedValue({ content: '回答', usage: { totalTokens: 10 }, provider: 'chat', model: 'm' }),
         chatStream: async function* () {
           yield '回'
           yield '答'
@@ -31,7 +31,7 @@ describe('LlmService', () => {
   it('chat 应在缓存未命中时调用 provider 并写入缓存', async () => {
     const result = await service.chat([{ role: 'user', content: 'hi' }], { model: 'm' })
     expect(result.content).toBe('回答')
-    expect(mockRegistry.doubao.chat).toHaveBeenCalled()
+    expect(mockRegistry.chat.chat).toHaveBeenCalled()
     expect(mockCacheSet).toHaveBeenCalled()
   })
 
@@ -39,7 +39,7 @@ describe('LlmService', () => {
     mockCacheGet.mockResolvedValueOnce({ content: '缓存回答', usage: { totalTokens: 5 }, provider: 'cache', model: 'm' })
     const result = await service.chat([{ role: 'user', content: 'hi' }], { model: 'm' })
     expect(result.content).toBe('缓存回答')
-    expect(mockRegistry.doubao.chat).not.toHaveBeenCalled()
+    expect(mockRegistry.chat.chat).not.toHaveBeenCalled()
   })
 
   it('chatStream 不应使用缓存(流式不缓存)', async () => {
@@ -100,22 +100,22 @@ describe('LlmService', () => {
   })
 
   it('chat 主 provider 失败应切换到 fallback', async () => {
-    // 添加 fallback provider (chat 降级链: doubao -> deepseek -> claude)
-    mockRegistry.deepseek = {
-      name: 'deepseek',
+    // 添加 fallback provider (chat 降级链: chat -> fallback -> claude, 槽位制 AI-SLOT)
+    mockRegistry.fallback = {
+      name: 'fallback',
       chat: jest
         .fn()
-        .mockResolvedValue({ content: 'fallback 回答', usage: { totalTokens: 8 }, provider: 'deepseek', model: 'm' }),
+        .mockResolvedValue({ content: 'fallback 回答', usage: { totalTokens: 8 }, provider: 'fallback', model: 'm' }),
       chatStream: async function* () {
         yield 'fallback'
       },
     }
-    // 主 provider doubao 失败(可重试错误)
-    mockRegistry.doubao.chat.mockRejectedValueOnce(new Error('provider down'))
+    // 主 provider chat 失败(可重试错误)
+    mockRegistry.chat.chat.mockRejectedValueOnce(new Error('provider down'))
 
     const result = await service.chat([{ role: 'user', content: 'hi' }], { model: 'm' })
     expect(result.content).toBe('fallback 回答')
-    expect(mockRegistry.deepseek.chat).toHaveBeenCalled()
+    expect(mockRegistry.fallback.chat).toHaveBeenCalled()
   })
 
   it('缓存写入失败不影响主流程', async () => {

@@ -5,11 +5,19 @@
  * @usage npm run ai:ingest
  */
 
+import dotenv from 'dotenv'
+import { join } from 'node:path'
 import { createPool, query, closePool } from '../database/pool.js'
-import { getRegistry } from '../services/ai/providers/index.js'
-import { Embedder } from '../services/ai/rag/embedder.js'
-import { Ingester, type IngestItem } from '../services/ai/rag/ingester.js'
-import { pgQuery, closePgPool } from '../services/ai/pgPool.js'
+import type { IngestItem } from '../services/ai/rag/ingester.js'
+
+// dotenv 必须先于 config/ai.js 求值（aiConfig 模块加载即消费 env）——
+// 本脚本独立运行不走 app 入口的 config/index.ts，需自行加载（DBG-25）。
+// 动态 import 保证时序（静态 import 提升会破坏它）。
+dotenv.config({ path: join(process.cwd(), process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development') })
+const { getRegistry } = await import('../services/ai/providers/index.js')
+const { Embedder } = await import('../services/ai/rag/embedder.js')
+const { Ingester } = await import('../services/ai/rag/ingester.js')
+const { pgQuery, closePgPool } = await import('../services/ai/pgPool.js')
 
 /**
  * 从 ships 表加载舰船知识

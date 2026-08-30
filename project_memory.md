@@ -33,6 +33,8 @@
 - [x] M4-1 覆盖率基线实测：语句 56.57%/行 57.5%/分支 54.64%/函数 51.29%（M0/M3 已抬升基线）；第一批攻击目标=dataService(70)/router(33)/calendar store(39) 等 ~182 语句；planet/rendering 5 文件 ~477 语句明确不追（R7）
 - [x] M4-2 第一批逻辑层补测（2026-08-30）：+126 用例（前端 413→509）；dataService USE_API 分支/降级回退、真实路由器守卫全分支（旧 router 测试是玩具路由表，真身从未被测，ENG-07）、monitorService/calendarService 错误形态、calendar store join/leave 与视图导航、BaseModal/BaseTooltip 摆设测试重写（旧用例 props 名错误组件从未渲染，QUAL-18 同类）
 - [x] M4-3 门禁 49→55（2026-08-30）：实测 62.03/63.01/58.33/56.33（stmts/lines/branch/funcs）四项过线（G4：实测≥目标才上调）；下一档 60
+- [x] M1 AI 部署验证 ✅（2026-08-30，G2 满足）：AI-SLOT 槽位制重构（AD-13，LLM_CHAT_*/LLM_EMBED_*/LLM_FALLBACK_* 通用 OpenAI 兼容槽位）；实测入库 7/7 幂等、RAG 检索带 similarity、DeepSeek 真实回答、SSE 125 token 流式；DBG-25 修复（脚本不加载 .env 静默连错库）+ SEC-01 违规清除（aiConfig 硬编码凭据 fallback 移除）
+- [x] v1.7.0 发布：CHANGELOG + README 美化（测试数字/AI 指南/端口修正）+ .env.example 槽位模板 + DeepSeek key 验证后立即删除（三路扫描零残留）
 - [ ] M4 第二批：覆盖率 62% → 70%（Join.vue 69 / Calendar.vue 92 / ApplicationsAdmin 36 等转化流 + 门禁 55→60）
 - [ ] 正式上线部署（nginx + certbot production profile 未启用）
 

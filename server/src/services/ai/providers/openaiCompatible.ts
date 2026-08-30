@@ -80,7 +80,7 @@ export class OpenAICompatibleProvider implements LLMProvider {
 
   async embed(texts: string[]): Promise<number[][]> {
     const body = {
-      model: '',
+      model: process.env.LLM_EMBEDDING_MODEL || '',
       input: texts,
     }
     const res = await this.request('/embeddings', body)

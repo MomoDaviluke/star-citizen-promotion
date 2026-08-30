@@ -7,7 +7,14 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { pgPool, closePgPool } from '../services/ai/pgPool.js'
+// 注意：dotenv 必须先于 config/ai.js 求值（aiConfig 模块加载即消费 env）。
+// 静态 import 会被提升到 dotenv.config 之前，故此处用动态 import（本脚本不进测试，无 DBG-21 风险）。
+import dotenv from 'dotenv'
+
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
+dotenv.config({ path: join(process.cwd(), envFile) })
+
+const { pgPool, closePgPool } = await import('../services/ai/pgPool.js')
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 

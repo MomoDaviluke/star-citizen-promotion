@@ -8,11 +8,21 @@ import { ProviderError } from '../../../../src/services/ai/providers/types.js'
 
 // aiConfig 在模块加载时读取 process.env,必须在动态 import 之前设置 env vars。
 // (jest.unstable_mockModule 与 tsx 加载器不兼容,改用 env vars 预设方式)
-process.env.DOUBAO_API_KEY = 'sk-doubao'
-process.env.DOUBAO_BASE_URL = 'https://doubao.test'
+//
+// 槽位制(AI-SLOT): registry 键 = chat / embed / fallback / claude
+// - chat 槽位配置 → 应出现在 registry
+// - embed 槽位故意不配置 → 测试 enabled=false 的 provider 被跳过
+// - CI/本地可能带真实 key(M1 验证用),测试前显式清掉防止意外 enabled
+process.env.LLM_CHAT_API_KEY = 'sk-chat-slot'
+process.env.LLM_CHAT_BASE_URL = 'https://chat.test/v1'
 process.env.ANTHROPIC_API_KEY = 'sk-claude'
 process.env.ANTHROPIC_BASE_URL = 'https://claude.test'
-// deepseek 故意不配置(测试 enabled=false 的 provider 被跳过)
+delete process.env.LLM_EMBED_API_KEY
+delete process.env.LLM_EMBED_BASE_URL
+delete process.env.LLM_FALLBACK_API_KEY
+delete process.env.LLM_FALLBACK_BASE_URL
+delete process.env.DEEPSEEK_API_KEY
+delete process.env.OLLAMA_API_KEY
 
 let createProviders: typeof import('../../../../src/services/ai/providers/index.js').createProviders
 let routeWithFallback: typeof import('../../../../src/services/ai/providers/index.js').routeWithFallback
@@ -26,11 +36,12 @@ beforeAll(async () => {
 describe('Provider 工厂与路由', () => {
   it('createProviders 应为每个已配置的 provider 创建实例', () => {
     const { providers, registry } = createProviders()
-    expect(providers.doubao).toBeDefined()
+    expect(providers.chat).toBeDefined()
     expect(providers.claude).toBeDefined()
-    expect(providers.doubao.name).toBe('doubao')
-    // deepseek 未配置 API key,不应出现在 registry 中
-    expect(providers.deepseek).toBeUndefined()
+    expect(providers.chat.name).toBe('chat')
+    // embed 槽位未配置 API key,不应出现在 registry 中
+    expect(providers.embed).toBeUndefined()
+    expect(providers.fallback).toBeUndefined()
   })
 
   it('routeWithFallback 应在主 provider 失败时切换到 fallback', async () => {
