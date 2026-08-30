@@ -15,7 +15,11 @@ globalThis.__beforeEachGuards = globalThis.__beforeEachGuards || []
 const mockAuthStore = {
   isAuthenticated: false,
   isAdmin: false,
-  user: null
+  user: null,
+  initialized: false,
+  initializeAuth: vi.fn(async () => {
+    mockAuthStore.initialized = true
+  })
 }
 
 vi.mock('@/stores/auth.js', () => ({
@@ -171,11 +175,33 @@ describe('Router', () => {
       expect(globalThis.__beforeEachGuards.length).toBeGreaterThan(0)
     })
 
-    it('未登录访问需要认证的路由应该重定向到登录页', () => {
-      mockAuthStore.isAuthenticated = false
+    it('未初始化时应先等待认证状态恢复再判定权限', async () => {
+      mockAuthStore.initialized = false
+      mockAuthStore.initializeAuth.mockClear()
       const guard = globalThis.__beforeEachGuards[0]
 
-      const result = guard({
+      await guard({ meta: { title: '首页' }, fullPath: '/' })
+
+      expect(mockAuthStore.initializeAuth).toHaveBeenCalled()
+      expect(mockAuthStore.initialized).toBe(true)
+    })
+
+    it('已初始化后不应重复调用 initializeAuth', async () => {
+      mockAuthStore.initialized = true
+      mockAuthStore.initializeAuth.mockClear()
+      const guard = globalThis.__beforeEachGuards[0]
+
+      await guard({ meta: { title: '首页' }, fullPath: '/' })
+
+      expect(mockAuthStore.initializeAuth).not.toHaveBeenCalled()
+    })
+
+    it('未登录访问需要认证的路由应该重定向到登录页', async () => {
+      mockAuthStore.isAuthenticated = false
+      mockAuthStore.initialized = true
+      const guard = globalThis.__beforeEachGuards[0]
+
+      const result = await guard({
         meta: { requiresAuth: true },
         fullPath: '/profile'
       })
@@ -183,12 +209,13 @@ describe('Router', () => {
       expect(result).toEqual({ path: '/login', query: { redirect: '/profile' } })
     })
 
-    it('非管理员访问管理后台应该重定向到首页', () => {
+    it('非管理员访问管理后台应该重定向到首页', async () => {
       mockAuthStore.isAuthenticated = true
       mockAuthStore.isAdmin = false
+      mockAuthStore.initialized = true
       const guard = globalThis.__beforeEachGuards[0]
 
-      const result = guard({
+      const result = await guard({
         meta: { requiresAuth: true, requiresAdmin: true },
         fullPath: '/admin'
       })
@@ -196,11 +223,12 @@ describe('Router', () => {
       expect(result).toEqual({ path: '/' })
     })
 
-    it('已登录用户访问登录页应该重定向到个人中心', () => {
+    it('已登录用户访问登录页应该重定向到个人中心', async () => {
       mockAuthStore.isAuthenticated = true
+      mockAuthStore.initialized = true
       const guard = globalThis.__beforeEachGuards[0]
 
-      const result = guard({
+      const result = await guard({
         meta: { guestOnly: true },
         fullPath: '/login'
       })
@@ -208,11 +236,12 @@ describe('Router', () => {
       expect(result).toEqual({ path: '/profile' })
     })
 
-    it('未登录用户访问公开路由应该放行', () => {
+    it('未登录用户访问公开路由应该放行', async () => {
       mockAuthStore.isAuthenticated = false
+      mockAuthStore.initialized = true
       const guard = globalThis.__beforeEachGuards[0]
 
-      const result = guard({
+      const result = await guard({
         meta: { title: '首页' },
         fullPath: '/'
       })
@@ -220,12 +249,13 @@ describe('Router', () => {
       expect(result).toBeUndefined()
     })
 
-    it('管理员访问管理后台应该放行', () => {
+    it('管理员访问管理后台应该放行', async () => {
       mockAuthStore.isAuthenticated = true
       mockAuthStore.isAdmin = true
+      mockAuthStore.initialized = true
       const guard = globalThis.__beforeEachGuards[0]
 
-      const result = guard({
+      const result = await guard({
         meta: { requiresAuth: true, requiresAdmin: true },
         fullPath: '/admin/dashboard'
       })
@@ -233,10 +263,11 @@ describe('Router', () => {
       expect(result).toBeUndefined()
     })
 
-    it('应该设置页面标题', () => {
+    it('应该设置页面标题', async () => {
+      mockAuthStore.initialized = true
       const guard = globalThis.__beforeEachGuards[0]
 
-      guard({
+      await guard({
         meta: { title: '测试标题' },
         fullPath: '/test'
       })

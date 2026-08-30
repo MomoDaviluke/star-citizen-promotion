@@ -65,6 +65,9 @@ export default defineConfig({
   ],
   use: {
     baseURL: 'http://localhost:4173',
+    // 屏蔽 PWA Service Worker：SW 会拦截网络请求并绕过 page.route 的 API mock，
+    // 使「保存后重新拉取列表」这类二次请求直连后端返回 502（E2E-SW-01）
+    serviceWorkers: 'block',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

@@ -5,134 +5,131 @@
 -->
 
 <template>
-  <AdminLayout>
-    <div class="settings-admin">
-      <section class="card">
-        <div class="card-header">
-          <h3>站点信息</h3>
+  <div class="settings-admin">
+    <section class="card">
+      <div class="card-header">
+        <h3>站点信息</h3>
+      </div>
+      <form @submit.prevent="saveSiteSettings" class="settings-form">
+        <div class="form-group">
+          <label class="form-label">站点名称</label>
+          <input
+            v-model="settings.siteName"
+            type="text"
+            class="form-input"
+            placeholder="请输入站点名称"
+          />
         </div>
-        <form @submit.prevent="saveSiteSettings" class="settings-form">
-          <div class="form-group">
-            <label class="form-label">站点名称</label>
-            <input
-              v-model="settings.siteName"
-              type="text"
-              class="form-input"
-              placeholder="请输入站点名称"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label">站点描述</label>
-            <textarea
-              v-model="settings.siteDescription"
-              class="form-input form-textarea"
-              placeholder="请输入站点描述"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">联系邮箱</label>
-            <input
-              v-model="settings.contactEmail"
-              type="email"
-              class="form-input"
-              placeholder="请输入联系邮箱"
-            />
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary" :disabled="isSaving">
-              {{ isSaving ? '保存中...' : '保存设置' }}
-            </button>
-            <span v-if="statusMessage" class="status-msg">{{ statusMessage }}</span>
-          </div>
-        </form>
-      </section>
+        <div class="form-group">
+          <label class="form-label">站点描述</label>
+          <textarea
+            v-model="settings.siteDescription"
+            class="form-input form-textarea"
+            placeholder="请输入站点描述"
+            rows="3"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">联系邮箱</label>
+          <input
+            v-model="settings.contactEmail"
+            type="email"
+            class="form-input"
+            placeholder="请输入联系邮箱"
+          />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" :disabled="isSaving">
+            {{ isSaving ? '保存中...' : '保存设置' }}
+          </button>
+          <span v-if="statusMessage" class="status-msg">{{ statusMessage }}</span>
+        </div>
+      </form>
+    </section>
 
-      <section class="card">
-        <div class="card-header">
-          <h3>功能开关</h3>
+    <section class="card">
+      <div class="card-header">
+        <h3>功能开关</h3>
+      </div>
+      <div class="feature-toggles">
+        <div class="toggle-item">
+          <div class="toggle-info">
+            <span id="toggle-label-ai" class="toggle-label">AI 服务</span>
+            <span id="toggle-desc-ai" class="toggle-desc">启用 AI 辅助功能</span>
+          </div>
+          <label class="toggle-switch">
+            <input
+              type="checkbox"
+              v-model="features.enableAI"
+              aria-labelledby="toggle-label-ai"
+              aria-describedby="toggle-desc-ai"
+            />
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <div class="feature-toggles">
-          <div class="toggle-item">
-            <div class="toggle-info">
-              <span id="toggle-label-ai" class="toggle-label">AI 服务</span>
-              <span id="toggle-desc-ai" class="toggle-desc">启用 AI 辅助功能</span>
-            </div>
-            <label class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="features.enableAI"
-                aria-labelledby="toggle-label-ai"
-                aria-describedby="toggle-desc-ai"
-              />
-              <span class="toggle-slider"></span>
-            </label>
+        <div class="toggle-item">
+          <div class="toggle-info">
+            <span id="toggle-label-auth" class="toggle-label">用户认证</span>
+            <span id="toggle-desc-auth" class="toggle-desc">启用用户登录注册功能</span>
           </div>
-          <div class="toggle-item">
-            <div class="toggle-info">
-              <span id="toggle-label-auth" class="toggle-label">用户认证</span>
-              <span id="toggle-desc-auth" class="toggle-desc">启用用户登录注册功能</span>
-            </div>
-            <label class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="features.enableAuth"
-                aria-labelledby="toggle-label-auth"
-                aria-describedby="toggle-desc-auth"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="toggle-item">
-            <div class="toggle-info">
-              <span id="toggle-label-notify" class="toggle-label">实时通知</span>
-              <span id="toggle-desc-notify" class="toggle-desc">启用 WebSocket 实时通知</span>
-            </div>
-            <label class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="features.enableNotifications"
-                aria-labelledby="toggle-label-notify"
-                aria-describedby="toggle-desc-notify"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+          <label class="toggle-switch">
+            <input
+              type="checkbox"
+              v-model="features.enableAuth"
+              aria-labelledby="toggle-label-auth"
+              aria-describedby="toggle-desc-auth"
+            />
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-      </section>
+        <div class="toggle-item">
+          <div class="toggle-info">
+            <span id="toggle-label-notify" class="toggle-label">实时通知</span>
+            <span id="toggle-desc-notify" class="toggle-desc">启用 WebSocket 实时通知</span>
+          </div>
+          <label class="toggle-switch">
+            <input
+              type="checkbox"
+              v-model="features.enableNotifications"
+              aria-labelledby="toggle-label-notify"
+              aria-describedby="toggle-desc-notify"
+            />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
 
-      <section class="card danger-zone">
-        <div class="card-header">
-          <h3>危险操作</h3>
-        </div>
-        <div class="danger-content">
-          <div class="danger-item">
-            <div class="danger-info">
-              <span class="danger-label">重置数据库</span>
-              <span class="danger-desc">清除所有数据并重新初始化数据库</span>
-            </div>
-            <button class="btn btn-danger" @click="resetDatabase">
-              重置数据库
-            </button>
+    <section class="card danger-zone">
+      <div class="card-header">
+        <h3>危险操作</h3>
+      </div>
+      <div class="danger-content">
+        <div class="danger-item">
+          <div class="danger-info">
+            <span class="danger-label">重置数据库</span>
+            <span class="danger-desc">清除所有数据并重新初始化数据库</span>
           </div>
-          <div class="danger-item">
-            <div class="danger-info">
-              <span class="danger-label">清除缓存</span>
-              <span class="danger-desc">清除所有缓存数据</span>
-            </div>
-            <button class="btn btn-danger" @click="clearCache">
-              清除缓存
-            </button>
-          </div>
+          <button class="btn btn-danger" @click="resetDatabase">
+            重置数据库
+          </button>
         </div>
-      </section>
-    </div>
-  </AdminLayout>
+        <div class="danger-item">
+          <div class="danger-info">
+            <span class="danger-label">清除缓存</span>
+            <span class="danger-desc">清除所有缓存数据</span>
+          </div>
+          <button class="btn btn-danger" @click="clearCache">
+            清除缓存
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import AdminLayout from './AdminLayout.vue'
 import { siteConfig } from '@/config/site.config.js'
 import { dataService } from '@/services'
 

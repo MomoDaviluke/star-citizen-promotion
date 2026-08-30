@@ -5,102 +5,100 @@
 -->
 
 <template>
-  <AdminLayout>
-    <div class="members-admin">
-      <div class="toolbar">
-        <div class="filter-group">
-          <select v-model="statusFilter" class="filter-select">
-            <option value="">全部状态</option>
-            <option value="active">活跃</option>
-            <option value="inactive">非活跃</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" @click="openCreateModal">添加成员</button>
+  <div class="members-admin">
+    <div class="toolbar">
+      <div class="filter-group">
+        <select v-model="statusFilter" class="filter-select">
+          <option value="">全部状态</option>
+          <option value="active">活跃</option>
+          <option value="inactive">非活跃</option>
+        </select>
       </div>
+      <button class="btn btn-primary" @click="openCreateModal">添加成员</button>
+    </div>
 
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>成员</th>
-              <th>角色</th>
-              <th>状态</th>
-              <th>加入时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="member in filteredMembers" :key="member.id">
-              <td data-label="成员">
-                <div class="member-info">
-                  <span class="member-name">{{ member.name }}</span>
-                </div>
-              </td>
-              <td data-label="角色">{{ member.role }}</td>
-              <td data-label="状态">
-                <span class="status-badge" :class="`status-${member.status}`">
-                  {{ getMemberStatusLabel(member.status) }}
-                </span>
-              </td>
-              <td data-label="加入时间">{{ formatDate(member.created_at) }}</td>
-              <td data-label="操作">
-                <div class="action-buttons">
-                  <button class="btn btn-sm" @click="editMember(member)">编辑</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteMember(member.id)">删除</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>成员</th>
+            <th>角色</th>
+            <th>状态</th>
+            <th>加入时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="member in filteredMembers" :key="member.id">
+            <td data-label="成员">
+              <div class="member-info">
+                <span class="member-name">{{ member.name }}</span>
+              </div>
+            </td>
+            <td data-label="角色">{{ member.role }}</td>
+            <td data-label="状态">
+              <span class="status-badge" :class="`status-${member.status}`">
+                {{ getMemberStatusLabel(member.status) }}
+              </span>
+            </td>
+            <td data-label="加入时间">{{ formatDate(member.created_at) }}</td>
+            <td data-label="操作">
+              <div class="action-buttons">
+                <button class="btn btn-sm" @click="editMember(member)">编辑</button>
+                <button class="btn btn-sm btn-danger" @click="deleteMember(member.id)">删除</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <div v-if="filteredMembers.length === 0" class="empty-state">
-          暂无成员数据
-        </div>
-      </div>
-
-      <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>{{ modalMode === 'edit' ? '编辑成员' : '添加成员' }}</h3>
-            <button class="modal-close" @click="closeModal">&times;</button>
-          </div>
-          <form @submit.prevent="saveForm" class="edit-form">
-            <div class="form-group">
-              <label class="form-label">姓名</label>
-              <input v-model="editForm.name" name="name" type="text" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">角色</label>
-              <input v-model="editForm.role" name="role" type="text" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">简介</label>
-              <textarea v-model="editForm.intro" class="form-input form-textarea" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">头像地址</label>
-              <input v-model="editForm.avatar" type="text" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">状态</label>
-              <select v-model="editForm.status" name="status" class="form-input">
-                <option value="active">活跃</option>
-                <option value="inactive">非活跃</option>
-                <option value="retired">已退役</option>
-              </select>
-            </div>
-            <p v-if="formError" class="form-error">{{ formError }}</p>
-            <div class="modal-actions">
-              <button type="button" class="btn" @click="closeModal">取消</button>
-              <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                {{ isSaving ? '保存中...' : '保存' }}
-              </button>
-            </div>
-          </form>
-        </div>
+      <div v-if="filteredMembers.length === 0" class="empty-state">
+        暂无成员数据
       </div>
     </div>
-  </AdminLayout>
+
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ modalMode === 'edit' ? '编辑成员' : '添加成员' }}</h3>
+          <button class="modal-close" @click="closeModal">&times;</button>
+        </div>
+        <form @submit.prevent="saveForm" class="edit-form">
+          <div class="form-group">
+            <label class="form-label">姓名</label>
+            <input v-model="editForm.name" name="name" type="text" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">角色</label>
+            <input v-model="editForm.role" name="role" type="text" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">简介</label>
+            <textarea v-model="editForm.intro" class="form-input form-textarea" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">头像地址</label>
+            <input v-model="editForm.avatar" type="text" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">状态</label>
+            <select v-model="editForm.status" name="status" class="form-input">
+              <option value="active">活跃</option>
+              <option value="inactive">非活跃</option>
+              <option value="retired">已退役</option>
+            </select>
+          </div>
+          <p v-if="formError" class="form-error">{{ formError }}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn" @click="closeModal">取消</button>
+            <button type="submit" class="btn btn-primary" :disabled="isSaving">
+              {{ isSaving ? '保存中...' : '保存' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -114,7 +112,6 @@ const logger = createLogger('MembersAdmin')
  */
 
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 import { getMemberStatusLabel } from '@/utils/labelMaps'
 

@@ -5,176 +5,174 @@
 -->
 
 <template>
-  <AdminLayout>
-    <div class="applications-admin">
-      <div class="toolbar">
-        <div class="filter-group">
-          <select v-model="statusFilter" class="filter-select">
-            <option value="">全部状态</option>
-            <option value="pending">待审核</option>
-            <option value="approved">已通过</option>
-            <option value="rejected">已拒绝</option>
-          </select>
-        </div>
-        <div class="search-group">
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="search-input"
-            placeholder="搜索姓名或邮箱..."
-          />
-        </div>
+  <div class="applications-admin">
+    <div class="toolbar">
+      <div class="filter-group">
+        <select v-model="statusFilter" class="filter-select">
+          <option value="">全部状态</option>
+          <option value="pending">待审核</option>
+          <option value="approved">已通过</option>
+          <option value="rejected">已拒绝</option>
+        </select>
       </div>
-
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>申请人</th>
-              <th>联系方式</th>
-              <th>游戏经验</th>
-              <th>提交时间</th>
-              <th>状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="app in filteredApplications" :key="app.id">
-              <td data-label="申请人">
-                <div class="applicant-info">
-                  <span class="applicant-name">{{ app.name }}</span>
-                  <span class="applicant-discord" v-if="app.discord">
-                    Discord: {{ app.discord }}
-                  </span>
-                </div>
-              </td>
-              <td data-label="联系方式">
-                <a :href="`mailto:${app.email}`" class="email-link">
-                  {{ app.email }}
-                </a>
-              </td>
-              <td data-label="游戏经验">
-                <span class="experience-preview" :title="app.experience">
-                  {{ truncate(app.experience, 30) || '未填写' }}
-                </span>
-              </td>
-              <td data-label="提交时间">{{ formatDate(app.created_at) }}</td>
-              <td data-label="状态">
-                <span class="status-badge" :class="`status-${app.status}`">
-                  {{ getApplicationStatusLabel(app.status) }}
-                </span>
-              </td>
-              <td data-label="操作">
-                <div class="action-buttons">
-                  <button
-                    class="btn btn-sm"
-                    @click="viewApplication(app)"
-                    title="查看详情"
-                  >
-                    查看
-                  </button>
-                  <button
-                    v-if="app.status === 'pending'"
-                    class="btn btn-sm btn-success"
-                    @click="updateStatus(app.id, 'approved')"
-                    title="通过申请"
-                  >
-                    通过
-                  </button>
-                  <button
-                    v-if="app.status === 'pending'"
-                    class="btn btn-sm btn-danger"
-                    @click="updateStatus(app.id, 'rejected')"
-                    title="拒绝申请"
-                  >
-                    拒绝
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-if="filteredApplications.length === 0" class="empty-state">
-          暂无申请记录
-        </div>
-      </div>
-
-      <div class="pagination" v-if="pagination.total > pagination.limit">
-        <button
-          class="btn btn-sm"
-          :disabled="pagination.offset === 0"
-          @click="loadPage(pagination.offset - pagination.limit)"
-        >
-          上一页
-        </button>
-        <span class="page-info">
-          {{ pagination.offset + 1 }} - {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} / {{ pagination.total }}
-        </span>
-        <button
-          class="btn btn-sm"
-          :disabled="!pagination.hasMore"
-          @click="loadPage(pagination.offset + pagination.limit)"
-        >
-          下一页
-        </button>
+      <div class="search-group">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="search-input"
+          placeholder="搜索姓名或邮箱..."
+        />
       </div>
     </div>
 
-    <Teleport to="body">
-      <div v-if="selectedApplication" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>申请详情</h3>
-            <button class="modal-close" @click="closeModal">×</button>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>申请人</th>
+            <th>联系方式</th>
+            <th>游戏经验</th>
+            <th>提交时间</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="app in filteredApplications" :key="app.id">
+            <td data-label="申请人">
+              <div class="applicant-info">
+                <span class="applicant-name">{{ app.name }}</span>
+                <span class="applicant-discord" v-if="app.discord">
+                  Discord: {{ app.discord }}
+                </span>
+              </div>
+            </td>
+            <td data-label="联系方式">
+              <a :href="`mailto:${app.email}`" class="email-link">
+                {{ app.email }}
+              </a>
+            </td>
+            <td data-label="游戏经验">
+              <span class="experience-preview" :title="app.experience">
+                {{ truncate(app.experience, 30) || '未填写' }}
+              </span>
+            </td>
+            <td data-label="提交时间">{{ formatDate(app.created_at) }}</td>
+            <td data-label="状态">
+              <span class="status-badge" :class="`status-${app.status}`">
+                {{ getApplicationStatusLabel(app.status) }}
+              </span>
+            </td>
+            <td data-label="操作">
+              <div class="action-buttons">
+                <button
+                  class="btn btn-sm"
+                  @click="viewApplication(app)"
+                  title="查看详情"
+                >
+                  查看
+                </button>
+                <button
+                  v-if="app.status === 'pending'"
+                  class="btn btn-sm btn-success"
+                  @click="updateStatus(app.id, 'approved')"
+                  title="通过申请"
+                >
+                  通过
+                </button>
+                <button
+                  v-if="app.status === 'pending'"
+                  class="btn btn-sm btn-danger"
+                  @click="updateStatus(app.id, 'rejected')"
+                  title="拒绝申请"
+                >
+                  拒绝
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div v-if="filteredApplications.length === 0" class="empty-state">
+        暂无申请记录
+      </div>
+    </div>
+
+    <div class="pagination" v-if="pagination?.total > pagination?.limit">
+      <button
+        class="btn btn-sm"
+        :disabled="pagination.offset === 0"
+        @click="loadPage(pagination.offset - pagination.limit)"
+      >
+        上一页
+      </button>
+      <span class="page-info">
+        {{ pagination.offset + 1 }} - {{ Math.min(pagination.offset + pagination.limit, pagination.total) }} / {{ pagination.total }}
+      </span>
+      <button
+        class="btn btn-sm"
+        :disabled="!pagination.hasMore"
+        @click="loadPage(pagination.offset + pagination.limit)"
+      >
+        下一页
+      </button>
+    </div>
+  </div>
+
+  <Teleport to="body">
+    <div v-if="selectedApplication" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>申请详情</h3>
+          <button class="modal-close" @click="closeModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-row">
+            <span class="detail-label">姓名</span>
+            <span class="detail-value">{{ selectedApplication.name }}</span>
           </div>
-          <div class="modal-body">
-            <div class="detail-row">
-              <span class="detail-label">姓名</span>
-              <span class="detail-value">{{ selectedApplication.name }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">邮箱</span>
-              <span class="detail-value">{{ selectedApplication.email }}</span>
-            </div>
-            <div class="detail-row" v-if="selectedApplication.discord">
-              <span class="detail-label">Discord</span>
-              <span class="detail-value">{{ selectedApplication.discord }}</span>
-            </div>
-            <div class="detail-row" v-if="selectedApplication.availability">
-              <span class="detail-label">在线时间</span>
-              <span class="detail-value">{{ getAvailabilityLabel(selectedApplication.availability) }}</span>
-            </div>
-            <div class="detail-row" v-if="selectedApplication.experience">
-              <span class="detail-label">游戏经验</span>
-              <p class="detail-text">{{ selectedApplication.experience }}</p>
-            </div>
-            <div class="detail-row" v-if="selectedApplication.reason">
-              <span class="detail-label">加入原因</span>
-              <p class="detail-text">{{ selectedApplication.reason }}</p>
-            </div>
+          <div class="detail-row">
+            <span class="detail-label">邮箱</span>
+            <span class="detail-value">{{ selectedApplication.email }}</span>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline" @click="closeModal">关闭</button>
-            <template v-if="selectedApplication.status === 'pending'">
-              <button
-                class="btn btn-danger"
-                @click="updateStatus(selectedApplication.id, 'rejected')"
-              >
-                拒绝
-              </button>
-              <button
-                class="btn btn-primary"
-                @click="updateStatus(selectedApplication.id, 'approved')"
-              >
-                通过
-              </button>
-            </template>
+          <div class="detail-row" v-if="selectedApplication.discord">
+            <span class="detail-label">Discord</span>
+            <span class="detail-value">{{ selectedApplication.discord }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedApplication.availability">
+            <span class="detail-label">在线时间</span>
+            <span class="detail-value">{{ getAvailabilityLabel(selectedApplication.availability) }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedApplication.experience">
+            <span class="detail-label">游戏经验</span>
+            <p class="detail-text">{{ selectedApplication.experience }}</p>
+          </div>
+          <div class="detail-row" v-if="selectedApplication.reason">
+            <span class="detail-label">加入原因</span>
+            <p class="detail-text">{{ selectedApplication.reason }}</p>
           </div>
         </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="closeModal">关闭</button>
+          <template v-if="selectedApplication.status === 'pending'">
+            <button
+              class="btn btn-danger"
+              @click="updateStatus(selectedApplication.id, 'rejected')"
+            >
+              拒绝
+            </button>
+            <button
+              class="btn btn-primary"
+              @click="updateStatus(selectedApplication.id, 'approved')"
+            >
+              通过
+            </button>
+          </template>
+        </div>
       </div>
-    </Teleport>
-  </AdminLayout>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -188,7 +186,6 @@ const logger = createLogger('ApplicationsAdmin')
  */
 
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 import { getApplicationStatusLabel, getAvailabilityLabel } from '@/utils/labelMaps'
 
@@ -254,7 +251,10 @@ async function loadApplications(offset = 0) {
 
     if (response.success) {
       applications.value = response.data
-      pagination.value = response.pagination
+      // 后端未返回 pagination 时保留本地默认值，避免置为 undefined 导致模板渲染崩溃（TD-26）
+      if (response.pagination) {
+        pagination.value = { ...pagination.value, ...response.pagination }
+      }
     }
   } catch (error) {
     logger.error('加载申请列表失败:', error)

@@ -24,6 +24,12 @@
 | M0-2 | MembersAdmin 新增/编辑弹窗实现（TDD 绿） | ✅ 已完成 | 修复 editMember 半成品 |
 | M0-3 | Projects/Pilots/Dashboard 死链修复 | ✅ 已完成 | `/admin/*/new` 系统性死链清零 |
 | M0-4 | 验证与提交 | ✅ 已完成 | 411/411、typecheck 0、build 通过 |
+| M3-1 | `e2e/fleet.spec.js`（列表/筛选/详情跳转） | ✅ 已完成 | 7 用例（2026-08-30） |
+| M3-2 | `e2e/admin.spec.js`（登录→成员 CRUD 往返） | ✅ 已完成 | 5 用例，端到端验收 M0（2026-08-30） |
+| TD-25 | 路由守卫未等待 auth 初始化，刷新/直访 /admin 被误踢登录页 | ✅ 已完成 | beforeEach 改 async + await initializeAuth |
+| TD-26 | 6 个 admin 子页面双重 AdminLayout 包裹（无 slot）致内容不渲染 | ✅ 已完成 | 移除子页面 AdminLayout 包装 |
+| TD-27 | ApplicationsAdmin pagination 未兜底，响应无该字段时模板崩溃 | ✅ 已完成 | 赋值兜底 + 模板可选链 |
+| E2E-SW-01 | PWA Service Worker 绕过 page.route，二次请求直连后端 502 | ✅ 已完成 | playwright `serviceWorkers: 'block'` |
 
 ### P1 — 上线前缺口
 

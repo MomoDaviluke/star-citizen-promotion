@@ -5,104 +5,102 @@
 -->
 
 <template>
-  <AdminLayout>
-    <div class="projects-admin">
-      <div class="toolbar">
-        <div class="filter-group">
-          <select v-model="statusFilter" class="filter-select">
-            <option value="">全部状态</option>
-            <option value="active">进行中</option>
-            <option value="completed">已完成</option>
-            <option value="paused">已暂停</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" @click="openCreateModal">创建项目</button>
+  <div class="projects-admin">
+    <div class="toolbar">
+      <div class="filter-group">
+        <select v-model="statusFilter" class="filter-select">
+          <option value="">全部状态</option>
+          <option value="active">进行中</option>
+          <option value="completed">已完成</option>
+          <option value="paused">已暂停</option>
+        </select>
       </div>
+      <button class="btn btn-primary" @click="openCreateModal">创建项目</button>
+    </div>
 
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>项目名称</th>
-              <th>描述</th>
-              <th>状态</th>
-              <th>进度</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="project in filteredProjects" :key="project.id">
-              <td data-label="项目名称" class="project-name">{{ project.name }}</td>
-              <td data-label="描述" class="project-desc">{{ truncate(project.description, 50) }}</td>
-              <td data-label="状态">
-                <span class="status-badge" :class="`status-${project.status}`">
-                  {{ getProjectStatusLabel(project.status) }}
-                </span>
-              </td>
-              <td data-label="进度">
-                <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: `${project.progress || 0}%` }"></div>
-                  <span class="progress-text">{{ project.progress || 0 }}%</span>
-                </div>
-              </td>
-              <td data-label="操作">
-                <div class="action-buttons">
-                  <button class="btn btn-sm" @click="editProject(project)">编辑</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteProject(project.id)">删除</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>项目名称</th>
+            <th>描述</th>
+            <th>状态</th>
+            <th>进度</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="project in filteredProjects" :key="project.id">
+            <td data-label="项目名称" class="project-name">{{ project.name }}</td>
+            <td data-label="描述" class="project-desc">{{ truncate(project.description, 50) }}</td>
+            <td data-label="状态">
+              <span class="status-badge" :class="`status-${project.status}`">
+                {{ getProjectStatusLabel(project.status) }}
+              </span>
+            </td>
+            <td data-label="进度">
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: `${project.progress || 0}%` }"></div>
+                <span class="progress-text">{{ project.progress || 0 }}%</span>
+              </div>
+            </td>
+            <td data-label="操作">
+              <div class="action-buttons">
+                <button class="btn btn-sm" @click="editProject(project)">编辑</button>
+                <button class="btn btn-sm btn-danger" @click="deleteProject(project.id)">删除</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <div v-if="filteredProjects.length === 0" class="empty-state">
-          暂无项目数据
-        </div>
-      </div>
-
-      <div v-if="editingProject" class="modal-overlay" @click.self="closeEdit">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>{{ modalMode === 'edit' ? '编辑项目' : '创建项目' }}</h3>
-            <button class="modal-close" @click="closeEdit">&times;</button>
-          </div>
-          <form @submit.prevent="saveEdit" class="edit-form">
-            <div class="form-group">
-              <label class="form-label">项目名称</label>
-              <input v-model="editForm.name" type="text" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">周期</label>
-              <input v-model="editForm.period" type="text" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">描述</label>
-              <textarea v-model="editForm.description" class="form-input form-textarea" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">状态</label>
-              <select v-model="editForm.status" class="form-input">
-                <option value="planning">规划中</option>
-                <option value="active">进行中</option>
-                <option value="completed">已完成</option>
-                <option value="cancelled">已取消</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">进度 (%)</label>
-              <input v-model.number="editForm.progress" type="number" min="0" max="100" class="form-input" />
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="btn" @click="closeEdit">取消</button>
-              <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                {{ isSaving ? '保存中...' : '保存' }}
-              </button>
-            </div>
-          </form>
-        </div>
+      <div v-if="filteredProjects.length === 0" class="empty-state">
+        暂无项目数据
       </div>
     </div>
-  </AdminLayout>
+
+    <div v-if="editingProject" class="modal-overlay" @click.self="closeEdit">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ modalMode === 'edit' ? '编辑项目' : '创建项目' }}</h3>
+          <button class="modal-close" @click="closeEdit">&times;</button>
+        </div>
+        <form @submit.prevent="saveEdit" class="edit-form">
+          <div class="form-group">
+            <label class="form-label">项目名称</label>
+            <input v-model="editForm.name" type="text" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">周期</label>
+            <input v-model="editForm.period" type="text" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea v-model="editForm.description" class="form-input form-textarea" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">状态</label>
+            <select v-model="editForm.status" class="form-input">
+              <option value="planning">规划中</option>
+              <option value="active">进行中</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">进度 (%)</label>
+            <input v-model.number="editForm.progress" type="number" min="0" max="100" class="form-input" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn" @click="closeEdit">取消</button>
+            <button type="submit" class="btn btn-primary" :disabled="isSaving">
+              {{ isSaving ? '保存中...' : '保存' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -110,7 +108,6 @@ import { createLogger } from '../../utils/logger.js'
 const logger = createLogger('ProjectsAdmin')
 
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 import { getProjectStatusLabel } from '@/utils/labelMaps'
 

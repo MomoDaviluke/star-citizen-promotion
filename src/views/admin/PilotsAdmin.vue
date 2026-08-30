@@ -5,105 +5,103 @@
 -->
 
 <template>
-  <AdminLayout>
-    <div class="pilots-admin">
-      <div class="toolbar">
-        <div class="search-group">
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="search-input"
-            placeholder="搜索飞行员..."
-          />
-        </div>
-        <button class="btn btn-primary" @click="openCreateModal">添加飞行员</button>
+  <div class="pilots-admin">
+    <div class="toolbar">
+      <div class="search-group">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="search-input"
+          placeholder="搜索飞行员..."
+        />
       </div>
+      <button class="btn btn-primary" @click="openCreateModal">添加飞行员</button>
+    </div>
 
-      <div class="pilots-grid">
-        <div
-          v-for="pilot in filteredPilots"
-          :key="pilot.id"
-          class="pilot-card"
-        >
-          <div class="pilot-avatar">
-            <span class="avatar-placeholder">{{ pilot.name?.charAt(0) || '?' }}</span>
+    <div class="pilots-grid">
+      <div
+        v-for="pilot in filteredPilots"
+        :key="pilot.id"
+        class="pilot-card"
+      >
+        <div class="pilot-avatar">
+          <span class="avatar-placeholder">{{ pilot.name?.charAt(0) || '?' }}</span>
+        </div>
+        <div class="pilot-info">
+          <h4 class="pilot-name">{{ pilot.name }}</h4>
+          <p class="pilot-callsign">{{ pilot.callsign }}</p>
+          <p class="pilot-specialty">{{ pilot.specialty || '通用飞行员' }}</p>
+        </div>
+        <div class="pilot-stats">
+          <div class="stat">
+            <span class="stat-value">{{ pilot.missions || 0 }}</span>
+            <span class="stat-label">任务</span>
           </div>
-          <div class="pilot-info">
-            <h4 class="pilot-name">{{ pilot.name }}</h4>
-            <p class="pilot-callsign">{{ pilot.callsign }}</p>
-            <p class="pilot-specialty">{{ pilot.specialty || '通用飞行员' }}</p>
-          </div>
-          <div class="pilot-stats">
-            <div class="stat">
-              <span class="stat-value">{{ pilot.missions || 0 }}</span>
-              <span class="stat-label">任务</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value">{{ pilot.hours || 0 }}</span>
-              <span class="stat-label">小时</span>
-            </div>
-          </div>
-          <div class="pilot-actions">
-            <button class="btn btn-sm" @click="editPilot(pilot)">编辑</button>
-            <button class="btn btn-sm btn-danger" @click="deletePilot(pilot.id)">删除</button>
+          <div class="stat">
+            <span class="stat-value">{{ pilot.hours || 0 }}</span>
+            <span class="stat-label">小时</span>
           </div>
         </div>
-      </div>
-
-      <div v-if="filteredPilots.length === 0" class="empty-state">
-        暂无飞行员数据
-      </div>
-
-      <div v-if="editingPilot" class="modal-overlay" @click.self="closeEdit">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>{{ modalMode === 'edit' ? '编辑飞行员' : '添加飞行员' }}</h3>
-            <button class="modal-close" @click="closeEdit">&times;</button>
-          </div>
-          <form @submit.prevent="saveEdit" class="edit-form">
-            <div class="form-group">
-              <label class="form-label">名称</label>
-              <input v-model="editForm.name" type="text" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">呼号</label>
-              <input v-model="editForm.callsign" type="text" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">驾驶飞船</label>
-              <input v-model="editForm.ship" type="text" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">描述</label>
-              <textarea v-model="editForm.description" class="form-input form-textarea" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">任务数</label>
-              <input v-model.number="editForm.missions" type="number" min="0" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">击杀数</label>
-              <input v-model.number="editForm.kills" type="number" min="0" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">状态</label>
-              <select v-model="editForm.status" class="form-input">
-                <option value="active">活跃</option>
-                <option value="inactive">非活跃</option>
-                <option value="kia">KIA</option>
-              </select>
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="btn" @click="closeEdit">取消</button>
-              <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                {{ isSaving ? '保存中...' : '保存' }}
-              </button>
-            </div>
-          </form>
+        <div class="pilot-actions">
+          <button class="btn btn-sm" @click="editPilot(pilot)">编辑</button>
+          <button class="btn btn-sm btn-danger" @click="deletePilot(pilot.id)">删除</button>
         </div>
       </div>
     </div>
-  </AdminLayout>
+
+    <div v-if="filteredPilots.length === 0" class="empty-state">
+      暂无飞行员数据
+    </div>
+
+    <div v-if="editingPilot" class="modal-overlay" @click.self="closeEdit">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ modalMode === 'edit' ? '编辑飞行员' : '添加飞行员' }}</h3>
+          <button class="modal-close" @click="closeEdit">&times;</button>
+        </div>
+        <form @submit.prevent="saveEdit" class="edit-form">
+          <div class="form-group">
+            <label class="form-label">名称</label>
+            <input v-model="editForm.name" type="text" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">呼号</label>
+            <input v-model="editForm.callsign" type="text" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">驾驶飞船</label>
+            <input v-model="editForm.ship" type="text" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea v-model="editForm.description" class="form-input form-textarea" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">任务数</label>
+            <input v-model.number="editForm.missions" type="number" min="0" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">击杀数</label>
+            <input v-model.number="editForm.kills" type="number" min="0" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">状态</label>
+            <select v-model="editForm.status" class="form-input">
+              <option value="active">活跃</option>
+              <option value="inactive">非活跃</option>
+              <option value="kia">KIA</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn" @click="closeEdit">取消</button>
+            <button type="submit" class="btn btn-primary" :disabled="isSaving">
+              {{ isSaving ? '保存中...' : '保存' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -111,7 +109,6 @@ import { createLogger } from '../../utils/logger.js'
 const logger = createLogger('PilotsAdmin')
 
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 
 const pilots = ref([])

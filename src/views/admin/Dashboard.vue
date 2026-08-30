@@ -5,101 +5,99 @@
 -->
 
 <template>
-  <AdminLayout>
-    <div class="dashboard">
-      <section class="stats-grid">
-        <article
-          v-for="(stat, index) in stats"
-          :key="stat.label"
-          class="stat-card"
-          :style="{ animationDelay: `${index * 0.1}s` }"
-        >
-          <div class="stat-icon">{{ stat.icon }}</div>
-          <div class="stat-content">
-            <h3 class="stat-value">{{ stat.value }}</h3>
-            <p class="stat-label">{{ stat.label }}</p>
-          </div>
-          <div class="stat-trend" :class="stat.trend > 0 ? 'up' : 'down'">
-            <span>{{ stat.trend > 0 ? '↑' : '↓' }}</span>
-            <span>{{ Math.abs(stat.trend) }}%</span>
-          </div>
-        </article>
-      </section>
+  <div class="dashboard">
+    <section class="stats-grid">
+      <article
+        v-for="(stat, index) in stats"
+        :key="stat.label"
+        class="stat-card"
+        :style="{ animationDelay: `${index * 0.1}s` }"
+      >
+        <div class="stat-icon">{{ stat.icon }}</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ stat.value }}</h3>
+          <p class="stat-label">{{ stat.label }}</p>
+        </div>
+        <div class="stat-trend" :class="stat.trend > 0 ? 'up' : 'down'">
+          <span>{{ stat.trend > 0 ? '↑' : '↓' }}</span>
+          <span>{{ Math.abs(stat.trend) }}%</span>
+        </div>
+      </article>
+    </section>
 
-      <section class="dashboard-grid">
-        <div class="card recent-applications">
-          <div class="card-header">
-            <h3>最近申请</h3>
-            <RouterLink to="/admin/applications" class="view-all">
-              查看全部 →
-            </RouterLink>
-          </div>
-          <div class="application-list">
-            <div
-              v-for="app in recentApplications"
-              :key="app.id"
-              class="application-item"
-            >
-              <div class="app-info">
-                <span class="app-name">{{ app.name }}</span>
-                <span class="app-email">{{ app.email }}</span>
-              </div>
-              <div class="app-meta">
-                <span class="app-date">{{ formatDate(app.created_at) }}</span>
-                <span class="app-status" :class="`status-${app.status}`">
-                  {{ getApplicationStatusLabel(app.status) }}
-                </span>
-              </div>
+    <section class="dashboard-grid">
+      <div class="card recent-applications">
+        <div class="card-header">
+          <h3>最近申请</h3>
+          <RouterLink to="/admin/applications" class="view-all">
+            查看全部 →
+          </RouterLink>
+        </div>
+        <div class="application-list">
+          <div
+            v-for="app in recentApplications"
+            :key="app.id"
+            class="application-item"
+          >
+            <div class="app-info">
+              <span class="app-name">{{ app.name }}</span>
+              <span class="app-email">{{ app.email }}</span>
             </div>
-            <div v-if="recentApplications.length === 0" class="empty-state">
-              暂无申请记录
+            <div class="app-meta">
+              <span class="app-date">{{ formatDate(app.created_at) }}</span>
+              <span class="app-status" :class="`status-${app.status}`">
+                {{ getApplicationStatusLabel(app.status) }}
+              </span>
             </div>
           </div>
+          <div v-if="recentApplications.length === 0" class="empty-state">
+            暂无申请记录
+          </div>
         </div>
+      </div>
 
-        <div class="card quick-actions">
-          <div class="card-header">
-            <h3>快捷操作</h3>
-          </div>
-          <div class="action-grid">
-            <RouterLink to="/admin/members" class="action-item">
-              <span class="action-icon">👤</span>
-              <span class="action-label">成员管理</span>
-            </RouterLink>
-            <RouterLink to="/admin/projects" class="action-item">
-              <span class="action-icon">📋</span>
-              <span class="action-label">项目管理</span>
-            </RouterLink>
-            <RouterLink to="/admin/pilots" class="action-item">
-              <span class="action-icon">✈</span>
-              <span class="action-label">飞行员管理</span>
-            </RouterLink>
-            <RouterLink to="/admin/settings" class="action-item">
-              <span class="action-icon">⚙</span>
-              <span class="action-label">站点设置</span>
-            </RouterLink>
-          </div>
+      <div class="card quick-actions">
+        <div class="card-header">
+          <h3>快捷操作</h3>
         </div>
+        <div class="action-grid">
+          <RouterLink to="/admin/members" class="action-item">
+            <span class="action-icon">👤</span>
+            <span class="action-label">成员管理</span>
+          </RouterLink>
+          <RouterLink to="/admin/projects" class="action-item">
+            <span class="action-icon">📋</span>
+            <span class="action-label">项目管理</span>
+          </RouterLink>
+          <RouterLink to="/admin/pilots" class="action-item">
+            <span class="action-icon">✈</span>
+            <span class="action-label">飞行员管理</span>
+          </RouterLink>
+          <RouterLink to="/admin/settings" class="action-item">
+            <span class="action-icon">⚙</span>
+            <span class="action-label">站点设置</span>
+          </RouterLink>
+        </div>
+      </div>
 
-        <div class="card activity-log">
-          <div class="card-header">
-            <h3>活动日志</h3>
-          </div>
-          <div class="log-list">
-            <div
-              v-for="(log, index) in activityLogs"
-              :key="index"
-              class="log-item"
-            >
-              <span class="log-action">{{ log.action }}</span>
-              <span class="log-entity">{{ log.entity }}</span>
-              <span class="log-time">{{ log.time }}</span>
-            </div>
+      <div class="card activity-log">
+        <div class="card-header">
+          <h3>活动日志</h3>
+        </div>
+        <div class="log-list">
+          <div
+            v-for="(log, index) in activityLogs"
+            :key="index"
+            class="log-item"
+          >
+            <span class="log-action">{{ log.action }}</span>
+            <span class="log-entity">{{ log.entity }}</span>
+            <span class="log-time">{{ log.time }}</span>
           </div>
         </div>
-      </section>
-    </div>
-  </AdminLayout>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script setup>
@@ -113,7 +111,6 @@ const logger = createLogger('Dashboard')
  */
 
 import { ref, onMounted } from 'vue'
-import AdminLayout from './AdminLayout.vue'
 import { dataService } from '@/services'
 import { getApplicationStatusLabel } from '@/utils/labelMaps'
 

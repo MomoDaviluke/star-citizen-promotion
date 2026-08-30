@@ -199,13 +199,20 @@ const router = createRouter({
  * @description 在每次路由切换前执行，用于权限检查和页面准备。
  *              认证状态通过 Pinia auth store 获取，Token 由 httpOnly cookie 管理。
  */
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const title = /** @type {string|undefined} */ (to.meta.title)
   if (title) {
     document.title = title
   }
 
   const authStore = useAuthStore()
+
+  // 等待登录态恢复完成再判定权限：main.js 启动时调用的 initializeAuth 是异步的，
+  // 若守卫不等待，用户刷新页面或直接访问 /admin/* 时 user 仍为 null，
+  // 会被误判为未登录而踢到登录页（TD-25）。initializeAuth 内部有 initialized 幂等保护。
+  if (!authStore.initialized) {
+    await authStore.initializeAuth()
+  }
 
   // 检查路由是否需要认证
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
