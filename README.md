@@ -102,26 +102,31 @@ LLM_EMBEDDING_MODEL=bge-m3
 
 ## ✨ 功能特性
 
-### 前端功能
+### 🎮 玩家端
 
-- **科幻 UI 设计** — 网格背景、光晕效果、扫描线动画，沉浸式星际体验
-- **路由预加载** — 智能预加载相邻路由组件，提升页面导航体验
-- **双数据源** — 支持后端 API 与静态数据自动切换，离线亦可访问
-- **AI 服务架构** — 优先级队列调度、并发控制、超时重试、资源监控
-- **完整认证流程** — 注册 / 登录 / 令牌自动刷新 / RBAC 权限控制
-- **错误边界** — React 风格 ErrorBoundary 组件，优雅处理渲染异常
-- **响应式设计** — 移动端适配，支持 `prefers-reduced-motion` 无障碍偏好
-- **管理后台** — 仪表盘、成员管理、飞行员管理、项目管理、申请审核
+- **沉浸式科幻 UI** — 网格背景/光晕/扫描线/MFD 面板式组件，GSAP ScrollTrigger 滚动叙事动效
+- **舰船图鉴与舰队展示** — 内置舰船数据库、详情页、分类筛选（E2E 已覆盖）
+- **活动日历** — 月历/列表双视图、活动报名/取消、管理员创建/编辑/删除（CRUD 全覆盖）
+- **入队申请** — 表单实时校验、成功面板、AI 招募官画像一键预填、转化埋点全程追踪
+- **PWA 离线支持** — Service Worker 缓存、离线回退页、安装提示
+- **亮暗双主题** — CSS 变量设计系统（CI lint 守护 0 断裂），`prefers-reduced-motion` 无障碍
 
-### 后端功能
+### 🛡️ 管理端
 
-- **RESTful API** — 规范的资源路由设计，统一的响应格式
-- **JWT 认证** — 令牌签发 / 验证 / 刷新，支持可选认证与角色鉴权
-- **数据库连接池** — MySQL2 连接池管理，支持事务操作
-- **请求日志** — Morgan 访问日志 + Winston 结构化日志 + requestId 全链路追踪
-- **速率限制** — express-rate-limit 防止 API 滥用
-- **参数校验** — express-validator 请求数据验证
-- **WebSocket** — ws 实时通信支持
+- **仪表盘** — 站点统计、快捷操作入口
+- **成员/飞行员/项目管理** — 完整 CRUD（弹窗式 create+edit，全链路可用）
+- **申请审核** — 状态筛选/关键词搜索/分页/详情弹窗，审核操作实时同步列表与弹窗
+- **系统监控面板** — CPU/RSS/事件循环实时指标、告警列表认领、前端问题回报按 requestId 串联
+- **RBAC 权限** — 用户/管理员两级角色，路由守卫 + API 双层校验
+
+### ⚙️ 工程化
+
+- **测试防线** — 前后端 1247 用例 + E2E 9 spec；覆盖率门禁随实测三档上调（49→55→60）
+- **CI/CD 流水线** — GitHub Actions：lint / 前后端测试（MySQL service 容器）/ 安全审计 / 构建 / E2E / CodeQL
+- **依赖安全** — `npm audit --omit=dev` 门禁 + overrides 锁定传递依赖修复（js-yaml、nanoid 均有实战）
+- **可观测性** — Prometheus 指标、Sentry 错误追踪、requestId 全链路日志、Swagger 文档
+- **数据安全** — 每日自动备份（保留 30 天）、备份恢复流程已演练
+- **文档体系** — 16+ 份文档：架构决策表（AD）/ 技术债编号（TD）/ 教训标签库（SEC/ARCH/QUAL/DBG）
 
 ---
 
@@ -171,6 +176,8 @@ LLM_EMBEDDING_MODEL=bge-m3
 | Playwright | 1.58 | 端到端测试框架 |
 | ESLint | 9.x | 代码质量检查 |
 | @vue/test-utils | 2.4 | Vue 组件测试工具 |
+| GSAP | 3.x | ScrollTrigger 滚动动效引擎 |
+| vite-plugin-pwa | latest | PWA 离线支持（Service Worker 自动生成） |
 | Sentry | latest | 前端错误监控 |
 
 ### 后端技术栈
@@ -188,6 +195,9 @@ LLM_EMBEDDING_MODEL=bge-m3
 | express-rate-limit | 7.5 | API 速率限制 |
 | express-validator | 7.2 | 请求数据校验 |
 | ws | 8.18 | WebSocket 实时通信 |
+| pg | 8.x | PostgreSQL 驱动（pgvector 向量检索） |
+| ioredis | 5.x | Redis 客户端（LLM 缓存/会话存储） |
+| OpenAI 兼容 SDK 层 | 自研 | AI-SLOT 槽位制 Provider（chat/embed/降级链） |
 | Jest | 29.7 | 后端测试框架 |
 | Supertest | 7.0 | HTTP 接口测试 |
 | Prometheus | latest | 应用性能监控指标 |
@@ -203,12 +213,16 @@ star-citizen-promotion/
 ├── .github/workflows/          # CI/CD 配置
 │   └── ci.yml                  # GitHub Actions 流水线
 ├── docs/                       # 项目文档 (16+ 份)
-├── e2e/                        # Playwright E2E 测试
-│   ├── home.spec.js
-│   ├── join.spec.js
-│   ├── apply.spec.js
-│   ├── auth.spec.js
-│   └── navigation.spec.js
+├── e2e/                        # Playwright E2E 测试（9 spec / 60 用例）
+│   ├── navigation.spec.js      # 导航骨架
+│   ├── home.spec.js            # 首页渲染
+│   ├── fleet.spec.js           # 舰队列表/筛选/详情跳转
+│   ├── join.spec.js            # 入队申请流
+│   ├── apply.spec.js           # 申请提交
+│   ├── auth.spec.js            # 认证流程
+│   ├── admin.spec.js           # Admin 登录 + 成员 CRUD 往返
+│   ├── recruiter.spec.js       # AI 招募官对话/预填链路
+│   └── real-backend.spec.js    # 真实后端往返验证
 ├── public/                     # 静态资源
 ├── server/                     # ===== 后端服务 =====
 │   └── src/
