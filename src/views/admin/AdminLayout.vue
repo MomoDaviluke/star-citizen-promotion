@@ -83,7 +83,7 @@
  * @summary 作为所有管理后台页面的父布局组件，提供统一的导航和用户信息展示
  */
 
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authService } from '@/services'
 import { useAuthStore } from '@/stores/auth'
@@ -175,13 +175,22 @@ watch(() => route.path, () => {
   closeSidebar()
 })
 
-// 监听 ESC 键关闭侧边栏
+/**
+ * ESC 键关闭侧边栏
+ * @description 挂载期注册 window 级监听，必须在卸载时摘除：
+ *              否则组件销毁后旧闭包仍持有已失效的 sidebarOpen ref，
+ *              每次按键都会执行无意义的写操作并泄漏监听（面板反复进出时累积）。
+ * @param {KeyboardEvent} e - 键盘事件
+ */
+function handleKeydown(e) {
+  if (e.key === 'Escape' && sidebarOpen.value) {
+    closeSidebar()
+  }
+}
+
 if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sidebarOpen.value) {
-      closeSidebar()
-    }
-  })
+  window.addEventListener('keydown', handleKeydown)
+  onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 }
 </script>
 

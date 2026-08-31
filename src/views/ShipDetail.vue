@@ -183,7 +183,7 @@ const ship = ref(null)
 const rootRef = ref(null)
 
 // GSAP 滚动入场动画：参数条填充 + 区块揭示
-useGSAPReveal(({ reveal, stagger, barFill }) => {
+useGSAPReveal(({ stagger, barFill }) => {
   nextTick(() => {
     if (!rootRef.value || !ship.value || ship.value.notFound) return
 
