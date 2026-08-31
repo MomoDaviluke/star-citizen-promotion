@@ -33,12 +33,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'tests/', 'src/main.js', 'server/', '.reasonix/', '.codegraph/', 'dist/', 'coverage/', 'e2e/', 'patches/', 'playwright-report/', 'test-results/'],
-      // M4 第二批门禁上调：55 → 60（2026-08-30，实测 Lines 68.12 / Stmts 66.96 / Branch 66.73 / Funcs 63.38）→ 65 → 70
+      // M4 第三批门禁上调：60 → 65（2026-08-31，实测 Lines 70.41 / Stmts 69.35 / Branch 69.55 / Funcs 68.00）→ 70
+      // 本批补测来源：AdminLayout.vue（15 函数 0% → 全覆盖）+ ShipDetail.vue（22 函数 0% → 全覆盖）
       thresholds: {
-        lines: 60,
-        functions: 60,
-        branches: 60,
-        statements: 60
+        lines: 65,
+        functions: 65,
+        branches: 65,
+        statements: 65
       }
     }
   },
