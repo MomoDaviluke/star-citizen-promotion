@@ -40,7 +40,7 @@
     "load:down": "docker compose -f load-tests/docker-compose.loadtest.yml down -v"
   },
   "dependencies": {
-    "@sentry/vue": "^10.53.1",
+    "@sentry/vue": "^10.72.0",
     "@vueuse/core": "^14.3.0",
     "animejs": "^4.4.1",
     "chart.js": "^4.5.1",
