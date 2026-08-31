@@ -62,7 +62,7 @@
     "chrome-launcher": "^1.2.1",
     "esbuild": "^0.28.1",
     "eslint": "^9.22.0",
-    "eslint-plugin-vue": "^10.0.0",
+    "eslint-plugin-vue": "^10.10.0",
     "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
     "lighthouse": "^12.8.2",
