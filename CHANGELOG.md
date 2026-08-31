@@ -2,7 +2,7 @@
 
 > **项目**: Star Citizen 战队宣传网站
 > **更新日期**: 2026-08-31
-> **当前版本**: v1.8.0（MCP 协议层 + Agent 工具调用全链路，2026-08-31）
+> **当前版本**: v1.9.0（前端 Agent 模式 + MCP 外部客户端接入 + README 全面美化，2026-08-31）
 
 ---
 
@@ -13,6 +13,41 @@
 - **主版本号 (MAJOR)**: 不兼容的 API 变更
 - **次版本号 (MINOR)**: 向下兼容的功能新增
 - **修订号 (PATCH)**: 向下兼容的问题修复
+
+---
+
+## [1.9.0] - 2026-08-31
+
+### 新功能
+
+#### 前端 Agent 模式（MCP 工具调用可视化）
+
+- **`src/composables/useMcpAgent.js`**：调用 `/api/v1/ai/agent/chat` 的 SSE composable
+  - 解析五类事件：`token` / `tool_call` / `metadata` / `done` / `error`
+  - 消息模型扩展 `tool` 角色（工具轨迹气泡），事件顺序保证 user → tool → assistant 渲染正确
+  - 无服务端会话：history 由前端组装回传（过滤 tool 角色、user/assistant 最近 12 条）
+  - 容错：tool_call 缺 name 忽略、非法 JSON 跳过、空 assistant 消息异常时移除（已有工具轨迹则保留）
+- **`src/components/ai/RecruiterTerminal.vue`**：新增 **对话 / AGENT** 双模式切换
+  - AGENT 模式：隐藏画像面板与快捷建议，标题与输入框占位符联动，状态点/流式禁用同步到 active 会话
+  - 修复两处绑定遗漏：模式切换按钮与 header 状态文本原绑定 recruiter 的 `isStreaming`（agent 模式下不会禁用/显示通讯中），统一改用 `activeStreaming` computed
+- **`src/components/ai/ChatStream.vue`**：tool 角色渲染 HUD 风格工具轨迹气泡
+  - 工具名 + 旋转 ⚙ 图标 + 参数摘要（空参数隐藏）+ 成功/失败状态标记 + 可折叠执行结果预览
+
+#### MCP 外部客户端接入文档
+
+- **`docs/guides/MCP_CLIENT_SETUP.md`**：Claude Desktop（HTTP / mcp-remote 桥接两种方式）、Cursor 配置方法、curl 四连调试（握手/发现/调用/未知工具错误）、协议约定与服务端实现索引
+
+### 文档美化
+
+- **README 全面精修**：头部标语升级（AI 招募官 + MCP 全链路）、新增 MCP badge、核心亮点表 AI 项前置、MCP 小节标注前端可视化与外部接入、玩家端功能加 Agent 模式、快速开始加「MCP 工具调用一键验证」（无需 LLM key）、文档表加 MCP_CLIENT_SETUP、项目简介补 MCP 协议描述
+
+### 测试加固
+
+- **+22 用例（前端 616 → 638，50 套件）**：
+  - `tests/composables/useMcpAgent.test.js`（13）：事件解析全类型、消息顺序、history 组装与过滤、错误分支、reset/生命周期
+  - `tests/components/ai/ChatStream.test.js`（+3）：工具轨迹渲染（成功/失败/空参数无结果折叠）
+  - `tests/components/ai/RecruiterTerminal.test.js`（+6）：模式切换、AGENT 发送分发与埋点、agent 消息流渲染、流式禁用、错误联动
+- 验证：前端 638/638、后端 721/721（合计 1359）、typecheck/lint 0 错误、生产构建通过
 
 ---
 

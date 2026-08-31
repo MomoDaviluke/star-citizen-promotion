@@ -24,17 +24,44 @@
         class="chat-message"
         :class="`chat-message--${msg.role}`"
       >
-        <!-- assistant 消息四角装饰（全息终端感） -->
-        <template v-if="msg.role === 'assistant'">
-          <HudCorner position="top-left" size="sm" />
-          <HudCorner position="bottom-right" size="sm" />
+        <!-- 工具调用轨迹：Agent 模式专属消息类型（MCP 工具气泡） -->
+        <template v-if="msg.role === 'tool' && msg.toolCall">
+          <div class="tool-trace">
+            <div class="tool-trace__head">
+              <span class="tool-trace__icon" aria-hidden="true">⚙</span>
+              <span class="tool-trace__name">{{ msg.toolCall.name }}</span>
+              <span
+                class="tool-trace__status"
+                :class="msg.toolCall.ok ? 'tool-trace__status--ok' : 'tool-trace__status--fail'"
+                :aria-label="msg.toolCall.ok ? '工具执行成功' : '工具执行失败'"
+              >
+                {{ msg.toolCall.ok ? '✓' : '✗' }}
+              </span>
+            </div>
+            <div v-if="hasArgs(msg.toolCall.arguments)" class="tool-trace__args">
+              {{ formatArgs(msg.toolCall.arguments) }}
+            </div>
+            <details v-if="msg.toolCall.resultPreview" class="tool-trace__result">
+              <summary>执行结果</summary>
+              <pre class="tool-trace__preview">{{ msg.toolCall.resultPreview }}</pre>
+            </details>
+          </div>
         </template>
 
-        <div class="chat-message__label">
-          <span class="chat-message__prefix" aria-hidden="true">{{ msg.role === 'assistant' ? '>' : '//' }}</span>
-          <span class="chat-message__role">{{ msg.role === 'assistant' ? 'AI 指挥官' : '你' }}</span>
-        </div>
-        <div class="chat-message__content">{{ msg.content }}</div>
+        <!-- 常规消息（user / assistant） -->
+        <template v-else>
+          <!-- assistant 消息四角装饰（全息终端感） -->
+          <template v-if="msg.role === 'assistant'">
+            <HudCorner position="top-left" size="sm" />
+            <HudCorner position="bottom-right" size="sm" />
+          </template>
+
+          <div class="chat-message__label">
+            <span class="chat-message__prefix" aria-hidden="true">{{ msg.role === 'assistant' ? '>' : '//' }}</span>
+            <span class="chat-message__role">{{ msg.role === 'assistant' ? 'AI 指挥官' : '你' }}</span>
+          </div>
+          <div class="chat-message__content">{{ msg.content }}</div>
+        </template>
       </div>
 
       <!-- 流式输入指示器 -->
@@ -68,6 +95,17 @@ const props = defineProps({
 })
 
 const containerRef = ref(null)
+
+/** 工具参数是否有内容（空对象不渲染参数行） */
+function hasArgs(args) {
+  return !!args && Object.keys(args).length > 0
+}
+
+/** 工具参数紧凑格式化（≤ 80 字符截断） */
+function formatArgs(args) {
+  const s = JSON.stringify(args)
+  return s.length > 80 ? `${s.slice(0, 80)}…` : s
+}
 
 const lastMessageEmpty = computed(() => {
   const last = props.messages[props.messages.length - 1]
@@ -236,6 +274,102 @@ onUnmounted(() => {
   color: var(--color-text-body);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* ============================================================
+ * 工具调用轨迹（MCP Agent 模式）：HUD 系统日志风格气泡
+ * ============================================================ */
+.chat-message--tool {
+  align-self: stretch;
+  border-style: dashed;
+  border-left: 2px dashed var(--color-accent);
+  background: rgba(var(--raw-cyan-rgb), 0.04);
+}
+
+.tool-trace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.tool-trace__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+}
+
+.tool-trace__icon {
+  color: var(--color-text-accent);
+  animation: tool-spin 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-trace__icon {
+    animation: none;
+  }
+}
+
+.tool-trace__name {
+  color: var(--color-text-accent);
+  font-weight: 600;
+}
+
+.tool-trace__status {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.tool-trace__status--ok {
+  color: var(--color-accent);
+}
+
+.tool-trace__status--fail {
+  color: var(--color-highlight);
+}
+
+.tool-trace__args {
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  word-break: break-all;
+}
+
+.tool-trace__result summary {
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-label);
+  cursor: pointer;
+  user-select: none;
+}
+
+.tool-trace__result summary:hover {
+  color: var(--color-text-accent);
+}
+
+.tool-trace__preview {
+  margin: 0.375rem 0 0;
+  padding: 0.5rem 0.625rem;
+  max-height: 180px;
+  overflow: auto;
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border-subtle);
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--color-text-body);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@keyframes tool-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* 打字指示器：HUD 脉冲风格 */

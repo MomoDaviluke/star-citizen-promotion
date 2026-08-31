@@ -8,11 +8,16 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { ref, reactive } from 'vue'
 import RecruiterTerminal from '@/components/ai/RecruiterTerminal.vue'
 import { useAiRecruiter } from '@/composables/useAiRecruiter'
+import { useMcpAgent } from '@/composables/useMcpAgent'
 import { trackEvent } from '@/services/analyticsService'
 import { useRouter } from 'vue-router'
 
 vi.mock('@/composables/useAiRecruiter', () => ({
   useAiRecruiter: vi.fn(),
+}))
+
+vi.mock('@/composables/useMcpAgent', () => ({
+  useMcpAgent: vi.fn(),
 }))
 
 vi.mock('@/services/analyticsService', () => ({
@@ -25,6 +30,7 @@ vi.mock('vue-router', () => ({
 
 describe('RecruiterTerminal 组件', () => {
   let mockApi
+  let mockAgent
   let pushMock
 
   beforeEach(() => {
@@ -39,6 +45,15 @@ describe('RecruiterTerminal 组件', () => {
       reset: vi.fn(),
     }
     vi.mocked(useAiRecruiter).mockReturnValue(mockApi)
+    mockAgent = {
+      messages: ref([]),
+      isStreaming: ref(false),
+      error: ref(null),
+      toolCallCount: ref(0),
+      sendMessage: vi.fn().mockResolvedValue(undefined),
+      reset: vi.fn(),
+    }
+    vi.mocked(useMcpAgent).mockReturnValue(mockAgent)
     pushMock = vi.fn()
     vi.mocked(useRouter).mockReturnValue({ push: pushMock })
     vi.clearAllMocks()
@@ -155,5 +170,74 @@ describe('RecruiterTerminal 组件', () => {
     wrapper.unmount()
     expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
     removeSpy.mockRestore()
+  })
+
+  describe('Agent 模式（MCP 工具调用）', () => {
+    it('默认 chat 模式：显示画像面板与快捷建议，AGENT 未激活', () => {
+      const wrapper = mount(RecruiterTerminal, { props: { isOpen: true } })
+      expect(wrapper.find('.side-panel').exists()).toBe(true)
+      expect(wrapper.find('.mode-switch__btn--active').text()).toBe('对话')
+      expect(wrapper.text()).toContain('// AI 指挥官')
+    })
+
+    it('切换到 AGENT：标题变化、画像面板与快捷建议隐藏', async () => {
+      const wrapper = mount(RecruiterTerminal, { props: { isOpen: true } })
+      const agentBtn = wrapper.findAll('.mode-switch__btn').find((b) => b.text() === 'AGENT')
+      await agentBtn.trigger('click')
+
+      expect(wrapper.text()).toContain('AI 指挥官 · AGENT')
+      expect(wrapper.find('.side-panel').exists()).toBe(false)
+      expect(wrapper.find('.suggestion-bubble').exists()).toBe(false)
+      expect(wrapper.find('.chat-input').attributes('placeholder')).toContain('Agent')
+    })
+
+    it('AGENT 模式发送消息走 agent.sendMessage 并埋点 agent_chat_turn', async () => {
+      const wrapper = mount(RecruiterTerminal, { props: { isOpen: true } })
+      const agentBtn = wrapper.findAll('.mode-switch__btn').find((b) => b.text() === 'AGENT')
+      await agentBtn.trigger('click')
+
+      const input = wrapper.find('.chat-input')
+      await input.setValue('舰队有几艘船？')
+      await input.trigger('keyup.enter')
+
+      expect(mockAgent.sendMessage).toHaveBeenCalledWith('舰队有几艘船？')
+      expect(mockApi.sendMessage).not.toHaveBeenCalled()
+      expect(trackEvent).toHaveBeenCalledWith('agent_chat_turn', { messageLength: 7 })
+    })
+
+    it('AGENT 模式渲染 agent 消息流（含工具轨迹）', async () => {
+      mockAgent.messages.value = [
+        { role: 'user', content: 'hi' },
+        { role: 'tool', content: '', toolCall: { name: 'query_fleet', arguments: {}, ok: true, resultPreview: '{}' } },
+      ]
+      const wrapper = mount(RecruiterTerminal, { props: { isOpen: true } })
+      const agentBtn = wrapper.findAll('.mode-switch__btn').find((b) => b.text() === 'AGENT')
+      await agentBtn.trigger('click')
+
+      expect(wrapper.find('.chat-message--tool').exists()).toBe(true)
+      expect(wrapper.text()).toContain('query_fleet')
+    })
+
+    it('AGENT 流式中禁用输入与模式切换', async () => {
+      const wrapper = mount(RecruiterTerminal, { props: { isOpen: true } })
+      const agentBtn = wrapper.findAll('.mode-switch__btn').find((b) => b.text() === 'AGENT')
+      await agentBtn.trigger('click')
+
+      mockAgent.isStreaming.value = true
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.chat-input').attributes('disabled')).toBeDefined()
+      expect(wrapper.findAll('.mode-switch__btn')[0].attributes('disabled')).toBeDefined()
+      expect(wrapper.text()).toContain('通讯中...')
+    })
+
+    it('AGENT 模式错误显示 agent 错误', async () => {
+      mockAgent.error.value = '通讯中断,请重试'
+      const wrapper = mount(RecruiterTerminal, { props: { isOpen: true } })
+      const agentBtn = wrapper.findAll('.mode-switch__btn').find((b) => b.text() === 'AGENT')
+      await agentBtn.trigger('click')
+
+      expect(wrapper.find('.error-bar__text').text()).toBe('通讯中断,请重试')
+    })
   })
 })

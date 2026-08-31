@@ -1,8 +1,8 @@
 # 项目记忆（project_memory.md）
 
 > **最后更新**: 2026-08-31
-> **当前版本**: v1.8.0
-> **当前阶段**: MCP 协议层 + Agent 工具调用全链路落地（对照 AI 全栈岗位 JD 补缺陷：MCP 实战 + 部署验证）
+> **当前版本**: v1.9.0
+> **当前阶段**: 前端 Agent 模式（MCP 工具调用可视化）+ MCP 外部客户端接入文档 + README 全面美化（对照 JD 补缺陷第二轮收官）
 
 ---
 
@@ -42,6 +42,7 @@
 - [x] **M4 第四批（可选）**：65 → 70 需再攻 Calendar(25)/ParticleEngine(23)/router(16)；planet/rendering 共 36 个明确不追（R7）
 - [x] **v1.8.0 MCP 全链路（2026-08-31，对照 AI 全栈岗位 JD 补缺陷）**：`server/src/mcp/` 协议层（JSON-RPC 2.0 + initialize/tools/list/tools/call + InProcessTransport）+ 3 个 Service 层只读工具（query_fleet/get_fleet_stats/query_events）+ ReAct Agent 循环（两阶段生成：决策轮 300 tokens 非流式 → 最终轮流式；tool_call/tool_result 文本协议；降级链三层兜底）+ 新端点 POST /api/v1/mcp 与 POST /api/v1/ai/agent/chat（SSE）。+65 用例（721 总），MCP 模块覆盖率 97.85%。curl 实测：initialize 握手 / tools/list / tools/call 真实查库（4 艘舰船）/ 未知工具 -32602 / Agent 无 key 优雅 error 事件
 - [x] **v1.8.0 Docker 部署验证（2026-08-31）**：compose config 默认 + production profile 双通过；backend 生产镜像多阶段构建成功（2m28s）；3306 与本机原生 MySQL 冲突故不做全栈 up（构建即部署证据）
+- [x] **v1.9.0 前端 Agent 模式 + MCP 外部接入（2026-08-31）**：useMcpAgent composable（SSE 五事件解析 + tool 角色消息模型 + history 组装回传）+ RecruiterTerminal 对话/AGENT 双模式 + ChatStream 工具轨迹 HUD 气泡 + docs/guides/MCP_CLIENT_SETUP.md（Claude Desktop/Cursor 接入）。+22 用例（前端 616→638，50 套件，合计 1359）；修复两处 activeStreaming 绑定遗漏。README 全面美化（MCP badge/亮点前置/一键验证/文档表）。版本 1.8.0→1.9.0，SSH 推送远程
 - [ ] 正式上线部署 M2（nginx + certbot production profile 未启用；**模块矩阵中唯一未完成 P0**，卡在服务器权限）
 
 ## 本地运行环境拓扑（实测验证 2026-08-29）
@@ -152,6 +153,7 @@ npm run dev
 
 | 日期 | 变更 |
 |------|------|
+| 2026-08-31 | **v1.9.0 前端 Agent 模式收官**：useMcpAgent（SSE 五事件解析 + tool 角色消息 + history 回传 12 条）；RecruiterTerminal 对话/AGENT 双模式（修 activeStreaming 两处绑定遗漏）；ChatStream 工具轨迹气泡；MCP_CLIENT_SETUP.md（Claude Desktop/Cursor 接入）；README 全面美化（MCP badge/亮点前置/一键验证/文档表）。+22 用例前端 616→638（50 套件），合计 1359。验证：前端 638/638、后端 721/721、typecheck/lint 0、build 通过。SSH push 远程 main |
 | 2026-08-31 | **v1.8.0 MCP 全链路**：新增 `server/src/mcp/`（types/tools/mcpServer/mcpClient）+ `services/ai/mcpAgentService.ts` + `routes/mcp.ts`；ai.ts 加 /agent/chat SSE 端点；index.ts 装配。+65 用例（后端 656→721），typecheck/lint 0 错误，MCP 模块覆盖率 97.85%。curl 实测全链路通过；Docker compose 双 profile 校验 + backend 镜像构建成功。版本号 1.7.2→1.8.0，README/CHANGELOG 同步 |
 | 2026-08-31 | **v1.7.2 技术债收尾**：M4 第三批补测（AdminLayout 12 用例 + ShipDetail 12 用例，前端 592→616，覆盖率门禁 60→65，实测四项 68.00~70.41）；修复 AdminLayout window keydown 监听器泄漏（未摘除 + 闭包持有已销毁 ref）；清理 ShipDetail 未使用解构；文档状态同步（TODO.md / EXECUTION_PLAN_TECHDEBT.md 版本与实测数字刷新，M1/M3 标完成、M5/M6 标搁置）。验证：前端 616/616、后端 656/656、lint/typecheck 0 errors、build 通过 |
 | 2026-08-29 | 排查"前后端互联数据收不到"：实测证明 JSON body 转发链路（fetch/vite proxy/express.json）全程正常；定位并修复 3 个真实问题：① paginatedQuery countFrom 别名冲突（GET /applications?status 500→200）② applications 表缺 note 列（审核申请 500→200，schema.ts+3306/3307 双库 ALTER）③ Redis 容器未运行（AI 端点挂 16s→2ms）。修正 .env.development DB_PORT 3306。新增 scripts/write-endpoints-probe.mjs 全端点探测脚本 |

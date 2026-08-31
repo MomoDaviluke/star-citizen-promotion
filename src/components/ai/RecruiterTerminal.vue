@@ -23,17 +23,40 @@
       <Scanline />
 
       <div class="terminal-header">
-        <HoloAvatar :is-active="!isStreaming" />
+        <HoloAvatar :is-active="!activeStreaming" />
         <div class="header-info">
-          <div class="header-title">// AI 指挥官</div>
+          <div class="header-title">// {{ isAgentMode ? 'AI 指挥官 · AGENT' : 'AI 指挥官' }}</div>
           <div class="header-status">
             <span
               class="header-status__dot"
-              :class="{ online: !isStreaming, streaming: isStreaming }"
+              :class="{ online: !activeStreaming, streaming: activeStreaming }"
               aria-hidden="true"
             ></span>
-            <span class="header-status__text">{{ isStreaming ? '通讯中...' : '在线' }}</span>
+            <span class="header-status__text">{{ activeStreaming ? '通讯中...' : '在线' }}</span>
           </div>
+        </div>
+        <!-- 模式切换：对话（RAG 会话）/ Agent（MCP 工具调用） -->
+        <div class="mode-switch" role="tablist" aria-label="对话模式切换">
+          <button
+            class="mode-switch__btn"
+            role="tab"
+            :class="{ 'mode-switch__btn--active': mode === 'chat' }"
+            :aria-selected="mode === 'chat'"
+            :disabled="activeStreaming"
+            @click="mode = 'chat'"
+          >
+            对话
+          </button>
+          <button
+            class="mode-switch__btn"
+            role="tab"
+            :class="{ 'mode-switch__btn--active': mode === 'agent' }"
+            :aria-selected="mode === 'agent'"
+            :disabled="activeStreaming"
+            @click="mode = 'agent'"
+          >
+            AGENT
+          </button>
         </div>
         <div class="header-actions">
           <button
@@ -57,17 +80,18 @@
 
       <div class="terminal-body">
         <div class="chat-area">
-          <ChatStream :messages="messages" :is-streaming="isStreaming" />
+          <ChatStream :messages="activeMessages" :is-streaming="activeStreaming" />
         </div>
-        <aside class="side-panel">
+        <aside class="side-panel" v-if="!isAgentMode">
           <ProfilePanel :profile="profile" />
         </aside>
       </div>
 
       <div class="terminal-footer">
         <QuickSuggestions
+          v-if="!isAgentMode"
           :suggestions="suggestions"
-          :disabled="isStreaming"
+          :disabled="activeStreaming"
           @select="handleSuggestion"
         />
         <div class="input-area">
@@ -75,28 +99,28 @@
             v-model="inputText"
             type="text"
             class="chat-input"
-            placeholder="// 输入消息..."
+            :placeholder="isAgentMode ? '// 问 Agent 一个问题（可查询实时舰队数据）...' : '// 输入消息...'"
             aria-label="输入消息给 AI 指挥官"
-            :disabled="isStreaming"
+            :disabled="activeStreaming"
             maxlength="500"
             @keyup.enter="handleSend"
           />
           <button
             class="send-btn"
-            :disabled="isStreaming || !inputText.trim()"
+            :disabled="activeStreaming || !inputText.trim()"
             @click="handleSend"
           >
-            {{ isStreaming ? '...' : '发送' }}
+            {{ activeStreaming ? '...' : '发送' }}
           </button>
         </div>
         <div
-          v-if="error"
+          v-if="activeError"
           class="error-bar"
           role="alert"
           aria-live="assertive"
         >
           <span class="error-bar__prefix" aria-hidden="true">!</span>
-          <span class="error-bar__text">{{ error }}</span>
+          <span class="error-bar__text">{{ activeError }}</span>
         </div>
       </div>
     </div>
@@ -104,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import HoloAvatar from './HoloAvatar.vue'
 import ChatStream from './ChatStream.vue'
@@ -112,6 +136,7 @@ import QuickSuggestions from './QuickSuggestions.vue'
 import ProfilePanel from './ProfilePanel.vue'
 import { HudCorner, Scanline } from '@/components/hud'
 import { useAiRecruiter } from '@/composables/useAiRecruiter'
+import { useMcpAgent } from '@/composables/useMcpAgent'
 import { trackEvent } from '@/services/analyticsService'
 
 const props = defineProps({
@@ -124,6 +149,10 @@ const router = useRouter()
 const isFullscreen = ref(false)
 const inputText = ref('')
 
+/** 对话模式：chat = RAG 会话（recruiter），agent = MCP 工具调用循环 */
+const mode = ref('chat')
+const isAgentMode = computed(() => mode.value === 'agent')
+
 const {
   messages,
   profile,
@@ -133,6 +162,13 @@ const {
   initSession,
   sendMessage,
 } = useAiRecruiter()
+
+const agent = useMcpAgent()
+
+/** 按模式切换到当前激活的会话状态 */
+const activeMessages = computed(() => (isAgentMode.value ? agent.messages.value : messages.value))
+const activeError = computed(() => (isAgentMode.value ? agent.error.value : error.value))
+const activeStreaming = computed(() => (isAgentMode.value ? agent.isStreaming.value : isStreaming.value))
 
 onMounted(() => {
   initSession()
@@ -159,8 +195,16 @@ function handleKeydown(e) {
 
 async function handleSend() {
   const text = inputText.value.trim()
-  if (!text || isStreaming.value) return
+  if (!text || activeStreaming.value) return
   inputText.value = ''
+
+  if (isAgentMode.value) {
+    // 转化埋点：Agent 对话轮次（含工具调用轨迹）
+    trackEvent('agent_chat_turn', { messageLength: text.length })
+    await agent.sendMessage(text)
+    return
+  }
+
   await sendMessage(text)
   // 转化埋点：招募官对话轮次
   trackEvent('recruiter_chat_turn', { messageLength: text.length, totalMessages: messages.value.length })
@@ -293,6 +337,57 @@ async function handleSuggestion(text) {
   display: flex;
   gap: 0.375rem;
   flex-shrink: 0;
+}
+
+/* ============================================================
+ * 模式切换（对话 / AGENT）—— HUD 分段按钮
+ * ============================================================ */
+.mode-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border-accent);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.mode-switch__btn {
+  padding: 0.25rem 0.625rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-label);
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.mode-switch__btn + .mode-switch__btn {
+  border-left: 1px solid var(--color-border-accent);
+}
+
+.mode-switch__btn--active {
+  background: var(--color-accent-muted);
+  color: var(--color-accent-bright);
+  box-shadow: inset 0 0 12px rgba(var(--raw-cyan-rgb), 0.15);
+}
+
+.mode-switch__btn:not(.mode-switch__btn--active):hover:not(:disabled) {
+  color: var(--color-text-accent);
+}
+
+.mode-switch__btn:focus-visible {
+  outline: 1px solid var(--color-accent-bright);
+  outline-offset: -1px;
+}
+
+.mode-switch__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* HUD 风格操作按钮：透明背景 + 青色边框 + hover 光晕 */
@@ -537,7 +632,8 @@ async function handleSuggestion(text) {
   }
   .action-btn,
   .chat-input,
-  .send-btn {
+  .send-btn,
+  .mode-switch__btn {
     transition: none;
   }
 }

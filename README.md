@@ -2,9 +2,9 @@
 
 # 🚀 星际公民战队宣传网站 · Stellar Nexus
 
-**企业级全栈项目 · 前后端 1337 个测试用例全通过 · AI 招募官 Agent + MCP 工具调用全链路实测 · v1.8.0**
+**企业级全栈项目 · 前后端 1359 个测试用例全通过 · AI 招募官 + MCP Agent 工具调用全链路（前端可视化 / 外部客户端可接入） · v1.9.0**
 
-*面向星际公民玩家的专业团队门户 — 科幻风格 UI · RAG 语义检索 · SSE 流式对话 · 完整可观测性*
+*面向星际公民玩家的专业团队门户 — RAG 语义检索 · MCP 标准工具协议 · SSE 流式对话 · 科幻 UI · 完整可观测性*
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
@@ -13,14 +13,16 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
-[![Vitest](https://img.shields.io/badge/前端测试-591✓-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
-[![Jest](https://img.shields.io/badge/后端测试-656✓-C21325?style=flat-square&logo=jest)](https://jestjs.io/)
+[![MCP](https://img.shields.io/badge/MCP-2024--11--05-f39c00?style=flat-square)](./docs/guides/MCP_CLIENT_SETUP.md)
+[![Vitest](https://img.shields.io/badge/前端测试-638✓-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
+[![Jest](https://img.shields.io/badge/后端测试-721✓-C21325?style=flat-square&logo=jest)](https://jestjs.io/)
 [![Playwright](https://img.shields.io/badge/E2E-9_spec-45ba4c?style=flat-square&logo=playwright)](https://playwright.dev/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
 
 [功能特性](#-项目简介) ·
 [AI 能力](#-ai-能力) ·
+[MCP 工具调用](#-mcp-工具调用-v190-完善) ·
 [技术架构](#-技术架构) ·
 [快速开始](#-快速开始) ·
 [测试体系](#-测试体系) ·
@@ -35,14 +37,14 @@
 
 **Stellar Nexus（星渊枢纽）** 是一个面向星际公民（Star Citizen）玩家公会的全栈宣传与招募平台，单人开发者按企业级标准打造。
 
-前端采用 Vue 3 + Vite 8 的科幻风格 SPA（MFD 面板式 UI / GSAP 动效 / PWA 离线支持），后端为 Express 4 + TypeScript 三层架构（Routes → Services → Database），AI 层基于 **pgvector RAG + 通用槽位制 LLM 配置**，实现对话式招募官与知识库语义检索。
+前端采用 Vue 3 + Vite 8 的科幻风格 SPA（MFD 面板式 UI / GSAP 动效 / PWA 离线支持），后端为 Express 4 + TypeScript 三层架构（Routes → Services → Database），AI 层基于 **pgvector RAG + 通用槽位制 LLM 配置 + MCP 标准工具协议**，实现对话式招募官（RAG / Agent 双模式）与知识库语义检索。
 
-### 核心数据（v1.8.0 实测）
+### 核心数据（v1.9.0 实测）
 
 | 指标 | 数值 |
 |:-----|:-----|
 | 后端测试 | **64 套件 / 721 用例** 100% 通过（Jest） |
-| 前端测试 | **616 用例** 100% 通过（Vitest） |
+| 前端测试 | **638 用例** 100% 通过（Vitest） |
 | 前端覆盖率门禁 | **65%** 四项统一门禁（实测语句 69.35% / 行 70.41% / 分支 69.55% / 函数 68.00%） |
 | 后端覆盖率 | 语句 84.22% / 分支 81.33% / 函数 89.44%（**MCP 模块 97.85%** / AI 模块 94.97%） |
 | E2E | **9 个 spec**（含 real-backend 真实往返、admin CRUD 往返、AI 招募官链路） |
@@ -53,10 +55,10 @@
 
 | 特性 | 说明 |
 |:-----|:-----|
-| 🏗️ **分层架构** | Routes → Services → Database 严格分层；knex 迁移版本化 + schema 单一来源 |
-| 🧪 **测试防线** | 单测 1337 + E2E 9 spec + 覆盖率门禁（随覆盖率上调，49→55→60→65 已四档）；真实路由守卫/AI 链路/转化流/MCP 工具调用全覆盖 |
 | 🤖 **AI 招募官** | RAG 语义检索（pgvector）+ SSE 流式对话 + 用户画像提取与申请表预填，全链路实测（入库幂等 / 检索带相似度 / 125 token 流式） |
-| 🔧 **MCP 工具调用** | Model Context Protocol 标准子集：Agent 循环 + 3 个实时数据工具 + JSON-RPC 2.0 HTTP 端点，外部 MCP 客户端可直接接入 |
+| 🔧 **MCP 工具调用** | Model Context Protocol 标准实现：ReAct Agent 循环 + 3 个实时数据工具 + 前端可视化轨迹 + JSON-RPC 2.0 HTTP 端点，**Claude Desktop / Cursor 可直接接入** |
+| 🏗️ **分层架构** | Routes → Services → Database 严格分层；knex 迁移版本化 + schema 单一来源 |
+| 🧪 **测试防线** | 单测 1359 + E2E 9 spec + 覆盖率门禁（随覆盖率上调，49→55→60→65 已四档）；真实路由守卫/AI 链路/转化流/MCP 工具调用全覆盖 |
 | 🔌 **AI-SLOT 槽位制** | 聊天/嵌入两个通用 OpenAI 兼容槽位，DeepSeek/豆包/Ollama/vLLM 任意端点自由指向，降级链自动跳过未配置槽位 |
 | 🔐 **安全加固** | httpOnly Cookie JWT、bcrypt、Helmet、速率限制、输入校验、日志脱敏、生产弱密钥拒绝 |
 | 📊 **自研监控** | 后端资源采集（CPU/RSS/事件循环）+ 分级告警引擎（冷却去重/升级）+ Webhook 通知（企微/钉钉/飞书）+ 前端问题回报 |
@@ -83,7 +85,7 @@
 - **画像提取**：多轮对话自动构建用户画像，一键预填申请表
 - **零成本嵌入**：本地 Ollama bge-m3（1024 维），云端仅付费聊天 token
 
-### MCP 工具调用（v1.8.0 新增）
+### MCP 工具调用（v1.9.0 完善）
 
 标准 **Model Context Protocol** 实现（2024-11-05 规范核心子集），Agent 具备实时数据查询能力：
 
@@ -96,7 +98,8 @@
 ```
 
 - **内置工具**：`query_fleet`（舰船查询）/ `get_fleet_stats`（舰队统计）/ `query_events`（近期活动），全部走 Service 层、参数钳制、异常兜底
-- **协议端点**：`POST /api/v1/mcp`（JSON-RPC 2.0：initialize / tools/list / tools/call），外部 MCP 客户端可直接对接
+- **前端可视化**（v1.9.0）：招募官终端新增 **AGENT 模式**开关，工具调用以 HUD 轨迹气泡实时展示（工具名/参数/成功状态/结果预览），看得见的 Agent 思考过程
+- **协议端点**：`POST /api/v1/mcp`（JSON-RPC 2.0：initialize / tools/list / tools/call），**Claude Desktop / Cursor 可直接接入** → [接入指南](./docs/guides/MCP_CLIENT_SETUP.md)
 - **Agent 端点**：`POST /api/v1/ai/agent/chat`（SSE，事件含 `token` / `tool_call` 工具轨迹）
 - **传输层抽象**：进程内 InProcessTransport 直连，未来可无缝切换独立 MCP 进程
 - **优雅降级**：MCP 不可用自动退化为纯 LLM 链路；工具失败错误回填、对话不中断；轮次上限防连环调用
@@ -126,6 +129,7 @@ LLM_EMBEDDING_MODEL=bge-m3
 - **沉浸式科幻 UI** — 网格背景/光晕/扫描线/MFD 面板式组件，GSAP ScrollTrigger 滚动叙事动效
 - **舰船图鉴与舰队展示** — 内置舰船数据库、详情页、分类筛选（E2E 已覆盖）
 - **活动日历** — 月历/列表双视图、活动报名/取消、管理员创建/编辑/删除（CRUD 全覆盖）
+- **AI 招募官终端** — RAG 对话 / **AGENT 模式**双模式：MCP 工具调用轨迹实时可视化（工具名/参数/结果预览气泡）
 - **入队申请** — 表单实时校验、成功面板、AI 招募官画像一键预填、转化埋点全程追踪
 - **PWA 离线支持** — Service Worker 缓存、离线回退页、安装提示
 - **亮暗双主题** — CSS 变量设计系统（CI lint 守护 0 断裂），`prefers-reduced-motion` 无障碍
@@ -140,12 +144,12 @@ LLM_EMBEDDING_MODEL=bge-m3
 
 ### ⚙️ 工程化
 
-- **测试防线** — 前后端 1337 用例 + E2E 9 spec；覆盖率门禁随实测四档上调（49→55→60→65）
+- **测试防线** — 前后端 1359 用例 + E2E 9 spec；覆盖率门禁随实测四档上调（49→55→60→65）
 - **CI/CD 流水线** — GitHub Actions：lint / 前后端测试（MySQL service 容器）/ 安全审计 / 构建 / E2E / CodeQL
 - **依赖安全** — `npm audit --omit=dev` 门禁 + overrides 锁定传递依赖修复（js-yaml、nanoid 均有实战）
 - **可观测性** — Prometheus 指标、Sentry 错误追踪、requestId 全链路日志、Swagger 文档
 - **数据安全** — 每日自动备份（保留 30 天）、备份恢复流程已演练
-- **文档体系** — 16+ 份文档：架构决策表（AD）/ 技术债编号（TD）/ 教训标签库（SEC/ARCH/QUAL/DBG）
+- **文档体系** — 17+ 份文档：架构决策表（AD）/ 技术债编号（TD）/ 教训标签库（SEC/ARCH/QUAL/DBG）/ MCP 接入指南
 
 ---
 
@@ -687,6 +691,30 @@ curl -X POST http://localhost:3001/api/v1/ai/retrieve \
   -H "Content-Type: application/json" -d '{"question":"推荐一艘适合新手的战斗机"}'
 ```
 
+#### MCP 工具调用一键验证（无需 LLM key）
+
+MCP 端点不依赖 LLM 配置，服务启动后即可验证：
+
+```bash
+# 1. 协议握手
+curl -X POST http://localhost:3001/api/v1/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
+
+# 2. 工具发现
+curl -X POST http://localhost:3001/api/v1/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+
+# 3. 真实调用（查询舰队）
+curl -X POST http://localhost:3001/api/v1/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"query_fleet","arguments":{"limit":3}}}'
+```
+
+前端入口：网站右下角 AI 招募官终端 → 切换到 **AGENT** 模式，即可对话体验工具调用轨迹可视化。
+外部客户端（Claude Desktop / Cursor）接入方式见 [MCP_CLIENT_SETUP.md](./docs/guides/MCP_CLIENT_SETUP.md)。
+
 ### 站点内容定制
 
 编辑 `src/config/site.config.js` 可快速定制站点信息：
@@ -822,7 +850,7 @@ Content-Type: application/json
 
 | 测试类型 | 框架 | 规模 | 覆盖范围 |
 |:---------|:-----|:-------|:---------|
-| 前端单元测试 | Vitest | **616 用例** | 服务层、组合式函数、真实路由守卫、Store、核心视图（含转化流）、AI 组件、监控面板 |
+| 前端单元测试 | Vitest | **638 用例** | 服务层、组合式函数、真实路由守卫、Store、核心视图（含转化流）、AI 组件（含 Agent 模式/工具轨迹）、监控面板 |
 | 后端测试 | Jest + Supertest | **64 套件 / 721 用例** | API 接口、认证中间件、错误处理、仓储层、缓存、AI（Providers/RAG/招募官）、MCP（协议/工具/Agent）、监控告警 |
 | E2E 测试 | Playwright | **9 spec / 60 用例** | 首页、加入流程、认证流程、申请流程、导航、船队、Admin CRUD 往返、AI 招募官、真实后端往返 |
 
@@ -998,6 +1026,7 @@ backend:
 | [DEPLOYMENT.md](docs/guides/DEPLOYMENT.md) | 部署指南 |
 | [SECURITY.md](docs/guides/SECURITY.md) | 安全体系 |
 | [MONITORING.md](docs/guides/MONITORING.md) | 监控与可观测性 |
+| [MCP_CLIENT_SETUP.md](docs/guides/MCP_CLIENT_SETUP.md) | **MCP 外部客户端接入指南（Claude Desktop / Cursor）** |
 | [CONTRIBUTING.md](docs/guides/CONTRIBUTING.md) | 贡献指南 |
 | [ROADMAP.md](docs/ROADMAP.md) | 优化路线图 |
 | [TESTING.md](docs/TESTING.md) | 测试指南 |

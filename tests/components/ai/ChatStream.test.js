@@ -35,6 +35,61 @@ describe('ChatStream 组件', () => {
     expect(wrapper.findAll('.chat-message')).toHaveLength(0)
   })
 
+  describe('工具调用轨迹（MCP Agent 模式）', () => {
+    it('tool 消息渲染工具名、成功状态与结果预览', () => {
+      const messages = [
+        { role: 'user', content: '推荐一艘战斗机' },
+        {
+          role: 'tool',
+          content: '',
+          toolCall: {
+            name: 'query_fleet',
+            arguments: { category: 'fighter', limit: 5 },
+            ok: true,
+            resultPreview: '{"total": 3, "ships": [...]}',
+          },
+        },
+        { role: 'assistant', content: '推荐 Gladius' },
+      ]
+      const wrapper = mount(ChatStream, { props: { messages } })
+
+      const toolMsg = wrapper.find('.chat-message--tool')
+      expect(toolMsg.exists()).toBe(true)
+      expect(toolMsg.text()).toContain('query_fleet')
+      expect(toolMsg.text()).toContain('fighter') // 参数摘要
+      expect(toolMsg.find('.tool-trace__status--ok').exists()).toBe(true)
+      expect(toolMsg.find('details').text()).toContain('total')
+      // 顺序：user → tool → assistant
+      const items = wrapper.findAll('.chat-message')
+      expect(items[1].classes()).toContain('chat-message--tool')
+    })
+
+    it('失败的工具调用显示失败状态标记', () => {
+      const messages = [
+        {
+          role: 'tool',
+          content: '',
+          toolCall: { name: 'no_such_tool', arguments: {}, ok: false, resultPreview: '工具执行失败: 未知工具' },
+        },
+      ]
+      const wrapper = mount(ChatStream, { props: { messages } })
+
+      expect(wrapper.find('.tool-trace__status--fail').exists()).toBe(true)
+      expect(wrapper.find('.tool-trace__status--ok').exists()).toBe(false)
+    })
+
+    it('空参数对象不渲染参数行；无结果预览不渲染折叠区', () => {
+      const messages = [
+        { role: 'tool', content: '', toolCall: { name: 'get_fleet_stats', arguments: {}, ok: true } },
+      ]
+      const wrapper = mount(ChatStream, { props: { messages } })
+
+      expect(wrapper.find('.tool-trace__args').exists()).toBe(false)
+      expect(wrapper.find('.tool-trace__result').exists()).toBe(false)
+      expect(wrapper.find('.tool-trace__name').text()).toBe('get_fleet_stats')
+    })
+  })
+
   it('流式中且最后一条为空助手消息时显示打字指示器', () => {
     const messages = [
       { role: 'assistant', content: '你好' },
