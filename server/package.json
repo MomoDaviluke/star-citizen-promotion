@@ -62,7 +62,7 @@
     "uuid": "^11.0.3",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "ws": "^8.18.0"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@swc/core": "^1.15.33",
