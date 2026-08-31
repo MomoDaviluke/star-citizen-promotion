@@ -37,8 +37,10 @@
 - [x] v1.7.0 发布：CHANGELOG + README 美化（测试数字/AI 指南/端口修正）+ .env.example 槽位模板 + DeepSeek key 验证后立即删除（三路扫描零残留）
 - [x] M4-2 第二批转化流补测（2026-08-30）：+82 用例（前端 509→591）；Register/Join/Calendar/Profile/ApplicationsAdmin 五视图重写；**QUAL-21 修复**（Join.vue 漏斗起点埋点被提前 return 跳过，自上线从未发送）；实测 66.96/68.12/66.73/63.38
 - [x] M4-3 门禁 55→60（2026-08-30）：四项过线（G4）；M4 累计 49→60
-- [ ] M4 第三批（可选）：68% → 70% 需评估 ROI（剩余主要是 planet/rendering 不追项与散点组件）
-- [ ] 正式上线部署（nginx + certbot production profile 未启用）
+- [x] M4 第三批（2026-08-31）：AdminLayout(15 函数 0%→全覆盖) + ShipDetail(22 函数 0%→全覆盖) 补测 +24 用例，前端 592→616；门禁 60→65（实测 stmts 69.35 / lines 70.41 / branch 69.55 / funcs 68.00）
+- [x] 文档状态同步（2026-08-31）：TODO.md 版本头与质量门禁表 6 项数字刷新、AI-DEP-1 标完成、AI-P2/P3 标搁置；EXECUTION_PLAN_TECHDEBT.md 模块总览 M1/M3 标完成、M5/M6 标搁置、C6 基线 413→616
+- [ ] M4 第四批（可选）：65 → 70 需再攻 Calendar(25)/ParticleEngine(23)/router(16)；planet/rendering 共 36 个明确不追（R7）
+- [ ] 正式上线部署 M2（nginx + certbot production profile 未启用；**模块矩阵中唯一未完成 P0**，卡在服务器权限）
 
 ## 本地运行环境拓扑（实测验证 2026-08-29）
 
@@ -135,10 +137,16 @@ npm run dev
 - DBG-23: vitest `--coverage` 会先删除已有 coverage/ 目录，沙箱拦截导致 Unhandled Error；用 `--coverage.reportsDirectory` 指向临时目录可绕过
 - DBG-24: **Node 25+/26 内置实验性 webstorage 遮蔽 jsdom**（2026-08-30 实测，Node 26.5.1）——无 flag 时全局 localStorage 存在但访问即告警 'not available because --localstorage-file was not provided'，`localStorage.clear()` 直接 TypeError，useTheme 套件 11 连挂且单文件运行也挂（与代码无关，是环境漂移）。修复：跑测试带 `NODE_OPTIONS=--localstorage-file=<临时文件>` 全绿 413/413；根治建议 tests/setup.js 判 `typeof localStorage === 'undefined'` 后从 window.localStorage 兜底 defineProperty。CI 用 Node 20 不受影响——**"测试全绿"声明必须绑定 Node 版本**（engines 允许 >=22.12 掩盖了此坑）
 
+## Lessons Learned（2026-08-31 新增）
+
+- ENG-08: `window.addEventListener` 注册在 setup 顶层却无 `onUnmounted` 摘除 —— 组件卸载后旧闭包仍持有已失效的 ref，反复进出页面会持续累积监听器（AdminLayout ESC 监听即此模式）。SPA 后台布局这类"会重复挂载销毁"的组件必须成对写注册/摘除，测试可用 `vi.spyOn(window,'removeEventListener')` 断言摘除被调用
+- QUAL-22: 覆盖率提升要**先排序再动手**，别凭感觉挑文件。用 `coverage-final.json` 按"函数未覆盖数"降序排 Top 榜，优先攻击 0% 覆盖的整文件——AdminLayout(15) + ShipDetail(22) 两个文件的补测就换来函数覆盖 +4.62%（63.38→68.00），同样的用例量若撒在散点文件上收益接近零。排查后应把"明确不追"的文件（如 planet/rendering 36 个）从分母预期里剔除，避免误判天花板
+
 ## Change Log
 
 | 日期 | 变更 |
 |------|------|
+| 2026-08-31 | **v1.7.2 技术债收尾**：M4 第三批补测（AdminLayout 12 用例 + ShipDetail 12 用例，前端 592→616，覆盖率门禁 60→65，实测四项 68.00~70.41）；修复 AdminLayout window keydown 监听器泄漏（未摘除 + 闭包持有已销毁 ref）；清理 ShipDetail 未使用解构；文档状态同步（TODO.md / EXECUTION_PLAN_TECHDEBT.md 版本与实测数字刷新，M1/M3 标完成、M5/M6 标搁置）。验证：前端 616/616、后端 656/656、lint/typecheck 0 errors、build 通过 |
 | 2026-08-29 | 排查"前后端互联数据收不到"：实测证明 JSON body 转发链路（fetch/vite proxy/express.json）全程正常；定位并修复 3 个真实问题：① paginatedQuery countFrom 别名冲突（GET /applications?status 500→200）② applications 表缺 note 列（审核申请 500→200，schema.ts+3306/3307 双库 ALTER）③ Redis 容器未运行（AI 端点挂 16s→2ms）。修正 .env.development DB_PORT 3306。新增 scripts/write-endpoints-probe.mjs 全端点探测脚本 |
 | 2026-08-29 | 同步 analyticsService Blob 实现的测试断言（2 个既有失败清零）；前端 vitest 378/378、server jest 511/511 全绿；AI 聊天待配置 LLM key（DOUBAO/DEEPSEEK/ANTHROPIC_API_KEY） |
 | 2026-08-29 | **新增后端资源监控与告警回报系统**：5 秒采集 CPU/RSS/事件循环/DB/Redis/接口错误；告警引擎分级阈值 + 冷却去重 + requestId 快照；MySQL `monitor_alerts` / `monitor_reports` 表；Admin「系统监控」面板；端到端 10/10 验证通过。后端 593/593、前端 391/391 全绿 |

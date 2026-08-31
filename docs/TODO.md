@@ -1,8 +1,8 @@
 # 项目待办任务清单
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-08-27
-> **版本**: v1.6.2
+> **更新日期**: 2026-08-31
+> **版本**: v1.7.1
 
 ---
 
@@ -38,18 +38,18 @@
 | TD-14 | AI 前端组件/Composable 无单元测试 | `useAiRecruiter.js` + 5 个 `components/ai/*.vue` | ✅ 已完成 | +53 用例（2026-08-27）；AI 文件行覆盖 94.2% / composable 97.4%，≥80% 达标 |
 | TD-15 | AI 招募官无 E2E spec | `e2e/` | ✅ 已完成 | 新增 `recruiter.spec.js` 3 用例：会话初始化 / 对话→预填链路 / 普通建议（2026-08-27） |
 | TD-19 | Home.vue 挂载触发 AI 会话请求，测试无隔离 | `views/Home.vue` + `Home.test.js` | ✅ 已完成 | `Home.test.js` mock RecruiterTerminal 隔离 AI 请求，15 用例通过（2026-08-27） |
-| AI-DEP-1 | `ai:ingest` 真实知识库种子验证 | `server/scripts/` | 🔄 待验证 | 代码就绪，需真实 Provider key 跑通 5 类知识源入库 |
-| AI-DEP-2 | 生产环境 AI 环境变量确认 | docker-compose | 🔄 待验证 | PGVECTOR_URL / REDIS_URL / LLM API keys 注入 |
+| AI-DEP-1 | `ai:ingest` 真实知识库种子验证 | `server/scripts/` | ✅ 已完成 | 2026-08-30 实测：入库 7/7 幂等（二次运行无膨胀）、RAG 检索带 similarity、DeepSeek 真实回答、SSE 125 token 流式 |
+| AI-DEP-2 | 生产环境 AI 环境变量注入 | docker-compose | 📋 待实施 | 归入 M2-3：PGVECTOR_URL / REDIS_URL / LLM keys / MONITOR_WEBHOOK_URL 生产清单 |
 | OPS-1 | 数据库备份恢复流程演练 | `backups/` | ✅ 已完成 | 2026-08-27 隔离栈演练：mysqldump 备份 → 临时库恢复 → COUNT(*) 全表行数一致（含 --single-transaction --routines --triggers，与 backup.sh 核心命令等价） |
 
 ### P2 — 功能推进
 
 | 编号 | 任务 | 状态 | 备注 |
 |:---|:---|:---|:---|
-| AI-P2 | Phase 2: GEO 搜索优化（llms.txt / JSON-LD / FAQ 入库 / 知识图谱） | 📋 待启动 | 约 3 天；SEO 基础（sitemap/robots/预渲染/OG）已于 2026-08-24 交付 |
-| AI-P3 | Phase 3: AI 飞船推荐助手（精简版） | 📋 待启动 | 约 1 周，复用 Phase 0 RAG；动态首页个性化已砍（RICE 0.10） |
-| FE-COV | 前端覆盖率 50.3% → ≥70% | 📋 待实施 | 门禁 49% 已生效，逐步上调 |
-| E2E-EXT | E2E spec 6 → ≥7 | 📋 待实施 | fleet / admin 场景扩展 |
+| AI-P2 | Phase 2: GEO 搜索优化（llms.txt / JSON-LD / FAQ 入库 / 知识图谱） | ⛔ 已搁置 | 2026-08 项目方向转向，不再推进；SEO 基础（sitemap/robots/预渲染/OG）已于 2026-08-24 交付 |
+| AI-P3 | Phase 3: AI 飞船推荐助手（精简版） | ⛔ 已搁置 | 2026-08 项目方向转向，不再推进；RAG 基建已由 AI-DEP-1 验证可用 |
+| FE-COV | 前端覆盖率 → ≥70% | 🔄 进行中 | 门禁 49→55→60→65 逐级上调（G4：实测≥目标才上调）；2026-08-31 实测见质量门禁表 |
+| E2E-EXT | E2E spec 扩展（fleet / admin） | ✅ 已完成 | spec 7→9（2026-08-30），60 passed / 1 skipped |
 
 ### P3 — 缓行技术债 / 远期
 
@@ -92,10 +92,12 @@
 
 | 指标 | 当前值 | 目标值 | 状态 |
 |:---|:---|:---|:---|
-| 后端测试通过率 | 621/621（2026-08-29 实测） | 100% | ✅ |
+| 后端测试通过率 | 656/656（2026-08-31 实测） | 100% | ✅ |
 | 后端语句覆盖率 | 75.35%（整体）/ AI 模块 88.94% | ≥ 60% | ✅ |
-| 前端语句覆盖率 | 53.25%（2026-08-27 实测，行 54.15%） | ≥ 49% 门禁（逐步上调） | ✅ 门禁生效 |
-| E2E spec | 7 个（新增 recruiter 链路，含 real-backend 真实往返） | ≥ 5 | ✅ |
+| 前端测试通过率 | 616/616（2026-08-31 实测） | 100% | ✅ |
+| 前端语句覆盖率 | 69.35%（2026-08-31 实测） | ≥ 65% 门禁（G4：实测≥目标才上调） | ✅ 门禁生效 |
+| 前端行 / 分支 / 函数覆盖率 | 70.41% / 69.55% / 68.00%（2026-08-31 实测） | ≥ 65% ×4 项 | ✅ 四项过线 |
+| E2E spec | 9 个（fleet/admin/recruiter，含 real-backend 真实往返） | ≥ 5 | ✅ |
 | ESLint / TypeScript 错误 | 0 | 0 | ✅ |
 | 高危安全漏洞 | 0 | 0 | ✅ |
 | CSS 变量断裂引用 | 0 | 0 | ✅（lint CI 集成） |
@@ -137,10 +139,14 @@
 | v1.6.1 技术债快修 TD-7/11/12 | 2026-08-10 | ✅ |
 | v1.6.2 上线前评审修复 | 2026-08-24 | ✅ |
 | 收尾批次（覆盖加固/E2E 真实链路/端口收紧） | 2026-08-26 | ✅ |
-| v1.7.0 AI Phase 2 GEO | 计划 | 📋 |
-| v1.8.0 AI Phase 3 选舰助手 | 计划 | 📋 |
+| v1.6.4 监控模块评审闭环 | 2026-08-30 | ✅ |
+| v1.6.5 版本对齐 + 文档失真修正 | 2026-08-30 | ✅ |
+| v1.7.0 M1 AI 部署验证 + AI-SLOT 通用槽位制 | 2026-08-30 | ✅ |
+| v1.7.1 M4 转化流补测 + 门禁 60 + CI 红灯修复 | 2026-08-30 | ✅ |
+| ~~v1.7.0 AI Phase 2 GEO~~ | — | ⛔ 已搁置（项目方向转向） |
+| ~~v1.8.0 AI Phase 3 选舰助手~~ | — | ⛔ 已搁置（项目方向转向） |
 
-> 完整版本历史见 [CHANGELOG.md](../CHANGELOG.md)；执行路线见 [ROADMAP.md](ROADMAP.md)。
+> 完整版本历史见 [CHANGELOG.md](../CHANGELOG.md)；执行路线见 [TECH_ROADMAP_2026-08-30.md](TECH_ROADMAP_2026-08-30.md)（ROADMAP.md 已归档）。
 
 ---
 

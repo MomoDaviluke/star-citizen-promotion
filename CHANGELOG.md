@@ -1,8 +1,8 @@
 # 版本变更记录
 
 > **项目**: Star Citizen 战队宣传网站
-> **更新日期**: 2026-08-30
-> **当前版本**: v1.7.1（M4 转化流补测 + 门禁 60 + QUAL-21，2026-08-30）
+> **更新日期**: 2026-08-31
+> **当前版本**: v1.7.2（M4 第三批补测 + 门禁 65 + 监听器泄漏修复 + 文档状态同步，2026-08-31）
 
 ---
 
@@ -15,6 +15,27 @@
 - **修订号 (PATCH)**: 向下兼容的问题修复
 
 ---
+
+## [1.7.2] - 2026-08-31
+
+### 问题修复
+
+- **AdminLayout window keydown 监听器泄漏**：ESC 关闭侧边栏的 `window.addEventListener('keydown', ...)` 注册在 setup 顶层但从未摘除，组件卸载后旧闭包仍持有已失效的 `sidebarOpen` ref —— 管理页面反复进出会持续累积监听器。改为命名 handler + `onUnmounted` 摘除
+- **ShipDetail 未使用的解构参数**：`useGSAPReveal(({ reveal, stagger, barFill }) => ...)` 中 `reveal` 从未使用（ESLint warning），移除
+
+### 测试加固
+
+#### M4 第三批：零覆盖文件补测（+24 用例，前端 592 → 616）
+
+- `tests/views/admin/AdminLayout.test.js`（12 用例）：7 项菜单渲染、pageTitle 命中/兜底、用户角色标签、toggleSidebar 切换、遮罩点击关闭、handleNavClick 命中与空白区两条分支、handleLogout 清态+跳转、ESC 关闭、卸载摘监听、路由切换 watch 关闭
+- `tests/views/ShipDetail.test.js`（12 用例）：舰船基本信息与注册号 `REG-4F-ANV`、heroDataStrip 三项中文标签提取与 `--` 兜底、参数条数量与宽度绑定、参数表/系统状态渲染、relatedShips 排除自身且最多 3 条、notFound 状态与返回跳转、slug 变化重加载、GSAP barFill/stagger 调用次数、notFound 时动画提前返回
+- 覆盖率门禁 60 → 65：实测语句 69.35% / 行 70.41% / 分支 69.55% / 函数 68.00%，四项过线（G4 规则）
+- AdminLayout / ShipDetail 由**函数覆盖 0%** 变为全覆盖（原 15 + 22 个函数从未被执行的观测点）
+
+### 文档
+
+- `docs/TODO.md`：版本头 v1.6.2→v1.7.1、日期 08-27→08-31；质量门禁表 6 项数字全部刷新为 2026-08-31 实测（后端 621→656、新增前端 616/616 与四项覆盖率、E2E 7→9）；AI-DEP-1 由「待验证」改「已完成」、AI-DEP-2 归入 M2-3；E2E-EXT 标完成、FE-COV 标进行中；AI-P2/AI-P3 标注搁置（项目方向转向）；里程碑补 v1.6.4/v1.6.5/v1.7.0/v1.7.1
+- `docs/EXECUTION_PLAN_TECHDEBT.md`：模块总览 M1/M3 改已完成、M4 改进行中、M5/M6 标搁置、M2 标注为唯一未完成 P0；C6 测试基线与验证命令速查 413→616
 
 ## [1.7.1] - 2026-08-30
 
