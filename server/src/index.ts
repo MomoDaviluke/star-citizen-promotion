@@ -48,6 +48,7 @@ import rumRoutes from './routes/rum.js'
 import activityLogRoutes from './routes/activityLogs.js'
 import analyticsRoutes from './routes/analytics.js'
 import { createAiRouter } from './routes/ai.js'
+import { createMcpRouter } from './routes/mcp.js'
 import { getRegistry } from './services/ai/providers/index.js'
 import { Embedder } from './services/ai/rag/embedder.js'
 import { Retriever } from './services/ai/rag/retriever.js'
@@ -59,7 +60,13 @@ import { closePgPool } from './services/ai/pgPool.js'
 import { SessionStore } from './services/ai/sessionStore.js'
 import { ProfileEngine } from './services/ai/profileEngine.js'
 import { RecruiterService } from './services/ai/recruiterService.js'
+import { McpAgentService } from './services/ai/mcpAgentService.js'
 import { getRedisClient } from './services/ai/redisClient.js'
+import { createToolRegistry } from './mcp/tools.js'
+import { McpServer } from './mcp/mcpServer.js'
+import { McpClient, InProcessTransport } from './mcp/mcpClient.js'
+import * as fleetService from './services/fleetService.js'
+import * as eventService from './services/eventService.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -341,6 +348,22 @@ const profileEngine = new ProfileEngine()
 const sessionStore = new SessionStore(getRedisClient())
 const recruiterService = new RecruiterService(ragService, sessionStore, profileEngine)
 
+/**
+ * MCP 层初始化
+ * @description 工具注册表(绑定 Service 层) → MCP Server(协议分发) → Client(进程内传输)
+ *              → McpAgentService(Agent 循环)。
+ *              MCP 不可用或发现失败时 Agent 自动降级为纯 LLM 链路,不影响既有功能。
+ *              同时以 HTTP 暴露 /api/v1/mcp,外部 MCP 客户端可直接接入。
+ */
+const mcpTools = createToolRegistry({
+  getShips: fleetService.getShips,
+  getFleetStats: fleetService.getFleetStats,
+  getEvents: eventService.getEvents,
+})
+const mcpServer = new McpServer(mcpTools, { name: 'stellar-nexus-mcp', version: '1.0.0' })
+const mcpClient = new McpClient(new InProcessTransport(mcpServer))
+const mcpAgentService = new McpAgentService({ llm: llmService, mcpClient })
+
 // 挂载路由 — 同时支持 /api/v1/ 和 /api/ 两种前缀
 const routeMounts = [
   { path: '/auth', router: authRoutes },
@@ -374,7 +397,13 @@ for (const { path: routePath, router } of routeMounts) {
 /**
  * AI 路由(仅 v1 前缀,不提供兼容入口)
  */
-app.use(`${apiV1Prefix}/ai`, createAiRouter({ ragService, recruiterService }))
+app.use(`${apiV1Prefix}/ai`, createAiRouter({ ragService, recruiterService, agentService: mcpAgentService }))
+
+/**
+ * MCP 协议端点(仅 v1 前缀)
+ * @description JSON-RPC 2.0:initialize / tools/list / tools/call
+ */
+app.use(`${apiV1Prefix}/mcp`, createMcpRouter({ mcpServer }))
 
 /**
  * 监控路由（仅 v1 前缀）

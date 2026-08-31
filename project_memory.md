@@ -1,8 +1,8 @@
 # 项目记忆（project_memory.md）
 
-> **最后更新**: 2026-08-30
-> **当前版本**: v1.6.4
-> **当前阶段**: 监控模块评审闭环完成（A-E 全落地）——告警外部通知上线、数据治理完成、前端测试盲区消除
+> **最后更新**: 2026-08-31
+> **当前版本**: v1.8.0
+> **当前阶段**: MCP 协议层 + Agent 工具调用全链路落地（对照 AI 全栈岗位 JD 补缺陷：MCP 实战 + 部署验证）
 
 ---
 
@@ -11,8 +11,8 @@
 - **名称**: Star Citizen 战队宣传网站（Stellar Nexus）
 - **架构**: Vue 3 + Vite 8 前端 / Express 4 + TypeScript 后端（三层 Routes→Services→DB）
 - **存储**: MySQL 8.0（主库，11 张表）+ PostgreSQL/pgvector（AI 向量库）+ Redis（LLM 缓存）
-- **AI**: 多 Provider 降级链（豆包/DeepSeek/Anthropic，无 key 自动 disabled 不阻断启动）
-- **测试**: 后端 58 套件 / 656 tests；前端 45 套件 / 413 tests（2026-08-30 独立复审实测，Node 26 本机需 NODE_OPTIONS=--localstorage-file，见 DBG-24）；前端覆盖率门禁 49/42/42/47（lines/funcs/branches/stmts）
+- **AI**: 多 Provider 降级链（豆包/DeepSeek/Anthropic，无 key 自动 disabled 不阻断启动）+ RAG（pgvector）+ MCP 工具调用（v1.8.0，ReAct Agent 循环 + 3 个实时数据工具）
+- **测试**: 后端 64 套件 / 721 tests；前端 616 tests（2026-08-31 实测）；前端覆盖率门禁 65 四项统一（实测 69.35~70.41）；后端覆盖率语句 84.22%（MCP 模块 97.85%）
 - **安全**: JWT httpOnly cookie + helmet + 速率限制 + metrics IP 白名单
 
 ## 当前进度（2026-08-30 实测）
@@ -39,7 +39,9 @@
 - [x] M4-3 门禁 55→60（2026-08-30）：四项过线（G4）；M4 累计 49→60
 - [x] M4 第三批（2026-08-31）：AdminLayout(15 函数 0%→全覆盖) + ShipDetail(22 函数 0%→全覆盖) 补测 +24 用例，前端 592→616；门禁 60→65（实测 stmts 69.35 / lines 70.41 / branch 69.55 / funcs 68.00）
 - [x] 文档状态同步（2026-08-31）：TODO.md 版本头与质量门禁表 6 项数字刷新、AI-DEP-1 标完成、AI-P2/P3 标搁置；EXECUTION_PLAN_TECHDEBT.md 模块总览 M1/M3 标完成、M5/M6 标搁置、C6 基线 413→616
-- [ ] M4 第四批（可选）：65 → 70 需再攻 Calendar(25)/ParticleEngine(23)/router(16)；planet/rendering 共 36 个明确不追（R7）
+- [x] **M4 第四批（可选）**：65 → 70 需再攻 Calendar(25)/ParticleEngine(23)/router(16)；planet/rendering 共 36 个明确不追（R7）
+- [x] **v1.8.0 MCP 全链路（2026-08-31，对照 AI 全栈岗位 JD 补缺陷）**：`server/src/mcp/` 协议层（JSON-RPC 2.0 + initialize/tools/list/tools/call + InProcessTransport）+ 3 个 Service 层只读工具（query_fleet/get_fleet_stats/query_events）+ ReAct Agent 循环（两阶段生成：决策轮 300 tokens 非流式 → 最终轮流式；tool_call/tool_result 文本协议；降级链三层兜底）+ 新端点 POST /api/v1/mcp 与 POST /api/v1/ai/agent/chat（SSE）。+65 用例（721 总），MCP 模块覆盖率 97.85%。curl 实测：initialize 握手 / tools/list / tools/call 真实查库（4 艘舰船）/ 未知工具 -32602 / Agent 无 key 优雅 error 事件
+- [x] **v1.8.0 Docker 部署验证（2026-08-31）**：compose config 默认 + production profile 双通过；backend 生产镜像多阶段构建成功（2m28s）；3306 与本机原生 MySQL 冲突故不做全栈 up（构建即部署证据）
 - [ ] 正式上线部署 M2（nginx + certbot production profile 未启用；**模块矩阵中唯一未完成 P0**，卡在服务器权限）
 
 ## 本地运行环境拓扑（实测验证 2026-08-29）
@@ -113,6 +115,10 @@ npm run dev
 | 2026-08-30 | webhook 通知器同规则 60s 速率冷却 + 失败重试 1 次 | 防止告警风暴刷爆外部 webhook；通知尽力而为 |
 | 2026-08-30 | `purgeReportsBefore` 独立函数支持 deps 注入 | 与告警仓储解耦，且让 ts-jest ESM 测试无需 jest.mock 模块（避开 ESM mock 兼容坑） |
 | 2026-08-30 | `/metrics` 历史降采样默认 60 点（`?points` 参数） | 300 点全量每 5s 轮询浪费带宽；等距抽样保留首尾，趋势不变 |
+| 2026-08-31 | MCP 工具调用采用 `<tool_call>` 文本协议 + ReAct Agent 循环，不改 Provider 层 | ChatMessage 是纯文本接口（role/content），原生 function calling 需动全部 provider + 656 测试；文本协议零侵入，且为 Qwen/Hermes 主流风格，LLM 训练漂移小 |
+| 2026-08-31 | MCP 两阶段生成：决策轮 maxTokens=300 非流式快速判断，最终轮才流式 | 决策只需容纳"调用哪个工具"，小输出降低成本与延迟；最终流式保证首 token 体验；无工具时完全跳过决策轮省一次调用 |
+| 2026-08-31 | MCP 传输抽象为 McpTransport 接口 + InProcessTransport 默认实现 | 进程内直连零网络开销；未来拆独立 MCP 进程只换 transport，Agent 代码不变；与 Notifier/仓储 deps 注入惯例一致 |
+| 2026-08-31 | 工具级错误走 result.isError、方法级错误走 JSON-RPC error 双层错误模型 | MCP 规范要求：业务失败是"合法结果"，LLM 可读可解释；协议错误才中断。工具执行失败回填错误文本让 LLM 自行向用户解释，对话不中断 |
 
 ## Lessons Learned（本次新增）
 
@@ -146,6 +152,7 @@ npm run dev
 
 | 日期 | 变更 |
 |------|------|
+| 2026-08-31 | **v1.8.0 MCP 全链路**：新增 `server/src/mcp/`（types/tools/mcpServer/mcpClient）+ `services/ai/mcpAgentService.ts` + `routes/mcp.ts`；ai.ts 加 /agent/chat SSE 端点；index.ts 装配。+65 用例（后端 656→721），typecheck/lint 0 错误，MCP 模块覆盖率 97.85%。curl 实测全链路通过；Docker compose 双 profile 校验 + backend 镜像构建成功。版本号 1.7.2→1.8.0，README/CHANGELOG 同步 |
 | 2026-08-31 | **v1.7.2 技术债收尾**：M4 第三批补测（AdminLayout 12 用例 + ShipDetail 12 用例，前端 592→616，覆盖率门禁 60→65，实测四项 68.00~70.41）；修复 AdminLayout window keydown 监听器泄漏（未摘除 + 闭包持有已销毁 ref）；清理 ShipDetail 未使用解构；文档状态同步（TODO.md / EXECUTION_PLAN_TECHDEBT.md 版本与实测数字刷新，M1/M3 标完成、M5/M6 标搁置）。验证：前端 616/616、后端 656/656、lint/typecheck 0 errors、build 通过 |
 | 2026-08-29 | 排查"前后端互联数据收不到"：实测证明 JSON body 转发链路（fetch/vite proxy/express.json）全程正常；定位并修复 3 个真实问题：① paginatedQuery countFrom 别名冲突（GET /applications?status 500→200）② applications 表缺 note 列（审核申请 500→200，schema.ts+3306/3307 双库 ALTER）③ Redis 容器未运行（AI 端点挂 16s→2ms）。修正 .env.development DB_PORT 3306。新增 scripts/write-endpoints-probe.mjs 全端点探测脚本 |
 | 2026-08-29 | 同步 analyticsService Blob 实现的测试断言（2 个既有失败清零）；前端 vitest 378/378、server jest 511/511 全绿；AI 聊天待配置 LLM key（DOUBAO/DEEPSEEK/ANTHROPIC_API_KEY） |

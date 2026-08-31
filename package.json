@@ -1,6 +1,6 @@
 {
   "name": "star-citizen-promotion",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "description": "Star Citizen 战队宣传网站 - Vue 3 + Vite",

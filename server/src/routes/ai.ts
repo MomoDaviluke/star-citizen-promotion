@@ -10,10 +10,13 @@ import { aiConfig } from '../config/ai.js'
 import { getRegistry } from '../services/ai/providers/index.js'
 import type { RagService } from '../services/ai/ragService.js'
 import { RecruiterService } from '../services/ai/recruiterService.js'
+import type { McpAgentService } from '../services/ai/mcpAgentService.js'
 
 export interface AiRouterDeps {
   ragService: RagService
   recruiterService?: RecruiterService
+  /** MCP Agent 服务(可选;未注入时 /agent/* 返回 503) */
+  agentService?: McpAgentService
 }
 
 export function createAiRouter(deps: AiRouterDeps): Router {
@@ -27,6 +30,19 @@ export function createAiRouter(deps: AiRouterDeps): Router {
   const recruiterLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 10,
+    message: { error: '请求过于频繁,请稍后再试' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+
+  /**
+   * MCP Agent 限流器
+   * @description Agent 单次对话可能触发多轮 LLM 调用与工具执行,成本更高,限流更紧:
+   *              6 次/分钟/IP
+   */
+  const agentLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 6,
     message: { error: '请求过于频繁,请稍后再试' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -166,6 +182,68 @@ export function createAiRouter(deps: AiRouterDeps): Router {
     } catch (err) {
       console.error('[AI /recruiter/suggest] Error:', err)
       res.status(500).json({ error: '获取推荐失败' })
+    }
+  })
+
+  /**
+   * POST /api/v1/ai/agent/chat
+   * MCP Agent 流式对话(SSE)
+   * @description Agent 循环:LLM 决策 → MCP 工具调用 → 结果回填 → 流式生成。
+   *              事件: token(文本片段) / tool_call(工具轨迹) / metadata / done / error
+   */
+  router.post('/agent/chat', agentLimiter, async (req: Request, res: Response) => {
+    if (!deps.agentService) {
+      res.status(503).json({ error: 'Agent 服务未启用' })
+      return
+    }
+
+    const { message, history } = req.body
+    if (!message || typeof message !== 'string') {
+      res.status(400).json({ error: 'message is required' })
+      return
+    }
+    if (message.length > 500) {
+      res.status(400).json({ error: '消息过长(最多 500 字)' })
+      return
+    }
+    // history 白名单校验:仅接受 role/content 结构
+    const safeHistory = Array.isArray(history)
+      ? history
+          .filter(
+            (m: unknown): m is { role: 'user' | 'assistant'; content: string } =>
+              !!m &&
+              typeof m === 'object' &&
+              ((m as { role?: string }).role === 'user' || (m as { role?: string }).role === 'assistant') &&
+              typeof (m as { content?: unknown }).content === 'string'
+          )
+          .slice(-12)
+          .map((m: { role: 'user' | 'assistant'; content: string }) => ({ role: m.role, content: m.content }))
+      : []
+
+    // SSE headers
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no')
+
+    try {
+      const toolCalls: unknown[] = []
+      for await (const ev of deps.agentService.chatStream(message, safeHistory)) {
+        if (ev.type === 'token') {
+          res.write(`event: token\ndata: ${JSON.stringify({ content: ev.content })}\n\n`)
+        } else if (ev.type === 'tool_call' && ev.toolCall) {
+          toolCalls.push(ev.toolCall)
+          res.write(`event: tool_call\ndata: ${JSON.stringify(ev.toolCall)}\n\n`)
+        }
+      }
+
+      res.write(`event: metadata\ndata: ${JSON.stringify({ toolCalls })}\n\n`)
+      res.write(`event: done\ndata: ${JSON.stringify({ ok: true })}\n\n`)
+      res.end()
+    } catch (err) {
+      console.error('[AI /agent/chat] Error:', err)
+      res.write(`event: error\ndata: ${JSON.stringify({ error: 'AI 服务暂时不可用' })}\n\n`)
+      res.end()
     }
   })
 

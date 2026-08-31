@@ -2,7 +2,7 @@
 
 > **项目**: Star Citizen 战队宣传网站
 > **更新日期**: 2026-08-31
-> **当前版本**: v1.7.2（M4 第三批补测 + 门禁 65 + 监听器泄漏修复 + 文档状态同步，2026-08-31）
+> **当前版本**: v1.8.0（MCP 协议层 + Agent 工具调用全链路，2026-08-31）
 
 ---
 
@@ -13,6 +13,40 @@
 - **主版本号 (MAJOR)**: 不兼容的 API 变更
 - **次版本号 (MINOR)**: 向下兼容的功能新增
 - **修订号 (PATCH)**: 向下兼容的问题修复
+
+---
+
+## [1.8.0] - 2026-08-31
+
+### 新功能
+
+#### MCP（Model Context Protocol）协议层 + Agent 工具调用全链路
+
+- **`server/src/mcp/` 新模块**：MCP 2024-11-05 规范核心子集
+  - `types.ts`：JSON-RPC 2.0 消息结构 + 工具定义/结果类型 + 标准错误码
+  - `tools.ts`：工具注册表，3 个只读工具（`query_fleet` 舰船查询 / `get_fleet_stats` 舰队统计 / `query_events` 近期活动），数据一律经 deps 注入走 Service 层（生产绑定真实实现、测试注入 stub），limit 参数安全钳制、handler 异常兜底为 `isError` 结果
+  - `mcpServer.ts`：JSON-RPC 分发器，支持 `initialize` / `notifications/initialized` / `ping` / `tools/list` / `tools/call`；方法级错误走 JSON-RPC error（-32601/-32602/-32600），工具执行错误走 `result.isError`（符合 MCP 规范）
+  - `mcpClient.ts`：客户端（initialize 幂等握手 + tools/list 缓存 + callTool），传输层抽象 `McpTransport`，内置 `InProcessTransport` 进程内传输，未来可替换 HTTP 传输连接独立 MCP 进程而 Agent 代码不变
+- **`server/src/services/ai/mcpAgentService.ts`**：ReAct 式 Agent 循环
+  - 两阶段生成：决策轮小 maxTokens（300）非流式快速判断是否调用工具，最终轮才流式输出，兼顾成本与首 token 延迟
+  - `<tool_call>` / `<tool_result>` 文本协议（Qwen/Hermes 风格），不改 Provider 层纯文本 ChatMessage 接口，对既有测试零侵入
+  - 工具轨迹（ToolCallTrace）随 SSE 事件下发前端；结果超长截断（2000 字符）防上下文爆炸；轮次上限（默认 3）防连环调用
+  - 降级链：mcpClient 未注入或工具发现失败 → 自动退化为纯 LLM 链路，进程内 fail-fast 不重复重试；工具执行失败 → 错误文本回填由 LLM 自行解释，对话不中断
+- **新端点**：
+  - `POST /api/v1/mcp`：MCP Streamable HTTP 风格 JSON-RPC 入口（外部 MCP 客户端可直接对接），30 次/分钟/IP 限流；`GET /api/v1/mcp` 端点发现
+  - `POST /api/v1/ai/agent/chat`：Agent SSE 流式对话（事件：`token` / `tool_call` / `metadata` / `done` / `error`），6 次/分钟/IP 限流，history 白名单过滤（仅 user/assistant 结构、最多 12 条）
+- **装配**：`index.ts` 组装 tools → McpServer → InProcessTransport → McpClient → McpAgentService，注入 AI 路由与独立 MCP 路由
+
+### 测试加固
+
+- **+65 用例（后端 656 → 721）**：
+  - `tests/mcp/tools.test.ts`（8）：工具定义齐全、参数钳制、Service 抛错收敛为 isError
+  - `tests/mcp/mcpServer.test.ts`（15）：initialize 握手、tools/list、tools/call 成功与三类协议错误、未知方法 -32601、请求骨架校验 -32600、id 对应（含字符串 id）
+  - `tests/mcp/mcpClient.test.ts`（9）：InProcess 全链路、listTools 缓存、initialize 幂等、工具级错误不抛/协议错误抛 McpClientError、自定义 transport 异常传播
+  - `tests/services/ai/mcpAgentService.test.ts`（18）：降级（client null / 发现失败 fail-fast）、parseToolCall 6 分支、chat 循环（直接回答 / 工具执行回填 / 协议失败继续 / 超长截断 / 轮次上限）、chatStream 事件序列
+  - `tests/routes/mcp.test.ts`（7）：HTTP 端点握手/发现/调用/未知方法/非法 body
+  - `tests/routes/aiAgent.test.ts`（6）：503 未启用、400 校验、SSE 事件序列、history 过滤与截取、流中断 error 事件
+  - 全部按构造函数注入 stub，零 jest.mock（规避 DBG-21 的 ts-jest ESM 兼容坑）
 
 ---
 
